@@ -2,30 +2,48 @@
 
 Phased build plan derived from [docs/research.md](docs/research.md). Each version delivers a working increment.
 
-## v0.1.0 — Research (current)
+## v0.1.0 — Research (shipped 2026-05-09)
 
 - [x] Survey 2026 Android-flashing tooling landscape
 - [x] Identify gaps: no all-in-one, no ROM-search desktop tool, fragmented backup
 - [x] Pick recommended toolchain to integrate (Bifrost + Thor + tetherback + Magisk_patcher + Platform-Tools)
 - [x] Repo scaffold (README, LICENSE, .gitignore, CHANGELOG, this file)
-- [ ] Lock primary stack (proposed: C#/.NET 10 WPF)
-- [ ] Decide bundling strategy: ship integrated tool binaries vs. download-on-first-run
+- [x] **Stack locked: C# / .NET 10 WPF**, `net10.0-windows10.0.22621.0` TFM (matches Snapture / OrganizeContacts / DicomUtilitySuite)
+- [x] **Architecture locked: subprocess wrappers for ALL backend tools** (preserves MIT license — linking against Thor as a library would force GPL-3.0 contagion). Tools downloaded lazily on first need to `%LOCALAPPDATA%\Devicer\tools\` with version pinning. Platform-tools detected on PATH; user-prompted install if absent.
 
-## v0.2.0 — Scaffold + device ID
+## v0.2.0 — Scaffold + device ID (shipped 2026-05-09)
 
-- [ ] WPF shell with sidebar (Device · Firmware · Backup · Patch · Flash · Settings)
-- [ ] Catppuccin Mocha dark theme + light option
-- [ ] adb/fastboot wrapper service: `getprop ro.build.fingerprint`, `ro.csc.sales_code`, `ro.product.model`, slot, BL state, baseband
-- [ ] Magisk + KernelSU detection via `su -c magisk --version` / `ksud --version`
-- [ ] Device dashboard: model, ROM, root, BL, Knox state as glanceable cards
-- [ ] First-run wizard: detect/install platform-tools v37+, prompt for USB debugging
+- [x] WPF shell with sidebar (Device · Firmware · Backup · Patch · Flash · Settings)
+- [x] Catppuccin Mocha dark theme (Latte deferred to v0.2.x polish)
+- [x] adb/fastboot wrapper service: `getprop ro.build.fingerprint`, `ro.csc.sales_code`, `ro.product.model`, slot, BL state, baseband, Knox warranty bit, encryption, OEM unlock
+- [x] Magisk + KernelSU + APatch detection via `su -c 'magisk -c'` / `ksud --version` / `apd --version`
+- [x] Device dashboard: model, ROM, root, BL, Knox state as glanceable cards
+- [x] `tools/Devicer.Smoke` console verifier (CI-friendly E2E against connected device)
+- [ ] First-run wizard: detect/install platform-tools v37+, prompt for USB debugging — deferred to v0.2.x
 
-## v0.3.0 — Firmware download (Samsung)
+## v0.2.x polish (next)
 
-- [ ] Bifrost protocol wrapper (or library reference if .NET binding viable)
+- [ ] First-run wizard (platform-tools detection + install prompt)
+- [ ] Catppuccin Latte light theme + runtime swap
+- [ ] Settings page implementation (theme, log level, tool paths)
+- [ ] Loading spinner during probe
+- [ ] Hot-plug detection (re-probe on USB connect)
+
+## v0.3.0 — Firmware download (Samsung) — **BLOCKED on backend choice**
+
+Three viable backends, mutually exclusive, each with real tradeoffs. **Decision required from user before implementation:**
+
+- **Option A** — Subprocess-wrap Python `samloader` CLI. Pros: real CLI, well-documented protocol, maintained forks. Cons: forces a Python runtime dependency on the user's machine (we'd ship an embeddable Python or require the user to install one).
+- **Option B** — Subprocess-wrap a Bifrost / SamloaderKotlin CLI build. Pros: same protocol, maintained, native binary (Kotlin/Native or JVM jlink). Cons: Bifrost is currently GUI-only — needs a CLI fork or upstream PR; jlink path adds ~50 MB JRE bundle.
+- **Option C** — Native C# reimplementation of Samsung's Kies / FUS / NF protocol. Pros: zero external dependency, single-binary install, fastest UX. Cons: most work; protocol can change (Samsung has rotated keys / endpoints in past).
+
+**Recommendation**: Option C if we want a clean MIT product. Option A is fastest if Python is acceptable.
+
+Once backend chosen:
+
 - [ ] Per-CSC search, latest + history view, region picker
 - [ ] Decrypted streaming download with resume + integrity check
-- [ ] Local firmware cache with model/CSC/version index
+- [ ] Local firmware cache at `%LOCALAPPDATA%\Devicer\firmware\<model>_<csc>_<version>\` with model/CSC/version index
 
 ## v0.4.0 — Custom ROM search
 
