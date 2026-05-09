@@ -21,13 +21,14 @@ Phased build plan derived from [docs/research.md](docs/research.md). Each versio
 - [x] `tools/Devicer.Smoke` console verifier (CI-friendly E2E against connected device)
 - [ ] First-run wizard: detect/install platform-tools v37+, prompt for USB debugging — deferred to v0.2.x
 
-## v0.2.x polish (next)
+## v0.2.x polish (in progress)
 
 - [ ] First-run wizard (platform-tools detection + install prompt)
 - [ ] Catppuccin Latte light theme + runtime swap
 - [ ] Settings page implementation (theme, log level, tool paths)
-- [ ] Loading spinner during probe
-- [ ] Hot-plug detection (re-probe on USB connect)
+- [x] Loading indicator during probe (v0.2.1 — animated accent stripe + status text)
+- [x] Hot-plug detection (v0.2.1 — 4 s polled re-probe with selection persistence)
+- [x] Banish pill / oval backdrops from theme (v0.2.1)
 
 ## v0.3.0 — Firmware download (Samsung) — **BLOCKED on backend choice**
 

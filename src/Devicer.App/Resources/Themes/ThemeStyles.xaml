@@ -204,37 +204,35 @@
         </Setter>
     </Style>
 
-    <!-- Status badge -->
+    <!-- Status badge — square corners with subtle 4px radius. Variants differentiate by color + left-accent stripe, not by shape. -->
     <Style x:Key="Badge" TargetType="Border">
-        <Setter Property="CornerRadius" Value="999" />
-        <Setter Property="Padding" Value="10,3" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Padding" Value="10,4" />
         <Setter Property="Background" Value="{DynamicResource AppSurfaceRaised}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource AppBorder}" />
+        <Setter Property="BorderThickness" Value="1" />
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="HorizontalAlignment" Value="Left" />
     </Style>
 
     <Style x:Key="BadgeSuccess" TargetType="Border" BasedOn="{StaticResource Badge}">
-        <Setter Property="Background" Value="#33A6E3A1" />
+        <Setter Property="Background" Value="#22A6E3A1" />
         <Setter Property="BorderBrush" Value="{DynamicResource AppSuccess}" />
-        <Setter Property="BorderThickness" Value="1" />
     </Style>
 
     <Style x:Key="BadgeWarning" TargetType="Border" BasedOn="{StaticResource Badge}">
-        <Setter Property="Background" Value="#33F9E2AF" />
+        <Setter Property="Background" Value="#22F9E2AF" />
         <Setter Property="BorderBrush" Value="{DynamicResource AppWarning}" />
-        <Setter Property="BorderThickness" Value="1" />
     </Style>
 
     <Style x:Key="BadgeDanger" TargetType="Border" BasedOn="{StaticResource Badge}">
-        <Setter Property="Background" Value="#33F38BA8" />
+        <Setter Property="Background" Value="#22F38BA8" />
         <Setter Property="BorderBrush" Value="{DynamicResource AppDestructive}" />
-        <Setter Property="BorderThickness" Value="1" />
     </Style>
 
     <Style x:Key="BadgeInfo" TargetType="Border" BasedOn="{StaticResource Badge}">
-        <Setter Property="Background" Value="#3389B4FA" />
+        <Setter Property="Background" Value="#2289B4FA" />
         <Setter Property="BorderBrush" Value="{DynamicResource AppInfo}" />
-        <Setter Property="BorderThickness" Value="1" />
     </Style>
 
     <!-- ScrollBar (slim) -->

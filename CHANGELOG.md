@@ -2,6 +2,16 @@
 
 All notable changes to Devicer are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [SemVer](https://semver.org/).
 
+## v0.2.1 — 2026-05-09 (UX polish)
+
+### Added
+- **Hot-plug detection**: 4-second `DispatcherTimer` re-probes adb / fastboot when not already probing, with a 3.5s minimum gap between probes. Plug or unplug a phone and the Device tab updates automatically — no manual Refresh.
+- **Probe status indicator**: animated accent stripe + live status text ("Probing adb / fastboot…", "1 device connected", "No devices") next to the heading.
+- Selection persistence across refreshes: when the same serial reappears, the previous device stays selected.
+
+### Fixed
+- **Removed pill / oval backdrops** from `Badge` styles in `ThemeStyles.xaml` (status badges and root indicators were `CornerRadius="999"`). All badges now use `CornerRadius="4"` with subtle 1 px tinted borders. Variants differentiate by color, not shape. Per global rule.
+
 ## v0.2.0 — 2026-05-09 (alpha shell)
 
 ### Added
