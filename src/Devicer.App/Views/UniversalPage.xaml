@@ -1,0 +1,116 @@
+<UserControl x:Class="Devicer.App.Views.UniversalPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Devicer.App.ViewModels">
+    <UserControl.Resources>
+        <Style x:Key="FieldLabel" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource AppSubtleForeground}" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Typography.Capitals" Value="AllSmallCaps" />
+            <Setter Property="Margin" Value="0,0,0,4" />
+        </Style>
+        <DataTemplate x:Key="StepTemplate">
+            <Border Style="{StaticResource Card}" Margin="0,0,0,8" Padding="14,10,14,12">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="{Binding Title}"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource AppForeground}"
+                                   Margin="0,0,0,2" />
+                        <TextBlock Text="{Binding Detail}"
+                                   Foreground="{DynamicResource AppMutedForeground}"
+                                   FontSize="12"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                    <Button Grid.Column="1"
+                            Content="Open"
+                            Style="{StaticResource SecondaryButton}"
+                            VerticalAlignment="Top"
+                            Margin="12,0,0,0"
+                            Command="{Binding DataContext.OpenStepCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                            CommandParameter="{Binding}"
+                            Visibility="{Binding Url, Converter={x:Static vm:NullToCollapsedConverter.Instance}}" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="32,28,32,32" MaxWidth="900" HorizontalAlignment="Left">
+            <DockPanel Margin="0,0,0,8" LastChildFill="True">
+                <Button DockPanel.Dock="Right"
+                        Content="{Binding Guide.PortalLabel, FallbackValue='Open portal', TargetNullValue='Open portal'}"
+                        Style="{StaticResource PrimaryButton}"
+                        Command="{Binding OpenPortalCommand}"
+                        Visibility="{Binding Guide.PortalUrl, Converter={x:Static vm:NullToCollapsedConverter.Instance}}" />
+                <StackPanel>
+                    <TextBlock Text="Universal" Style="{StaticResource HeadingTextBlock}" />
+                    <TextBlock Style="{StaticResource SubheadingTextBlock}"
+                               Text="OEM-aware flashing guidance for non-Samsung devices. Detects manufacturer / brand from the connected phone and surfaces the right unlock procedure, portal, and known quirks." />
+                </StackPanel>
+            </DockPanel>
+
+            <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="DETECTED OEM" Style="{StaticResource FieldLabel}" />
+                        <TextBlock Text="{Binding DetectedOemDisplay}"
+                                   FontFamily="Consolas, JetBrains Mono, Cascadia Mono"
+                                   FontSize="14"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource AppAccent}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1">
+                        <TextBlock Text="MODEL" Style="{StaticResource FieldLabel}" />
+                        <TextBlock Text="{Binding Model, FallbackValue='—', TargetNullValue='—'}"
+                                   FontFamily="Consolas, JetBrains Mono, Cascadia Mono"
+                                   FontSize="13"
+                                   Foreground="{DynamicResource AppForeground}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="CODENAME" Style="{StaticResource FieldLabel}" />
+                        <TextBlock Text="{Binding Codename, FallbackValue='—', TargetNullValue='—'}"
+                                   FontFamily="Consolas, JetBrains Mono, Cascadia Mono"
+                                   FontSize="13"
+                                   Foreground="{DynamicResource AppForeground}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <TextBlock Text="{Binding Guide.Headline}"
+                       Foreground="{DynamicResource AppForeground}"
+                       TextWrapping="Wrap"
+                       Margin="0,0,0,8" />
+            <TextBlock Style="{StaticResource MutedTextBlock}" FontSize="12" Margin="0,0,0,16" TextWrapping="Wrap">
+                <Run Text="Tooling:" /><Run Text="{Binding Guide.Tooling, Mode=OneWay}" />
+            </TextBlock>
+
+            <TextBlock Text="UNLOCK PROCEDURE" Style="{StaticResource FieldLabel}" Margin="0,0,0,6" />
+            <ItemsControl ItemsSource="{Binding UnlockSteps}" ItemTemplate="{StaticResource StepTemplate}" Margin="0,0,0,16" />
+
+            <TextBlock Text="FLASH PATH" Style="{StaticResource FieldLabel}" Margin="0,0,0,6" />
+            <ItemsControl ItemsSource="{Binding FlashSteps}" ItemTemplate="{StaticResource StepTemplate}" Margin="0,0,0,16" />
+
+            <TextBlock Text="QUIRKS / WARNINGS" Style="{StaticResource FieldLabel}" Margin="0,0,0,6" />
+            <ItemsControl ItemsSource="{Binding Quirks}" ItemTemplate="{StaticResource StepTemplate}" />
+
+            <Border Style="{StaticResource Card}"
+                    Background="#22F9E2AF"
+                    BorderBrush="{DynamicResource AppWarning}"
+                    Margin="0,16,0,0"
+                    Visibility="{Binding Diagnostic, Converter={x:Static vm:NullToCollapsedConverter.Instance}}">
+                <TextBlock Text="{Binding Diagnostic}" Foreground="{DynamicResource AppForeground}" TextWrapping="Wrap" />
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -94,11 +94,14 @@ Phased build plan derived from [docs/research.md](docs/research.md). Each versio
 - [ ] **Thor subprocess wrapper** for actual writes (deferred to v0.7.1; subprocess preserves MIT against Thor's GPL-3.0)
 - [ ] **Heimdall fallback** for the rare cases Thor can't reach the device (deferred to v0.7.2)
 
-## v0.8.0 — Universal mode
+## v0.8.0 — Universal mode — shipped 2026-05-09
 
-- [ ] Pixel/OnePlus/Xiaomi via fastboot pipeline
-- [ ] OEM portal links: Google Android Flash Tool, OnePlus MSM, Xiaomi MiFlash
-- [ ] Per-OEM quirk profiles (Pixel anti-rollback, Xiaomi unlock-wait, OnePlus EDL)
+- [x] **OEM detection** from `ro.product.manufacturer` / `ro.product.brand` — covers Samsung, Google, OnePlus, Xiaomi (incl. Redmi / POCO), Sony, ASUS, Motorola, Nothing, Realme, Oppo, Vivo. Falls back to a generic fastboot profile for unknown OEMs.
+- [x] **Per-OEM guidance card** with three sections (unlock procedure, flash path, quirks/warnings) backed by the `OemGuidanceService`. Each step has an optional deep-link button.
+- [x] **OEM portal deep-links** — Google Android Flash Tool, OnePlus MSM guide, Mi Unlock portal, Sony developer unlock portal, ASUS support, Motorola unlock portal, Nothing support.
+- [x] **Per-OEM quirk profiles** — Pixel anti-rollback + Pixel 7+ init_boot, OnePlus MSM region scoping + OxygenOS/ColorOS cross-flash trap, Xiaomi 7-day unlock wait + ARB + EU/Global/China ROM mixing, Sony DRM-key loss on unlock, Motorola Verizon-locked variants.
+- [x] **Universal sidebar tab** added between Flash and Settings.
+- [ ] Direct in-app fastboot flash queue with progress bar (deferred to v0.8.1 — uses the same `FastbootService` already in `Devicer.Core`)
 
 ## v1.0.0 — Polish + first public release
 

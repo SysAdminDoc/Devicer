@@ -17,6 +17,7 @@ public sealed class AppHost
     public IBackupService Backup { get; }
     public IBootPatchService BootPatch { get; }
     public IOdinInspectorService OdinInspector { get; }
+    public IOemGuidanceService OemGuidance { get; }
     public AppSettingsStore SettingsStore { get; }
     public ThemeManager Theme { get; }
 
@@ -34,6 +35,7 @@ public sealed class AppHost
         Backup = new BackupService(Adb);
         BootPatch = new BootPatchService(Adb);
         OdinInspector = new OdinInspectorService();
+        OemGuidance = new OemGuidanceService();
         SettingsStore = new AppSettingsStore();
         Theme = new ThemeManager(SettingsStore);
     }

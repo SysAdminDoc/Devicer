@@ -2,7 +2,7 @@
 
 # Devicer
 
-[![Version](https://img.shields.io/badge/version-0.7.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.8.0-blue.svg)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows-0078d4.svg)](#)
 [![.NET](https://img.shields.io/badge/.NET-10-512bd4.svg)](#)
@@ -12,7 +12,7 @@
 
 ## Status
 
-**v0.7.0 — alpha.** Device + Firmware + ROMs + Backup + Patch + **Flash** tabs all functional. Flash page reads Samsung Odin `.tar.md5` archives, lists their partition entries, and produces a dry-run plan with the EFS-Clear toggle (OFF by default) plus a Knox-status banner. Actual writes are gated to v0.7.1. Backup performs root `dd` of selected partitions, pulls the images off-device, SHA256-verifies, and writes a versioned manifest to `%LOCALAPPDATA%\Devicer\backups\<serial>\<timestamp>\`. Critical Samsung partitions (EFS, modem NV, persist, modem state, FSC/FSG) are pre-selected and rendered with a CRITICAL badge + plain-language reason. Live-tested partition discovery on the connected S25 Ultra (125 partitions, all 6 critical correctly flagged). No Python, no JRE, no third-party servers. See [CHANGELOG.md](CHANGELOG.md). Tooling-landscape document at [docs/research.md](docs/research.md), phased build plan at [ROADMAP.md](ROADMAP.md).
+**v0.8.0 — alpha.** Device + Firmware + ROMs + Backup + Patch + Flash + **Universal** tabs all functional. Universal tab auto-detects manufacturer/brand and surfaces an OEM-specific cheat sheet — unlock procedure, recommended tooling, portal deep-link, and known quirks for Pixel / OnePlus / Xiaomi / Sony / ASUS / Motorola / Nothing / Samsung (8 OEM profiles). All writes are still gated to a future release; v0.8.0 ships the inspector + safety gates + OEM guidance so a user can validate the path before committing. Backup performs root `dd` of selected partitions, pulls the images off-device, SHA256-verifies, and writes a versioned manifest to `%LOCALAPPDATA%\Devicer\backups\<serial>\<timestamp>\`. Critical Samsung partitions (EFS, modem NV, persist, modem state, FSC/FSG) are pre-selected and rendered with a CRITICAL badge + plain-language reason. Live-tested partition discovery on the connected S25 Ultra (125 partitions, all 6 critical correctly flagged). No Python, no JRE, no third-party servers. See [CHANGELOG.md](CHANGELOG.md). Tooling-landscape document at [docs/research.md](docs/research.md), phased build plan at [ROADMAP.md](ROADMAP.md).
 
 ## Goals
 

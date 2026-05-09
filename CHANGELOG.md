@@ -2,6 +2,32 @@
 
 All notable changes to Devicer are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [SemVer](https://semver.org/).
 
+## v0.8.0 — 2026-05-09 (Universal mode)
+
+### Added
+- **`OemKind` enum + `OemKindExtensions.Detect`** — manufacturer/brand → enum classification covering Samsung / Google / OnePlus / Xiaomi (Redmi / POCO) / Sony / ASUS / Motorola (Lenovo) / Nothing / Realme / Oppo / Vivo, plus Other/Unknown fallbacks.
+- **`OemGuidanceService`** — produces a populated `OemGuidance` (headline, tooling, unlock steps, flash steps, quirks, optional portal URL+label) for each OEM. Eight first-class profiles + a generic-fastboot fallback.
+- **Universal sidebar tab** (between Flash and Settings) with three step-list cards driven by the active OEM profile. Each step is a Catppuccin card with an optional "Open" deep-link button to the relevant portal/article. The header has a primary "Open portal" button bound to the OEM's portal URL when available.
+- **OEM auto-detection on device-tab change** — UniversalViewModel re-runs `OemKindExtensions.Detect(device.Manufacturer, device.Brand)` whenever the user picks a different connected device.
+
+### Profile coverage
+- **Pixel** — Android Flash Tool deep-link, factory-image fallback, anti-rollback warning, Pixel 7+ init_boot.img patch note.
+- **OnePlus** — fastboot flash + MSM tool guide, region-scoped MSM warning, OxygenOS/ColorOS cross-flash trap.
+- **Xiaomi** — Mi Unlock 7-day wait, MiFlash steps, ARB warning, EU/Global/China ROM mixing trap, MIUI/HyperOS post-reset lock note.
+- **Sony** — developer-portal IMEI unlock, Newflasher .ftf flow, DRM-key loss warning.
+- **ASUS** — model-specific Unlock Tool APK, fastboot flash, warranty marker.
+- **Motorola/Lenovo** — unlock-data extraction, portal submission, carrier-lock warning (Verizon variants).
+- **Nothing** — factory firmware ZIP, AVB / dm-verity note.
+- **Samsung** — links the user to the dedicated Firmware + Flash tabs and surfaces the One UI 8 OEM-unlock-toggle removal warning for S25 / Z Fold7 / Z Flip7.
+- **Generic** — standard fastboot unlock + per-partition flash, with a "verify the OEM's quirks before flashing" reminder.
+
+### Verified
+- dotnet build clean (4 projects, 0/0).
+- WPF app launches with the new Universal tab in nav; OEM auto-fills from the connected Samsung S25 Ultra (correctly routes to the Samsung-redirect profile).
+
+### Architecture notes
+- v0.8.0 is the **guidance** half of universal mode. Direct in-app fastboot flashing for non-Samsung devices is deferred to v0.8.1 — the underlying `FastbootService` is already in `Devicer.Core` from v0.2.0 and just needs an orchestration ViewModel + UI.
+
 ## v0.7.0 — 2026-05-09 (Flash inspector + safety gates)
 
 ### Added
