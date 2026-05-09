@@ -16,6 +16,7 @@ public sealed class AppHost
     public IRomAggregatorService RomAggregator { get; }
     public IBackupService Backup { get; }
     public IBootPatchService BootPatch { get; }
+    public IOdinInspectorService OdinInspector { get; }
     public AppSettingsStore SettingsStore { get; }
     public ThemeManager Theme { get; }
 
@@ -32,6 +33,7 @@ public sealed class AppHost
         RomAggregator = new RomAggregatorService();
         Backup = new BackupService(Adb);
         BootPatch = new BootPatchService(Adb);
+        OdinInspector = new OdinInspectorService();
         SettingsStore = new AppSettingsStore();
         Theme = new ThemeManager(SettingsStore);
     }

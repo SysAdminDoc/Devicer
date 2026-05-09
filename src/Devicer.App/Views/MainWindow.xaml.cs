@@ -15,6 +15,7 @@ public partial class MainWindow : Window
         var romVm = new RomViewModel(App.Host.RomAggregator);
         var backupVm = new BackupViewModel(App.Host.Adb, App.Host.Backup);
         var patchVm = new PatchViewModel(App.Host.BootPatch);
+        var flashVm = new FlashViewModel(App.Host.OdinInspector);
         var settingsVm = new SettingsViewModel(
             App.Host.SettingsStore,
             App.Host.Theme,
@@ -33,10 +34,11 @@ public partial class MainWindow : Window
                 romVm.PrefillFrom(deviceVm.SelectedDevice);
                 backupVm.PrefillFrom(deviceVm.SelectedDevice);
                 patchVm.PrefillFrom(deviceVm.SelectedDevice);
+                flashVm.PrefillFrom(deviceVm.SelectedDevice);
             }
         };
 
-        DataContext = new MainViewModel(deviceVm, firmwareVm, romVm, backupVm, patchVm, settingsVm);
+        DataContext = new MainViewModel(deviceVm, firmwareVm, romVm, backupVm, patchVm, flashVm, settingsVm);
 
         // Kick off an initial probe so the Device page lands on real data.
         Loaded += async (_, _) => await deviceVm.RefreshAsync();

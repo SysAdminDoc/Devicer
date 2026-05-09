@@ -83,13 +83,16 @@ Phased build plan derived from [docs/research.md](docs/research.md). Each versio
 - [x] Pre-validation: refuses to run if no root manager detected; surfaces the detected manager + version on the page.
 - [ ] PC-side affggh/Magisk_patcher subprocess fallback (deferred to v0.6.1 — required when the connected device has no installed root manager but the user has a known-good boot.img)
 
-## v0.7.0 — Flash
+## v0.7.0 — Flash (inspector + safety gates) — shipped 2026-05-09
 
-- [ ] Thor library integration as primary; Heimdall fallback
-- [ ] Odin .tar.md5 inspector + per-partition flash queue
-- [ ] EFS-Clear gate **OFF by default**, red banner if user enables
-- [ ] Knox eFuse warning before any custom AP flash
-- [ ] Dry-run mode that validates the queue without writing
+- [x] Odin **.tar.md5 inspector** — `OdinInspectorService` parses `.tar` / `.tar.md5` archives via `System.Formats.Tar`, lists every entry with size + partition guess (`boot.img.lz4` → `boot`).
+- [x] **Per-entry checkbox queue** with image-vs-non-image filtering (image entries are checked by default, manifest / metadata entries are listed but unchecked).
+- [x] **EFS-Clear gate OFF by default**, big red banner if the user enables it.
+- [x] **Knox eFuse warning** auto-derived from the connected device's warranty bit — green "intact, don't lose it" banner if `0`, yellow "already tripped" banner otherwise.
+- [x] **Dry-run mode** — produces the full flash plan (each `<entry> → <partition>`) plus the EFS-Clear / Knox status as readable text. No data written.
+- [x] Footnote: actual writes deferred until v0.7.1 — see notes below.
+- [ ] **Thor subprocess wrapper** for actual writes (deferred to v0.7.1; subprocess preserves MIT against Thor's GPL-3.0)
+- [ ] **Heimdall fallback** for the rare cases Thor can't reach the device (deferred to v0.7.2)
 
 ## v0.8.0 — Universal mode
 

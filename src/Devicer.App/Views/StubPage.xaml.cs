@@ -19,12 +19,3 @@ public partial class StubPage : UserControl
     }
 }
 
-public sealed class FlashPage : StubPage
-{
-    public FlashPage() : base(
-        "Flash",
-        "Samsung Odin-protocol flasher — Thor + EFS-clear and Knox safety gates.",
-        "Coming in v0.7.0.",
-        "Subprocess-wrapped Thor Flash Utility (GPL-3.0, kept across the process boundary). EFS-Clear is OFF by default; Knox eFuse warning gates any custom AP flash.")
-    { }
-}

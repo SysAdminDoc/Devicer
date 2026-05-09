@@ -2,6 +2,27 @@
 
 All notable changes to Devicer are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [SemVer](https://semver.org/).
 
+## v0.7.0 — 2026-05-09 (Flash inspector + safety gates)
+
+### Added
+- **`OdinInspectorService`** — parses Samsung's Odin firmware archives (.tar and .tar.md5) via `System.Formats.Tar`. Returns an `OdinTarInfo` with per-entry size + a derived partition-name guess (`boot.img.lz4` → `boot`, `cache.img.lz4` → `cache`). The trailing `<md5>  <filename>\n` block on `.tar.md5` files is detected and tolerated by the tar reader.
+- **Functional Flash page** (replaces stub):
+  - File picker for `.tar.md5` / `.tar` archives, "Inspect" button, package hint surfaced (AP / BL / CP / CSC / HOME_CSC).
+  - Per-entry checkbox list with mono name + partition guess + size; image-like entries (`.img` / `.lz4` / `.bin`) are pre-checked, metadata entries listed but unchecked.
+  - **Knox eFuse banner** — green "intact, do not lose it by accident" warning when the connected device's warranty bit is `0`; yellow "already tripped" banner otherwise. Drawn from `DeviceInfo.KnoxWarrantyBit` — auto-syncs when the user changes the selected device on the Device tab.
+  - **EFS-Clear toggle** — OFF by default, prominently labelled. Square `CornerRadius="6"` per the global pill-ban rule.
+  - **Dry-run plan** — text-rendered flash plan (`<entry-name> → <partition>`) plus the EFS-Clear + Knox status, written to a status panel. No writes performed.
+- New models: `OdinTarEntry`, `OdinTarInfo`.
+- Cleaned out the legacy `FlashPage` / `PatchPage` / `BackupPage` stubs from `StubPage.xaml.cs` — every nav item now has a real implementation page.
+
+### Verified
+- dotnet build clean across Debug + Release (4 projects, 0/0).
+- WPF app launches without XAML errors.
+
+### Architecture notes
+- v0.7.0 deliberately ships **inspect + dry-run only**. Actual writes will land in v0.7.1 via a Thor subprocess wrapper — keeping Thor (GPL-3.0) outside the .NET process boundary so Devicer stays MIT-clean.
+- The dry-run plan format already matches what the Thor subprocess flow will execute, so v0.7.1 will be a thin shim that turns "show me what would happen" into "actually do it" with explicit double-confirm gating.
+
 ## v0.6.0 — 2026-05-09 (Boot-image patcher)
 
 ### Added
