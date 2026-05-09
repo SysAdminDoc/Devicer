@@ -16,15 +16,8 @@
             <Setter Property="Foreground" Value="{DynamicResource AppForeground}" />
             <Setter Property="TextWrapping" Value="Wrap" />
         </Style>
-        <Style TargetType="TextBox">
-            <Setter Property="Background" Value="{DynamicResource AppSurfaceRaised}" />
-            <Setter Property="Foreground" Value="{DynamicResource AppForeground}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource AppBorder}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Padding" Value="8,6" />
-            <Setter Property="MinHeight" Value="30" />
+        <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
             <Setter Property="FontFamily" Value="Consolas, JetBrains Mono, Cascadia Mono" />
-            <Setter Property="CaretBrush" Value="{DynamicResource AppAccent}" />
         </Style>
     </UserControl.Resources>
 

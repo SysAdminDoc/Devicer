@@ -7,6 +7,7 @@
         MinWidth="540" MinHeight="480"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
+        Icon="pack://application:,,,/Resources/Images/logo.ico"
         Background="{DynamicResource AppBackground}"
         Foreground="{DynamicResource AppForeground}">
     <Window.Resources>

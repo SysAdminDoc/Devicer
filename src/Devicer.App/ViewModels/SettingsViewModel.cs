@@ -63,16 +63,35 @@ public partial class SettingsViewModel : ObservableObject
         FastbootStatus = fastbootOk ? "Available on PATH" : "Not found — install Android SDK Platform-Tools v37+";
     }
 
+    [ObservableProperty]
+    private string? _openFolderError;
+
     [RelayCommand]
     public void OpenSettingsFolder()
     {
+        OpenFolderError = null;
         var dir = Path.GetDirectoryName(SettingsPath);
-        if (dir is not null && Directory.Exists(dir))
+        if (dir is null || !Directory.Exists(dir))
+        {
+            OpenFolderError = $"Folder not found: {dir ?? "(none)"}";
+            return;
+        }
+        try
+        {
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
             {
                 FileName = dir,
                 UseShellExecute = true,
             });
+        }
+        catch (Exception ex)
+        {
+            // Shell-launch can fail when no Explorer / file-association / shell handler
+            // is registered (terminal-only Windows IoT, locked-down enterprise builds,
+            // ServerCore SKUs). Surface the error to the UI rather than crashing the
+            // dispatcher.
+            OpenFolderError = $"Could not open folder: {ex.Message}";
+        }
     }
 
     partial void OnSelectedThemeChanged(AppTheme value)

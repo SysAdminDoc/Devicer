@@ -14,7 +14,7 @@ namespace Devicer.Core.Services;
 /// of 4 KiB).
 /// </para>
 /// </summary>
-internal static class FirmwareCipher
+public static class FirmwareCipher
 {
     private const int ChunkSize = 4096;
 
@@ -67,10 +67,20 @@ internal static class FirmwareCipher
 
             if (isFinal)
             {
-                // Strip the PKCS#7 padding byte from the trailing block.
+                // Verify + strip PKCS#7 padding on the trailing block. A weak check (just
+                // the last byte) lets a wrong key silently produce garbage that "almost"
+                // looks valid; a strict check requires every pad byte to equal the pad
+                // count, which catches ~255/256 wrong-key cases on the final block alone.
+                if (written < 16)
+                    throw new InvalidDataException($"Decryption produced final block of {written} bytes — too small for PKCS#7. Wrong key or corrupt blob.");
                 var pad = outBuf[written - 1];
                 if (pad < 1 || pad > 16)
                     throw new InvalidDataException($"Decryption produced invalid PKCS#7 pad byte {pad} — wrong key or corrupt blob.");
+                for (int i = written - pad; i < written; i++)
+                {
+                    if (outBuf[i] != pad)
+                        throw new InvalidDataException($"PKCS#7 padding mismatch at offset {i} (expected 0x{pad:X2}, got 0x{outBuf[i]:X2}) — wrong key or corrupt blob.");
+                }
                 written -= pad;
             }
 

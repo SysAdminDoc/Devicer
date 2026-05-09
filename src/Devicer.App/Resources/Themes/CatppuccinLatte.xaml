@@ -36,10 +36,12 @@
     <Color x:Key="AppMutedForegroundColor">#FF6C6F85</Color>
     <Color x:Key="AppSubtleForegroundColor">#FF8C8FA1</Color>
     <Color x:Key="AppDisabledForegroundColor">#FF9CA0B0</Color>
-    <Color x:Key="AppAccentColor">#FF8839EF</Color>
-    <Color x:Key="AppAccentHoverColor">#FF9D5DF1</Color>
-    <Color x:Key="AppAccentPressedColor">#FF7228D9</Color>
-    <Color x:Key="AppAccentForegroundColor">#FFDCE0E8</Color>
+    <!-- Accent: Catppuccin Latte Blue. Pairs with Mocha's Blue accent so the app's
+         visual identity stays consistent across light/dark themes. -->
+    <Color x:Key="AppAccentColor">#FF1E66F5</Color>
+    <Color x:Key="AppAccentHoverColor">#FF3D79F7</Color>
+    <Color x:Key="AppAccentPressedColor">#FF1855D6</Color>
+    <Color x:Key="AppAccentForegroundColor">#FFEFF1F5</Color>
     <Color x:Key="AppFocusColor">#FF1E66F5</Color>
     <Color x:Key="AppDestructiveColor">#FFD20F39</Color>
     <Color x:Key="AppDestructiveForegroundColor">#FFDCE0E8</Color>

@@ -6,6 +6,7 @@
         Width="1100" Height="720"
         MinWidth="900" MinHeight="600"
         WindowStartupLocation="CenterScreen"
+        Icon="pack://application:,,,/Resources/Images/logo.ico"
         TextElement.Foreground="{DynamicResource AppForeground}"
         Background="{DynamicResource AppBackground}">
     <Window.Resources>
@@ -41,7 +42,10 @@
                 </Border>
                 <Border DockPanel.Dock="Bottom" Padding="20,8,20,16">
                     <StackPanel>
-                        <TextBlock Text="v0.3.0" Style="{StaticResource MutedTextBlock}" FontSize="11" />
+                        <!-- Bound to MainViewModel.AppVersionDisplay so the badge can never
+                             drift from the assembly version the way the prior hardcoded
+                             "v0.3.0" did (it kept pointing at v0.3.0 long after v1.0.0). -->
+                        <TextBlock Text="{Binding AppVersionDisplay, FallbackValue=v?.?.?}" Style="{StaticResource MutedTextBlock}" FontSize="11" />
                         <TextBlock Text="Local-only build" Style="{StaticResource MutedTextBlock}" FontSize="10" Opacity="0.7" />
                     </StackPanel>
                 </Border>

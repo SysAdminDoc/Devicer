@@ -15,7 +15,7 @@ namespace Devicer.Core.Services;
 ///   • CBC + PKCS#7 — for the auth nonce decode and the request-signature (this file).
 ///   • ECB + PKCS#7 — for the encrypted firmware blob itself (see <see cref="FirmwareCipher"/>).
 /// </summary>
-internal static class FusCrypto
+public static class FusCrypto
 {
     // Wire-protocol constants. Not creative expression; required by every independent FUS
     // client. Two key generations exist — current (samloader 0.4+) and legacy (samloader 0.3 era).

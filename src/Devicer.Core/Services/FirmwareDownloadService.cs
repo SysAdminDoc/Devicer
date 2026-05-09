@@ -97,6 +97,7 @@ public sealed class FirmwareDownloadService : IFirmwareDownloadService, IDisposa
         IProgress<FirmwareProgress>? progress,
         CancellationToken ct = default)
     {
+        DevicerLog.Section($"Download {model}/{region} {targetVersion} (IMEI {(imei.Length >= 8 ? imei[..8] + "…" : imei)})");
         progress?.Report(new FirmwareProgress(FirmwarePhase.Authenticating, 0, null, "Establishing FUS session…"));
 
         FirmwareBinaryInfo info;
@@ -105,6 +106,8 @@ public sealed class FirmwareDownloadService : IFirmwareDownloadService, IDisposa
             await _fus.EnsureSessionAsync(ct).ConfigureAwait(false);
             progress?.Report(new FirmwareProgress(FirmwarePhase.FetchingMetadata, 0, null, $"Fetching binary metadata for {model} / {region} / {targetVersion}…"));
             info = await GetBinaryInfoAsync(model, region, targetVersion, imei, ct).ConfigureAwait(false);
+            DevicerLog.Info("Download", $"BinaryInfo parsed: BinaryName='{info.BinaryName}', ModelPath='{info.ModelPath}', Size={info.BinaryByteSize:N0} bytes, IsV4={info.IsV4}");
+            DevicerLog.Info("Download", $"  LatestFwVersion='{info.LatestFwVersion}', LogicValueFactory='{info.LogicValueFactory}'");
         }
         catch (OperationCanceledException)
         {
@@ -133,6 +136,9 @@ public sealed class FirmwareDownloadService : IFirmwareDownloadService, IDisposa
             progress?.Report(new FirmwareProgress(FirmwarePhase.Downloading, resumeFrom, info.BinaryByteSize,
                 resumeFrom > 0 ? $"Resuming download at {FormatBytes(resumeFrom)} / {FormatBytes(info.BinaryByteSize)}…" : $"Downloading {FormatBytes(info.BinaryByteSize)}…"));
 
+            // FUS requires a BinaryInitForMass POST to set up server-side download state
+            // before the actual blob fetch — without it, the cloud endpoint returns HTTP 403.
+            await BinaryInitForMassAsync(info, ct).ConfigureAwait(false);
             await DownloadEncryptedAsync(info, encPath, resumeFrom, progress, ct).ConfigureAwait(false);
         }
         else
@@ -170,10 +176,59 @@ public sealed class FirmwareDownloadService : IFirmwareDownloadService, IDisposa
         return new FirmwareDownloadResult(encPath, decPath, info.BinaryByteSize, decryptedSize, sha, info);
     }
 
+    private async Task BinaryInitForMassAsync(FirmwareBinaryInfo info, CancellationToken ct)
+    {
+        var nonce = _fus.Nonce ?? throw new InvalidOperationException("FUS session not established");
+        var fwvSlice = ExtractFwvSlice(info.BinaryName);
+        var logicCheck = FusCrypto.GetLogicCheck(fwvSlice, nonce);
+
+        var doc = new XDocument(
+            new XElement("FUSMsg",
+                new XElement("FUSHdr", new XElement("ProtoVer", "1.0")),
+                new XElement("FUSBody",
+                    new XElement("Put",
+                        Field("BINARY_FILE_NAME", info.BinaryName),
+                        Field("LOGIC_CHECK", logicCheck)
+                    )
+                )
+            )
+        );
+        var xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + doc.ToString(SaveOptions.DisableFormatting);
+        var resp = await _fus.PostXmlAsync("/NF_DownloadBinaryInitForMass.do", xml, ct).ConfigureAwait(false);
+        // Status check: any non-200 in the response body kills the download.
+        var status = System.Text.RegularExpressions.Regex.Match(resp, @"<Status>(\d+)</Status>");
+        if (status.Success && status.Groups[1].Value != "200")
+            throw new FusProtocolException($"BinaryInitForMass: server returned status {status.Groups[1].Value}");
+    }
+
+    /// <summary>
+    /// Computes the 16-char filename slice fed into <c>LOGIC_CHECK</c>. The canonical FUS
+    /// algorithm (samloader, Bifrost, samfirm) is <c>filename.split(".")[0][-16:]</c> — split
+    /// on the FIRST dot and take the trailing 16 chars of that chunk. Using
+    /// <c>LastIndexOf('.')</c> instead silently produces a wrong slice for any filename with
+    /// multiple dots (which every modern firmware name has, e.g. <c>SW_….zip.enc4</c>) and the
+    /// server rejects the InitForMass call.
+    /// </summary>
+    public static string ExtractFwvSlice(string binaryName)
+    {
+        if (string.IsNullOrEmpty(binaryName))
+            throw new FusProtocolException("BinaryInitForMass: empty binary name from server.");
+        var stem = binaryName;
+        var firstDot = stem.IndexOf('.');
+        if (firstDot > 0) stem = stem[..firstDot];
+        if (stem.Length < 16)
+            throw new FusProtocolException($"BinaryInitForMass: filename stem '{stem}' is shorter than 16 chars; cannot compute logic check.");
+        return stem[^16..];
+    }
+
     private async Task DownloadEncryptedAsync(FirmwareBinaryInfo info, string outPath, long resumeFrom,
         IProgress<FirmwareProgress>? progress, CancellationToken ct)
     {
-        using var resp = await _fus.StartDownloadAsync(info.BinaryName, resumeFrom > 0 ? resumeFrom : null, ct).ConfigureAwait(false);
+        // The cloud-download endpoint expects the full server-relative path:
+        // ?file=<MODEL_PATH><BINARY_NAME>. Without the MODEL_PATH prefix, Samsung's CDN
+        // returns HTTP 403.
+        var remotePath = (info.ModelPath ?? string.Empty) + info.BinaryName;
+        using var resp = await _fus.StartDownloadAsync(remotePath, resumeFrom > 0 ? resumeFrom : null, ct).ConfigureAwait(false);
         await using var src = await resp.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
         await using var dst = new FileStream(outPath,
             resumeFrom > 0 ? FileMode.Append : FileMode.Create,
@@ -263,20 +318,43 @@ public sealed class FirmwareDownloadService : IFirmwareDownloadService, IDisposa
 
         var status = doc.Descendants("Status").FirstOrDefault()?.Value;
         if (!string.IsNullOrEmpty(status) && status != "200")
-            throw new FusProtocolException($"BinaryInform: server returned status {status}. The model+region+version triple is probably invalid.");
+            throw new FusProtocolException($"BinaryInform: server returned status {status}. The model+region+version triple is probably invalid.", xml);
 
-        string Get(string name)
-            => doc.Descendants(name).FirstOrDefault()?.Element("Data")?.Value
-               ?? throw new FusProtocolException($"BinaryInform: missing field '{name}' in response");
+        // Field-name resolution. Samsung's response schema uses BINARY_NAME on most paths but
+        // some CDN nodes return BINARY_FILE_NAME. The size is BINARY_BYTE_SIZE everywhere.
+        string? GetFirst(params string[] names)
+        {
+            foreach (var n in names)
+            {
+                var v = doc.Descendants(n).FirstOrDefault()?.Element("Data")?.Value;
+                if (!string.IsNullOrWhiteSpace(v)) return v;
+            }
+            return null;
+        }
 
-        var binaryName = Get("BINARY_NAME");
-        var binaryByteSizeStr = Get("BINARY_BYTE_SIZE");
+        var binaryName = GetFirst("BINARY_NAME", "BINARY_FILE_NAME")
+            ?? throw new FusProtocolException("BinaryInform: missing BINARY_NAME / BINARY_FILE_NAME in response", xml);
+        // Defend against BINARY_NATURE (value "1"/"0") leaking through.
+        if (binaryName.Length < 8 || !binaryName.Contains('.'))
+            throw new FusProtocolException(
+                $"BinaryInform: BINARY_NAME='{binaryName}' is too short to be a real firmware filename — server response shape changed.",
+                xml);
+
+        var binaryByteSizeStr = GetFirst("BINARY_BYTE_SIZE", "BINARY_TOTAL_BYTE_COUNT")
+            ?? throw new FusProtocolException("BinaryInform: missing BINARY_BYTE_SIZE in response", xml);
         if (!long.TryParse(binaryByteSizeStr, out var size) || size <= 0)
-            throw new FusProtocolException($"BinaryInform: invalid BINARY_BYTE_SIZE '{binaryByteSizeStr}'");
+            throw new FusProtocolException($"BinaryInform: invalid BINARY_BYTE_SIZE '{binaryByteSizeStr}'", xml);
 
-        var modelPath = doc.Descendants("MODEL_PATH").FirstOrDefault()?.Element("Data")?.Value ?? string.Empty;
-        var fwver = doc.Descendants("LATEST_FW_VERSION").FirstOrDefault()?.Element("Data")?.Value ?? string.Empty;
-        var logicVal = doc.Descendants("LOGIC_VALUE_FACTORY").FirstOrDefault()?.Element("Data")?.Value ?? string.Empty;
+        var modelPath = GetFirst("MODEL_PATH", "BINARY_MODEL_PATH") ?? string.Empty;
+        // Normalize: ensure it starts and ends with /.
+        if (modelPath.Length > 0)
+        {
+            if (!modelPath.StartsWith('/')) modelPath = "/" + modelPath;
+            if (!modelPath.EndsWith('/')) modelPath += "/";
+        }
+
+        var fwver = GetFirst("LATEST_FW_VERSION", "DEVICE_LATEST_VERSION") ?? string.Empty;
+        var logicVal = GetFirst("LOGIC_VALUE_FACTORY", "LOGIC_VALUE_HOME") ?? string.Empty;
 
         return new FirmwareBinaryInfo
         {

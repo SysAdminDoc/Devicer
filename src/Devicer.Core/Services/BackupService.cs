@@ -102,15 +102,17 @@ public sealed class BackupService : IBackupService
                 progress?.Report(new BackupProgress(BackupPhase.DumpingOnDevice, p.Name, i, partitions.Count, 0, p.SizeBytes,
                     $"dd'ing {p.Name} on device…"));
 
-                // bs=4M for throughput; use root su. Kill any earlier failed attempts first.
-                var ddCmd = $"rm -f {Bash.Quote(remoteTmp)}; dd if={Bash.Quote(p.BlockPath)} of={Bash.Quote(remoteTmp)} bs=4M 2>&1; chmod 0644 {Bash.Quote(remoteTmp)}";
-                // dd of large partitions can take minutes. Generous timeout proportional to size.
+                // `set -e` makes dd's non-zero exit propagate out of the script. Without it,
+                // the trailing `chmod` would mask a dd failure and we'd happily pull an empty
+                // or short image. `2>&1` keeps dd's stats/errors in stdout so we can surface
+                // them in the warning text.
+                var ddCmd = $"set -e; rm -f {Bash.Quote(remoteTmp)}; dd if={Bash.Quote(p.BlockPath)} of={Bash.Quote(remoteTmp)} bs=4M 2>&1; chmod 0644 {Bash.Quote(remoteTmp)}";
                 var ddTimeout = EstimateDumpTimeout(p.SizeBytes);
                 var ddRes = await _adb.RunSuAsync(serial, ddCmd, ddTimeout, ct).ConfigureAwait(false);
                 if (!ddRes.Success)
                 {
-                    warnings.Add($"{p.Name}: dd failed (exit {ddRes.ExitCode}). stderr: {ddRes.Stderr.Trim()}");
-                    await TryCleanup(serial, remoteTmp, ct).ConfigureAwait(false);
+                    warnings.Add($"{p.Name}: dd failed (exit {ddRes.ExitCode}): {Tail(JoinStreams(ddRes), 400)}");
+                    await TryCleanup(serial, remoteTmp).ConfigureAwait(false);
                     continue;
                 }
 
@@ -120,9 +122,18 @@ public sealed class BackupService : IBackupService
                 var pullRes = await _adb.PullAsync(serial, remoteTmp, localPath, EstimatePullTimeout(p.SizeBytes), ct).ConfigureAwait(false);
                 if (!pullRes.Success || !File.Exists(localPath))
                 {
-                    warnings.Add($"{p.Name}: adb pull failed: {pullRes.Stderr.Trim()}");
-                    await TryCleanup(serial, remoteTmp, ct).ConfigureAwait(false);
+                    warnings.Add($"{p.Name}: adb pull failed: {Tail(JoinStreams(pullRes), 400)}");
+                    await TryCleanup(serial, remoteTmp).ConfigureAwait(false);
                     continue;
+                }
+
+                // Sanity: a successful dd should land an image whose size matches blockdev's
+                // reported partition size. Wide divergence (>1%) usually means dd was killed
+                // mid-stream by an OOM / SELinux / shell-timeout that didn't propagate.
+                var actual = new FileInfo(localPath).Length;
+                if (p.SizeBytes > 0 && actual > 0 && Math.Abs(actual - p.SizeBytes) > Math.Max(p.SizeBytes / 100, 4096))
+                {
+                    warnings.Add($"{p.Name}: backup size {actual:N0} differs from expected {p.SizeBytes:N0} bytes — image may be truncated.");
                 }
 
                 progress?.Report(new BackupProgress(BackupPhase.Hashing, p.Name, i, partitions.Count, 0, p.SizeBytes,
@@ -139,18 +150,20 @@ public sealed class BackupService : IBackupService
                     IsCritical = p.IsCritical,
                 });
 
-                await TryCleanup(serial, remoteTmp, ct).ConfigureAwait(false);
+                await TryCleanup(serial, remoteTmp).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
                 progress?.Report(new BackupProgress(BackupPhase.Cancelled, p.Name, i, partitions.Count, 0, p.SizeBytes, "Cancelled."));
-                await TryCleanup(serial, remoteTmp, ct).ConfigureAwait(false);
+                // Cleanup must use a fresh token — the user-cancelled `ct` would immediately
+                // abort the rm and leave a multi-GB tmpfile on /data/local/tmp.
+                await TryCleanup(serial, remoteTmp).ConfigureAwait(false);
                 throw;
             }
             catch (Exception ex)
             {
                 warnings.Add($"{p.Name}: {ex.Message}");
-                await TryCleanup(serial, remoteTmp, ct).ConfigureAwait(false);
+                await TryCleanup(serial, remoteTmp).ConfigureAwait(false);
             }
         }
 
@@ -173,11 +186,26 @@ public sealed class BackupService : IBackupService
         return new BackupRunResult(folder, manifest, warnings);
     }
 
-    private async Task TryCleanup(string serial, string remoteTmp, CancellationToken ct)
+    private async Task TryCleanup(string serial, string remoteTmp)
     {
-        try { await _adb.RunSuAsync(serial, $"rm -f {Bash.Quote(remoteTmp)}", TimeSpan.FromSeconds(10), ct).ConfigureAwait(false); }
+        // Cleanup is best-effort and runs even after the caller's CancellationToken fires
+        // (otherwise the user would see "Cancelled" while a multi-GB image lingers in
+        // /data/local/tmp and fills the device's data partition on the next attempt).
+        using var cleanupCts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        try { await _adb.RunSuAsync(serial, $"rm -f {Bash.Quote(remoteTmp)}", TimeSpan.FromSeconds(10), cleanupCts.Token).ConfigureAwait(false); }
         catch { /* best-effort */ }
     }
+
+    private static string JoinStreams(ShellResult r)
+    {
+        var so = (r.Stdout ?? string.Empty).Trim();
+        var se = (r.Stderr ?? string.Empty).Trim();
+        if (so.Length == 0) return se;
+        if (se.Length == 0) return so;
+        return so + " | " + se;
+    }
+
+    private static string Tail(string s, int max) => s.Length <= max ? s : "…" + s[^max..];
 
     private static async Task<string> ComputeSha256Async(string path, CancellationToken ct)
     {

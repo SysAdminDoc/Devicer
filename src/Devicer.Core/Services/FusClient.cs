@@ -19,7 +19,9 @@ namespace Devicer.Core.Services;
 public sealed class FusClient : IDisposable
 {
     public const string ApiHost = "https://neofussvr.sslcs.cdngc.net";
-    public const string CloudHost = "http://cloud-neofussvr.sslcs.cdngc.net";
+    // Samsung's CDN now refuses plaintext HTTP on the cloud bulk-download host (returns
+    // a Squid 403 "access control configuration prevents your request"). Use HTTPS.
+    public const string CloudHost = "https://cloud-neofussvr.sslcs.cdngc.net";
 
     private const string GenerateNoncePath = "/NF_DownloadGenerateNonce.do";
     private const string DownloadPath = "/NF_DownloadBinaryForMass.do";
@@ -40,10 +42,12 @@ public sealed class FusClient : IDisposable
             _cookies = new CookieContainer();
             var handler = new HttpClientHandler
             {
-                // No cookie jar: Samsung's CDN sets JSESSIONID + SCOUTER + Imperva tracking
-                // cookies. Smart Switch ignores them all — the FUS session state lives entirely
-                // in the rotating NONCE. Sending the cookies back triggers Imperva to flag us.
-                UseCookies = false,
+                // The cloud-neofussvr download endpoint's Squid ACL requires the session
+                // cookies (JSESSIONID_SVR + SCOUTER + Imperva tracking pair) set during the
+                // POST handshake. Without them: HTTP 403 "Invalid Request". Imperva's
+                // bot-detection turned out to be a non-issue on the API path.
+                CookieContainer = _cookies,
+                UseCookies = true,
                 AllowAutoRedirect = false,
             };
             _http = new HttpClient(handler) { Timeout = TimeSpan.FromMinutes(5) };
@@ -90,13 +94,30 @@ public sealed class FusClient : IDisposable
         using var req = new HttpRequestMessage(HttpMethod.Post, ApiHost + path) { Content = content };
         AddAuthHeader(req);
 
+        DevicerLog.Info("FUS", $"POST {path} (body {xmlBody.Length} bytes)");
+        DevicerLog.Info("FUS", $"  request body: {Truncate(xmlBody, 500)}");
+
         using var resp = await _http.SendAsync(req, HttpCompletionOption.ResponseContentRead, ct).ConfigureAwait(false);
         ConsumeRotatedNonce(resp);
         var body = await resp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+
+        DevicerLog.Info("FUS", $"  response: HTTP {(int)resp.StatusCode} {resp.ReasonPhrase}, body {body.Length} bytes");
+        DevicerLog.Info("FUS", $"  response body: {Truncate(body, 800)}");
+        foreach (var h in resp.Headers.NonValidated.Concat(resp.Content.Headers.NonValidated))
+            DevicerLog.Info("FUS", $"    hdr {h.Key}: {string.Join(" | ", h.Value)}");
+
         if (!resp.IsSuccessStatusCode)
+        {
+            DevicerLog.Error("FUS", $"POST {path} failed: HTTP {(int)resp.StatusCode}");
             throw new FusProtocolException($"FUS POST {path} failed: HTTP {(int)resp.StatusCode} {resp.ReasonPhrase}", body);
+        }
         return body;
     }
+
+    private static string Truncate(string s, int max) =>
+        string.IsNullOrEmpty(s) ? string.Empty
+        : s.Length <= max ? s
+        : s[..max] + $"…[+{s.Length - max} more]";
 
     /// <summary>
     /// Streams an encrypted firmware blob from the bulk-download endpoint.
@@ -106,21 +127,78 @@ public sealed class FusClient : IDisposable
     public async Task<HttpResponseMessage> StartDownloadAsync(string remoteFileName, long? rangeFrom, CancellationToken ct = default)
     {
         await EnsureSessionAsync(ct).ConfigureAwait(false);
-        var url = $"{CloudHost}{DownloadPath}?file={Uri.EscapeDataString(remoteFileName)}";
+        // Samsung's CDN expects the file= value with literal slashes (e.g. /neofus/9/SW_...enc4).
+        // Uri.EscapeDataString would percent-encode the slashes (%2F) which Samsung rejects with
+        // HTTP 403. Only escape characters that genuinely need encoding (space, &, =, ?, #).
+        var encoded = EscapeFileQueryValue(remoteFileName);
+
+        // The actual blob is only served by the cloud-neofussvr edge. The API host accepts
+        // the GET but returns Content-Length: 0 (control-plane only). cloud-neofussvr's Squid
+        // ACL also needs the JSESSIONID_SVR + Imperva session cookies that get set during the
+        // POST handshake — without UseCookies=true, the CDN denies with "Invalid Request".
+        var url = $"{CloudHost}{DownloadPath}?file={encoded}";
         var req = new HttpRequestMessage(HttpMethod.Get, url);
+        // Force HTTP/1.1 — Samsung's cloud-neofussvr Squid edge rejects HTTP/2 with a generic
+        // "Invalid Request" ACL deny. Smart Switch (the reference client) is built on WinHTTP,
+        // which only speaks HTTP/1.1, so the edge config is calibrated for that.
+        req.Version = System.Net.HttpVersion.Version11;
+        req.VersionPolicy = System.Net.Http.HttpVersionPolicy.RequestVersionExact;
         AddAuthHeader(req);
-        if (rangeFrom is { } from && from > 0)
-            req.Headers.Range = new RangeHeaderValue(from, null);
+        // Always send Range — Samsung's bulk CDN requires it on every download request.
+        // Without it, some edge nodes return a Squid ACL-deny 403.
+        req.Headers.Range = new RangeHeaderValue(rangeFrom ?? 0L, null);
+        // Belt-and-suspenders: explicit UA on the request itself (in case the default doesn't propagate).
+        req.Headers.UserAgent.Clear();
+        req.Headers.TryAddWithoutValidation("User-Agent", UserAgent);
+
+        DevicerLog.Info("FUS", $"GET download URL: {url}");
+        DevicerLog.Info("FUS", $"  Range: bytes={rangeFrom ?? 0}-");
+        DevicerLog.Info("FUS", $"  remoteFileName arg: '{remoteFileName}' (len {remoteFileName.Length})");
+        // Dump every outgoing request header so we can spot what Smart Switch sends that we don't.
+        foreach (var h in req.Headers)
+            DevicerLog.Info("FUS", $"  REQ hdr {h.Key}: {string.Join(" | ", h.Value)}");
 
         var resp = await _http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
-        // Don't dispose req on success — caller owns the response stream.
+
+        DevicerLog.Info("FUS", $"  response: HTTP/{resp.Version} {(int)resp.StatusCode} {resp.ReasonPhrase}");
+        DevicerLog.Info("FUS", $"  Content-Length: {resp.Content.Headers.ContentLength}, Content-Type: {resp.Content.Headers.ContentType}");
+
         if (!resp.IsSuccessStatusCode)
         {
             var body = await resp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+            // Log full body for 403/4xx — Samsung's CDN often embeds the actual block reason here.
+            DevicerLog.Error("FUS", $"  full body ({body.Length} bytes):\n{body}");
+            DevicerLog.Error("FUS", $"  response headers:");
+            foreach (var h in resp.Headers.NonValidated.Concat(resp.Content.Headers.NonValidated))
+                DevicerLog.Error("FUS", $"    {h.Key}: {string.Join(" | ", h.Value)}");
             resp.Dispose();
-            throw new FusProtocolException($"FUS download failed: HTTP {(int)resp.StatusCode}", body);
+            throw new FusProtocolException($"FUS download failed: HTTP {(int)resp.StatusCode} — URL: {url}", body);
         }
         return resp;
+    }
+
+    /// <summary>
+    /// Conservative URL-query-value escape that preserves literal slashes. Samsung's FUS
+    /// CDN treats <c>/</c> as part of the file path, not a separator, so we must NOT
+    /// percent-escape it.
+    /// </summary>
+    private static string EscapeFileQueryValue(string value)
+    {
+        var sb = new System.Text.StringBuilder(value.Length + 8);
+        foreach (var c in value)
+        {
+            if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')
+                || c == '-' || c == '_' || c == '.' || c == '~' || c == '/')
+            {
+                sb.Append(c);
+            }
+            else
+            {
+                foreach (var b in System.Text.Encoding.UTF8.GetBytes(new[] { c }))
+                    sb.Append('%').Append(b.ToString("X2"));
+            }
+        }
+        return sb.ToString();
     }
 
     private static string? ExtractNonce(HttpResponseMessage resp)

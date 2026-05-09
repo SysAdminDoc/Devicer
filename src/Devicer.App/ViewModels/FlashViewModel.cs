@@ -50,6 +50,11 @@ public partial class FlashViewModel : ObservableObject
     public FlashViewModel(IOdinInspectorService inspector)
     {
         _inspector = inspector;
+        // DryRunCommand's CanExecute reads Entries.Count, which doesn't fire any property
+        // notification of its own. Without this hook the button stayed greyed out after
+        // Inspect populated the list until WPF happened to poll CanExecute (e.g. on focus
+        // change), giving the impression that Inspect failed silently.
+        Entries.CollectionChanged += (_, _) => DryRunCommand.NotifyCanExecuteChanged();
     }
 
     public void PrefillFrom(DeviceInfo? device)

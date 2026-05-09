@@ -113,13 +113,22 @@ public sealed class BootPatchService : IBootPatchService
             var sha = await ComputeSha256Async(localOut, ct).ConfigureAwait(false);
             var size = new FileInfo(localOut).Length;
 
-            // Cleanup remote artifacts (non-fatal).
-            try
+            // Cleanup remote artifacts (non-fatal). Use a fresh token so a Cancel pressed
+            // post-success still lets us reclaim the on-device tmp space.
+            using (var cleanupCts = new CancellationTokenSource(TimeSpan.FromSeconds(15)))
             {
-                await _adb.RunShellAsync(serial, $"rm -f {Bash.Quote(remoteSrc)}", TimeSpan.FromSeconds(10), ct).ConfigureAwait(false);
-                await _adb.RunSuAsync(serial, $"rm -f {Bash.Quote(remoteOutput)}", TimeSpan.FromSeconds(10), ct).ConfigureAwait(false);
+                try
+                {
+                    await _adb.RunShellAsync(serial, $"rm -f {Bash.Quote(remoteSrc)}", TimeSpan.FromSeconds(10), cleanupCts.Token).ConfigureAwait(false);
+                    await _adb.RunSuAsync(serial, $"rm -f {Bash.Quote(remoteOutput)}", TimeSpan.FromSeconds(10), cleanupCts.Token).ConfigureAwait(false);
+                    // Magisk leaves boot.img + new-boot.img in /data/adb/magisk after a patch.
+                    // Wipe them so the next run starts clean (and Magisk's own update flow
+                    // doesn't accidentally pick up a stale boot.img from us).
+                    if (rootStatus.Kind == RootKind.Magisk)
+                        await _adb.RunSuAsync(serial, "rm -f /data/adb/magisk/boot.img /data/adb/magisk/new-boot.img", TimeSpan.FromSeconds(10), cleanupCts.Token).ConfigureAwait(false);
+                }
+                catch { /* best-effort */ }
             }
-            catch { /* best-effort */ }
 
             progress?.Report(new PatchProgress(PatchPhase.Done, $"Done. Patched image at {localOut}", 1.0));
             return new PatchResult(localBootImgPath, localOut, outputFileName, sha, size, rootStatus.Kind, rootStatus.Version);
@@ -127,7 +136,9 @@ public sealed class BootPatchService : IBootPatchService
         catch (OperationCanceledException)
         {
             progress?.Report(new PatchProgress(PatchPhase.Cancelled, "Cancelled."));
-            try { await _adb.RunShellAsync(serial, $"rm -f {Bash.Quote(remoteSrc)}", TimeSpan.FromSeconds(5), ct).ConfigureAwait(false); }
+            // Best-effort cleanup with a fresh token (the original `ct` is already cancelled).
+            using var cleanupCts = new CancellationTokenSource(TimeSpan.FromSeconds(8));
+            try { await _adb.RunShellAsync(serial, $"rm -f {Bash.Quote(remoteSrc)}", TimeSpan.FromSeconds(5), cleanupCts.Token).ConfigureAwait(false); }
             catch { }
             throw;
         }
@@ -189,25 +200,46 @@ public sealed class BootPatchService : IBootPatchService
 
     private async Task<ShellResult> PushAsync(string serial, string localPath, string remotePath, CancellationToken ct)
     {
-        // We don't have a typed Push helper, so route through the IShellRunner-like adb call directly.
-        // Use AdbService.PullAsync's underlying shell would be wrong direction; reuse RunShellAsync isn't right either.
-        // Instead, run adb push as a one-off process via ProcessStartInfo.
+        // adb push is its own process; if the user hits Cancel mid-push we need to kill the
+        // process tree, otherwise a half-pushed multi-MB boot image keeps copying in the
+        // background and the next push collides with it.
         var psi = new System.Diagnostics.ProcessStartInfo("adb")
         {
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
             CreateNoWindow = true,
+            StandardOutputEncoding = System.Text.Encoding.UTF8,
+            StandardErrorEncoding = System.Text.Encoding.UTF8,
         };
         psi.ArgumentList.Add("-s"); psi.ArgumentList.Add(serial);
         psi.ArgumentList.Add("push"); psi.ArgumentList.Add(localPath); psi.ArgumentList.Add(remotePath);
 
         using var proc = System.Diagnostics.Process.Start(psi)
-            ?? throw new InvalidOperationException("Could not start adb.");
-        var so = proc.StandardOutput.ReadToEndAsync(ct);
-        var se = proc.StandardError.ReadToEndAsync(ct);
-        await proc.WaitForExitAsync(ct).ConfigureAwait(false);
-        return new ShellResult(proc.ExitCode, await so.ConfigureAwait(false), await se.ConfigureAwait(false));
+            ?? throw new InvalidOperationException("Could not start adb. Is it on PATH?");
+
+        // Cap individual pushes at 5 minutes to defend against a frozen adb daemon.
+        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        timeoutCts.CancelAfter(TimeSpan.FromMinutes(5));
+
+        var stdoutTask = proc.StandardOutput.ReadToEndAsync(CancellationToken.None);
+        var stderrTask = proc.StandardError.ReadToEndAsync(CancellationToken.None);
+
+        try
+        {
+            await proc.WaitForExitAsync(timeoutCts.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            try { if (!proc.HasExited) proc.Kill(entireProcessTree: true); } catch { /* best-effort */ }
+            // Surface the user's cancellation; if it was the timeout, surface a synthetic OCE
+            // so the caller still sees a clean cancel signal rather than a hang.
+            throw;
+        }
+
+        var stdout = await stdoutTask.ConfigureAwait(false);
+        var stderr = await stderrTask.ConfigureAwait(false);
+        return new ShellResult(proc.ExitCode, stdout, stderr);
     }
 
     private static string? ParseFirstFilename(string output, string prefix)

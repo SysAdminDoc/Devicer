@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Devicer.App.Services;
 using Devicer.Core.Models;
 using Devicer.Core.Services;
 
@@ -14,7 +15,10 @@ public partial class FirmwareViewModel : ObservableObject
 {
     private readonly IFirmwareCheckService _firmware;
     private readonly Func<IFirmwareDownloadService> _downloadFactory;
+    private readonly IAdbService? _adb;
+    private readonly ImeiCache? _imeiCache;
     private CancellationTokenSource? _downloadCts;
+    private string? _serial;
 
     public ObservableCollection<FirmwareVersion> History { get; } = new();
 
@@ -30,6 +34,19 @@ public partial class FirmwareViewModel : ObservableObject
     [ObservableProperty]
     private string? _imei;
 
+    /// <summary>
+    /// Bound to the ComboBox's <c>SelectedItem</c>. When the user picks an item from the
+    /// dropdown, this setter copies the entry's IMEI digits into the editable text field.
+    /// </summary>
+    [ObservableProperty]
+    private ImeiCacheEntry? _selectedImeiEntry;
+
+    partial void OnSelectedImeiEntryChanged(ImeiCacheEntry? value)
+    {
+        if (value is null) return;
+        Imei = value.Imei;
+    }
+
     [ObservableProperty]
     private FirmwareVersion? _latest;
 
@@ -40,10 +57,21 @@ public partial class FirmwareViewModel : ObservableObject
     private string? _diagnostic;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowUpToDateBadge))]
     private string? _statusText;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowUpToDateBadge))]
     private bool _updateAvailable;
+
+    /// <summary>
+    /// Visibility helper for the green "you're on the latest" badge. The badge had been
+    /// gated on <c>StatusText != null</c> alone, which let it render side-by-side with
+    /// the orange <c>UpdateAvailable</c> badge whenever both conditions held — both badges
+    /// then sat on the right with conflicting messaging. Show the success badge only when
+    /// we actually have status text AND there's no pending update.
+    /// </summary>
+    public bool ShowUpToDateBadge => !UpdateAvailable && !string.IsNullOrWhiteSpace(StatusText);
 
     // ----- v0.3.1 download surface -----
 
@@ -69,6 +97,14 @@ public partial class FirmwareViewModel : ObservableObject
     private string? _lastDownloadedPath;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasGeofenceFailover))]
+    private bool _showMirrorFailover;
+
+    public ObservableCollection<FirmwareMirror> Mirrors { get; } = new(FirmwareMirrors.All);
+
+    public bool HasGeofenceFailover => ShowMirrorFailover && Mirrors.Count > 0;
+
+    [ObservableProperty]
     private string? _lastDecryptedPath;
 
     public bool IsIdle => !IsDownloading && !IsChecking;
@@ -84,10 +120,22 @@ public partial class FirmwareViewModel : ObservableObject
         }
     }
 
-    public FirmwareViewModel(IFirmwareCheckService firmware, Func<IFirmwareDownloadService> downloadFactory)
+    public ObservableCollection<ImeiCacheEntry> ImeiHistory { get; } = new();
+
+    public FirmwareViewModel(IFirmwareCheckService firmware, Func<IFirmwareDownloadService> downloadFactory, IAdbService? adb = null, ImeiCache? imeiCache = null)
     {
         _firmware = firmware;
         _downloadFactory = downloadFactory;
+        _adb = adb;
+        _imeiCache = imeiCache;
+        RefreshImeiHistory();
+    }
+
+    private void RefreshImeiHistory()
+    {
+        ImeiHistory.Clear();
+        if (_imeiCache is null) return;
+        foreach (var e in _imeiCache.Entries) ImeiHistory.Add(e);
     }
 
     /// <summary>
@@ -96,12 +144,14 @@ public partial class FirmwareViewModel : ObservableObject
     public void PrefillFrom(DeviceInfo? device)
     {
         if (device is null) return;
+        _serial = device.Serial;
         if (!string.IsNullOrWhiteSpace(device.Model)) Model = device.Model;
         if (!string.IsNullOrWhiteSpace(device.Csc)) Csc = device.Csc;
         // Use the Samsung PDA (AP firmware version) for comparison — NOT ro.build.id (Android build ID).
         var current = device.SamsungPda ?? device.BuildId;
         if (!string.IsNullOrWhiteSpace(current)) CurrentBuildId = current;
         if (!string.IsNullOrWhiteSpace(device.Imei)) Imei = device.Imei;
+        ShowImeiOnPhoneCommand.NotifyCanExecuteChanged();
 
         // Reset latest so we don't show a stale match.
         Latest = null;
@@ -169,11 +219,27 @@ public partial class FirmwareViewModel : ObservableObject
     public async Task DownloadLatestAsync()
     {
         if (Latest is null || string.IsNullOrWhiteSpace(Model) || string.IsNullOrWhiteSpace(Csc)) return;
-        if (string.IsNullOrWhiteSpace(Imei) || Imei.Trim().Length < 14)
+
+        var imeiCandidate = (Imei ?? string.Empty).Trim();
+        // Strip whitespace and dashes the user might have pasted from a phone-info screen
+        // (e.g. "354 237 929 314 284" or "354-237-929-314-284") so we don't fail their
+        // perfectly valid IMEI for cosmetic reasons.
+        imeiCandidate = new string(imeiCandidate.Where(c => c is not ' ' and not '-').ToArray());
+        if (imeiCandidate.Length is < 14 or > 15 || imeiCandidate.Any(c => c < '0' || c > '9'))
         {
-            Diagnostic = "Samsung's FUS now requires a real device IMEI (14-15 digits). Connect the rooted device to auto-fill, or enter it manually below.";
+            Diagnostic = "Samsung's FUS now requires a real device IMEI (14-15 digits, numeric only). Connect the rooted device to auto-fill, or enter it manually below.";
             return;
         }
+        // Normalize the field so the value the user sees matches what we're actually sending.
+        Imei = imeiCandidate;
+
+        // Reset prior failover banner — only show if THIS attempt geofences.
+        ShowMirrorFailover = false;
+
+        // Persist the IMEI so the user doesn't have to retype 15 digits on every retry.
+        // Pair it with the model+CSC it's being used with so the dropdown can label entries.
+        _imeiCache?.AddOrTouch(imeiCandidate, Model, Csc);
+        RefreshImeiHistory();
 
         IsDownloading = true;
         Diagnostic = null;
@@ -202,7 +268,7 @@ public partial class FirmwareViewModel : ObservableObject
         var dl = _downloadFactory();
         try
         {
-            var result = await dl.DownloadAndDecryptAsync(Model!, Csc!, Latest.Normalized, Imei!.Trim(), progress, ct).ConfigureAwait(true);
+            var result = await dl.DownloadAndDecryptAsync(Model!, Csc!, Latest.Normalized, imeiCandidate, progress, ct).ConfigureAwait(true);
             LastDownloadedPath = result.EncryptedPath;
             LastDecryptedPath = result.DecryptedPath;
             DownloadStatus = $"Done. Decrypted to {result.DecryptedPath}";
@@ -213,8 +279,30 @@ public partial class FirmwareViewModel : ObservableObject
         }
         catch (FusProtocolException ex)
         {
-            Diagnostic = $"FUS protocol error: {ex.Message}";
+            var friendly = FusErrorClassifier.Classify(ex, Csc);
+            var sb = new System.Text.StringBuilder();
+            sb.Append("⚠  ").AppendLine(friendly.Title);
+            sb.AppendLine();
+            sb.AppendLine(friendly.Explanation);
+            sb.AppendLine();
+            sb.AppendLine("What to do:");
+            sb.AppendLine(friendly.SuggestedAction);
+            if (!string.IsNullOrWhiteSpace(friendly.TechnicalDetail))
+            {
+                sb.AppendLine();
+                sb.AppendLine("— Technical detail —");
+                sb.AppendLine(friendly.TechnicalDetail);
+            }
+            sb.AppendLine();
+            sb.Append("Full protocol log: ").Append(DevicerLog.LogPath);
+            Diagnostic = sb.ToString();
             DownloadStatus = null;
+
+            // For geofence failures, surface the public-mirror failover row so the user
+            // can pivot to a non-region-locked download without leaving Devicer.
+            ShowMirrorFailover = friendly.IsGeofence
+                && !string.IsNullOrWhiteSpace(Model)
+                && !string.IsNullOrWhiteSpace(Csc);
         }
         catch (Exception ex)
         {
@@ -240,6 +328,42 @@ public partial class FirmwareViewModel : ObservableObject
     }
 
     private bool CanCancel() => IsDownloading;
+
+    [RelayCommand]
+    public void RemoveImeiHistory(ImeiCacheEntry? entry)
+    {
+        if (entry is null || _imeiCache is null) return;
+        _imeiCache.Remove(entry.Imei);
+        RefreshImeiHistory();
+    }
+
+    [RelayCommand]
+    public void OpenMirror(FirmwareMirror? mirror)
+    {
+        if (mirror is null || string.IsNullOrWhiteSpace(Model) || string.IsNullOrWhiteSpace(Csc)) return;
+        var url = mirror.BuildUrl(Model!, Csc!);
+        var err = UrlLauncher.TryOpen(url);
+        if (err is not null) Diagnostic = $"Could not open {mirror.Name}: {err}";
+    }
+
+    [RelayCommand(CanExecute = nameof(CanShowImei))]
+    public async Task ShowImeiOnPhoneAsync()
+    {
+        if (_adb is null || string.IsNullOrWhiteSpace(_serial)) return;
+        try
+        {
+            var ok = await _adb.ShowImeiOnPhoneAsync(_serial!).ConfigureAwait(true);
+            Diagnostic = ok
+                ? "Opened the About phone screen on your device. Tap 'Status information' (or 'IMEI'), copy the 15-digit IMEI 1, and paste it into the IMEI field above."
+                : "Could not open the About phone screen. Manually navigate Settings → About phone → Status information → IMEI.";
+        }
+        catch (Exception ex)
+        {
+            Diagnostic = $"Could not trigger IMEI dialog: {ex.Message}";
+        }
+    }
+
+    private bool CanShowImei() => _adb is not null && !string.IsNullOrWhiteSpace(_serial);
 
     [RelayCommand(CanExecute = nameof(HasDecryptedPath))]
     public void OpenDownloadFolder()

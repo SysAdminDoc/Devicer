@@ -29,9 +29,10 @@ public sealed class FirmwareCheckService : IFirmwareCheckService, IDisposable
         {
             Timeout = TimeSpan.FromSeconds(15),
         };
-        // Samsung's CDN is permissive but a UA helps avoid edge-case rejections.
+        // Samsung's CDN is permissive but a UA helps avoid edge-case rejections. Source the
+        // version from the Core assembly so the UA can never go stale at release time.
         if (!_http.DefaultRequestHeaders.UserAgent.Any())
-            _http.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "Devicer/0.3 (+https://github.com/SysAdminDoc/Devicer)");
+            _http.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", $"Devicer/{HttpUserAgent.AssemblyVersion} (+https://github.com/SysAdminDoc/Devicer)");
     }
 
     public async Task<LatestFirmware?> GetLatestAsync(string model, string csc, CancellationToken ct = default)

@@ -42,10 +42,29 @@ jobs:
             dist/*.zip
             dist/*.sha256
 
+      - name: Validate version input
+        shell: pwsh
+        # Guards against typo'd or pre-release-style versions ("1.0.0-rc1") sneaking past
+        # the workflow_dispatch input. The downstream release/tag commands assume the
+        # canonical X.Y.Z form, so reject anything else early with a clear message.
+        run: |
+          if ('${{ inputs.version }}' -notmatch '^\d+\.\d+\.\d+$') {
+            throw "Invalid version '${{ inputs.version }}' — expected canonical X.Y.Z (no leading 'v', no suffix)."
+          }
+
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: pwsh
+        # Resolve the artifact list FIRST and abort if it's empty — otherwise we'd cut a
+        # GitHub Release with zero attachments and the user wouldn't notice until they
+        # tried to download. ErrorAction Stop also catches the case where dist/ doesn't
+        # exist at all (build-release.ps1 silently no-op'd).
         run: |
           $tag = "v${{ inputs.version }}"
-          gh release create $tag --title "Devicer $tag" --notes-file CHANGELOG.md (Get-ChildItem dist/*.zip, dist/*.sha256 | ForEach-Object FullName)
+          $files = @(Get-ChildItem -Path dist/*.zip, dist/*.sha256 -ErrorAction Stop | ForEach-Object FullName)
+          if ($files.Count -eq 0) {
+            throw "No release artifacts found in dist/ — build-release.ps1 produced nothing to attach."
+          }
+          gh release create $tag --title "Devicer $tag" --notes-file CHANGELOG.md @files
+          if ($LASTEXITCODE -ne 0) { throw "gh release create exited $LASTEXITCODE" }

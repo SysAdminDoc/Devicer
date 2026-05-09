@@ -15,6 +15,14 @@ if (args.Length > 0 && args[0] == "--inform" && args.Length >= 5)
     return;
 }
 
+if (args.Length >= 5 && args[0] == "--download-headers")
+{
+    // Probes the full FUS pipeline through the download-init step and prints the
+    // exact URL we'd hit, including MODEL_PATH. Does NOT actually download bytes.
+    await DownloadHeaderProbeAsync(args[1], args[2], args[3], args[4]);
+    return;
+}
+
 if (args.Length > 0 && args[0] == "--crypto-self-test")
 {
     Devicer.Smoke.CryptoSelfTest.RoundTrip();
@@ -140,6 +148,50 @@ foreach (var dev in result.Devices)
         {
             Console.WriteLine($"OTA query failed: {ex.Message}");
         }
+    }
+}
+
+static async Task DownloadHeaderProbeAsync(string model, string csc, string version, string imei)
+{
+    using var fus = new FusClient();
+    using var svc = new FirmwareDownloadService(fus);
+    try
+    {
+        Console.WriteLine($"--- BinaryInform ---");
+        var info = await svc.GetBinaryInfoAsync(model, csc, version, imei);
+        Console.WriteLine($"BinaryName    : {info.BinaryName}");
+        Console.WriteLine($"BinaryByteSize: {info.BinaryByteSize}");
+        Console.WriteLine($"ModelPath     : '{info.ModelPath}' (len {info.ModelPath?.Length ?? 0})");
+        Console.WriteLine($"LatestFwVer   : {info.LatestFwVersion}");
+        Console.WriteLine($"LogicValueFac : '{(string.IsNullOrEmpty(info.LogicValueFactory) ? "(none)" : info.LogicValueFactory)}'");
+
+        Console.WriteLine($"--- BinaryInitForMass + first 64 bytes via Range header ---");
+        // Reach in via a tiny range request to confirm the cloud-host URL works without burning bandwidth.
+        var remotePath = (info.ModelPath ?? string.Empty) + info.BinaryName;
+        Console.WriteLine($"Remote path   : '{remotePath}'");
+        // The fwv-slice algorithm is `binary_filename.split('.')[0][-16:]` — split on FIRST
+        // dot, take last 16 of the leading chunk. The earlier `LastIndexOf` formulation was
+        // buggy: for any filename with multiple dots (every modern .zip.enc4 name) it
+        // included `.zip` in the slice and on short stems it threw ArgumentOutOfRange.
+        var fwvSlice = FirmwareDownloadService.ExtractFwvSlice(info.BinaryName);
+        var initXml = $"<?xml version=\"1.0\" encoding=\"UTF-8\"?><FUSMsg><FUSHdr><ProtoVer>1.0</ProtoVer></FUSHdr><FUSBody><Put><BINARY_FILE_NAME><Data>{info.BinaryName}</Data></BINARY_FILE_NAME><LOGIC_CHECK><Data>{FusCrypto.GetLogicCheck(fwvSlice, fus.Nonce!)}</Data></LOGIC_CHECK></Put></FUSBody></FUSMsg>";
+        var initResp = await fus.PostXmlAsync("/NF_DownloadBinaryInitForMass.do", initXml);
+        Console.WriteLine($"Init response : {initResp.Substring(0, Math.Min(400, initResp.Length))}");
+
+        // 1-byte Range probe of the actual download — succeeds without burning the full 8 GB.
+        using var dlResp = await fus.StartDownloadAsync(remotePath, 0L);
+        Console.WriteLine($"Download HTTP : {(int)dlResp.StatusCode} {dlResp.ReasonPhrase}");
+        Console.WriteLine($"Content-Length: {dlResp.Content.Headers.ContentLength}");
+        Console.WriteLine($"Content-Type  : {dlResp.Content.Headers.ContentType}");
+    }
+    catch (FusProtocolException ex)
+    {
+        Console.WriteLine($"FUS error: {ex.Message}");
+        if (!string.IsNullOrEmpty(ex.ResponseBody)) Console.WriteLine($"Body: {ex.ResponseBody[..Math.Min(800, ex.ResponseBody.Length)]}");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Probe failed: {ex.Message}");
     }
 }
 

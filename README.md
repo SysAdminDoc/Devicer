@@ -51,8 +51,9 @@ Devicer.sln
 src/
   Devicer.Core/         class library — IShellRunner, AdbService, FastbootService,
                         DeviceProbeService, DeviceInfo / RootStatus models
-  Devicer.App/          WPF shell — sidebar nav, 6 pages (Device functional, others stubs),
-                        Catppuccin theme, MVVM via CommunityToolkit.Mvvm
+  Devicer.App/          WPF shell — sidebar nav, 7 functional pages (Device / Firmware /
+                        ROMs / Backup / Patch / Flash / Universal) + Settings, Catppuccin
+                        Mocha + Latte themes, MVVM via CommunityToolkit.Mvvm
 tools/
   Devicer.Smoke/        E2E console smoke against the connected device
 docs/

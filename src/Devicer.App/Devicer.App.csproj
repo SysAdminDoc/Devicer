@@ -18,6 +18,11 @@
     <AssemblyTitle>Devicer</AssemblyTitle>
     <Description>Unified Windows toolkit for managing rooted Android phones.</Description>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- Multi-resolution .ico (16/24/32/48/64/96/128/256) so Explorer's tile/list/large
+         views all pick a sharp render. Stamps the icon onto Devicer.App.exe so the
+         taskbar, Alt-Tab, jump list, and Open With dialog all show the brand mark
+         without depending on the WPF Window.Icon binding. -->
+    <ApplicationIcon>..\..\branding\logo.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
@@ -27,5 +32,8 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="..\..\branding\logo.png" Link="Resources\Images\logo.png" />
+    <!-- Embedded as a WPF resource so MainWindow / FirstRunWindow can set Icon via the
+         standard pack:// URI (sharper than the rasterized PNG at small render sizes). -->
+    <Resource Include="..\..\branding\logo.ico" Link="Resources\Images\logo.ico" />
   </ItemGroup>
 </Project>

@@ -17,15 +17,8 @@
             <Setter Property="TextWrapping" Value="Wrap" />
             <Setter Property="Margin" Value="0,0,0,12" />
         </Style>
-        <Style TargetType="TextBox">
-            <Setter Property="Background" Value="{DynamicResource AppSurfaceRaised}" />
-            <Setter Property="Foreground" Value="{DynamicResource AppForeground}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource AppBorder}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Padding" Value="8,6" />
-            <Setter Property="MinHeight" Value="30" />
+        <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
             <Setter Property="FontFamily" Value="Consolas, JetBrains Mono, Cascadia Mono" />
-            <Setter Property="CaretBrush" Value="{DynamicResource AppAccent}" />
         </Style>
     </UserControl.Resources>
 
@@ -55,10 +48,38 @@
                     BorderBrush="{DynamicResource AppWarning}"
                     Margin="0,0,0,16"
                     Visibility="{Binding Diagnostic, Converter={x:Static vm:NullToCollapsedConverter.Instance}}">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="&#xE7BA;" FontFamily="Segoe MDL2 Assets" FontSize="18"
-                               Foreground="{DynamicResource AppWarning}" Margin="0,0,12,0" VerticalAlignment="Center" />
-                    <TextBlock Text="{Binding Diagnostic}" VerticalAlignment="Center" TextWrapping="Wrap" />
+                <StackPanel>
+                    <DockPanel LastChildFill="True">
+                        <TextBlock DockPanel.Dock="Left" Text="&#xE7BA;" FontFamily="Segoe MDL2 Assets" FontSize="18"
+                                   Foreground="{DynamicResource AppWarning}" Margin="0,0,12,0" VerticalAlignment="Top" />
+                        <TextBlock Text="{Binding Diagnostic}" TextWrapping="Wrap" />
+                    </DockPanel>
+
+                    <!-- Geofence failover: deep-link to public mirrors that don't region-lock. -->
+                    <StackPanel Margin="30,12,0,0"
+                                Visibility="{Binding HasGeofenceFailover, Converter={x:Static vm:BoolToVisibilityConverter.Instance}}">
+                        <TextBlock Text="OPEN IN BROWSER (PUBLIC MIRRORS)" Style="{StaticResource FieldLabel}" Margin="0,0,0,6" />
+                        <ItemsControl ItemsSource="{Binding Mirrors}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Style="{StaticResource SecondaryButton}"
+                                            Margin="0,0,8,8"
+                                            Command="{Binding DataContext.OpenMirrorCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                            CommandParameter="{Binding}"
+                                            ToolTip="{Binding Note}">
+                                        <TextBlock Text="{Binding Name}" />
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Style="{StaticResource MutedTextBlock}" FontSize="11" TextWrapping="Wrap"
+                                   Text="These mirrors re-host Samsung firmware on their own CDNs and don't region-geofence. Cross-check the SHA256 across at least two mirrors before flashing." />
+                    </StackPanel>
                 </StackPanel>
             </Border>
 
@@ -79,10 +100,56 @@
                             <TextBox Text="{Binding Csc, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12" />
                         </StackPanel>
                     </Grid>
-                    <TextBlock Text="IMEI (required for download)" Style="{StaticResource FieldLabel}" />
-                    <TextBox Text="{Binding Imei, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,4" />
+                    <DockPanel LastChildFill="True" Margin="0,0,0,4">
+                        <TextBlock DockPanel.Dock="Left" Text="IMEI (required for download)" Style="{StaticResource FieldLabel}" Margin="0" VerticalAlignment="Center" />
+                        <Button DockPanel.Dock="Right"
+                                Content="Open IMEI on phone"
+                                Style="{StaticResource SecondaryButton}"
+                                Command="{Binding ShowImeiOnPhoneCommand}"
+                                HorizontalAlignment="Right" />
+                    </DockPanel>
+                    <!-- Editable ComboBox: type a new 15-digit IMEI OR pick a previously-used one. -->
+                    <ComboBox IsEditable="True"
+                              IsTextSearchEnabled="True"
+                              StaysOpenOnEdit="True"
+                              TextSearch.TextPath="Imei"
+                              ItemsSource="{Binding ImeiHistory}"
+                              Text="{Binding Imei, UpdateSourceTrigger=PropertyChanged}"
+                              SelectedItem="{Binding SelectedImeiEntry}"
+                              FontFamily="Consolas, JetBrains Mono, Cascadia Mono"
+                              Margin="0,0,0,4">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid MinWidth="420">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="{Binding Imei}"
+                                                   FontFamily="Consolas, JetBrains Mono, Cascadia Mono"
+                                                   FontSize="13"
+                                                   Foreground="{DynamicResource AppForeground}" />
+                                        <TextBlock FontSize="11" Foreground="{DynamicResource AppMutedForeground}">
+                                            <Run Text="{Binding Model, Mode=OneWay, FallbackValue=''}" />
+                                            <Run Text=" / " />
+                                            <Run Text="{Binding Csc, Mode=OneWay, FallbackValue=''}" />
+                                        </TextBlock>
+                                    </StackPanel>
+                                    <Button Grid.Column="1"
+                                            Content="✕"
+                                            ToolTip="Forget this IMEI"
+                                            Style="{StaticResource SecondaryButton}"
+                                            Width="28" MinHeight="22" Padding="0"
+                                            Margin="8,0,0,0"
+                                            Command="{Binding DataContext.RemoveImeiHistoryCommand, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                            CommandParameter="{Binding}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
                     <TextBlock Style="{StaticResource MutedTextBlock}" FontSize="11" TextWrapping="Wrap"
-                               Text="Samsung's FUS rejects fake IMEIs as of late 2024. Devicer auto-fills this from a rooted connected device; otherwise, dial *#06# on the phone and copy the value here." />
+                               Text="Samsung's FUS rejects fake IMEIs as of late 2024. Modern One UI 7+ blocks programmatic IMEI reads even via root — click 'Open IMEI on phone' to pop the Settings page on the device, then enter the 15-digit number above. Devicer remembers every IMEI you've used; pick one from the dropdown to skip the typing." />
                 </StackPanel>
             </Border>
 
@@ -98,7 +165,7 @@
                         </Border>
                         <Border DockPanel.Dock="Right"
                                 Style="{StaticResource BadgeSuccess}"
-                                Visibility="{Binding StatusText, Converter={x:Static vm:NullToCollapsedConverter.Instance}}">
+                                Visibility="{Binding ShowUpToDateBadge, Converter={x:Static vm:BoolToVisibilityConverter.Instance}}">
                             <TextBlock>
                                 <Run Text="{Binding StatusText, Mode=OneWay}" Foreground="{DynamicResource AppSuccess}" FontWeight="SemiBold" />
                             </TextBlock>

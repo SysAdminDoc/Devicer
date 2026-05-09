@@ -25,7 +25,13 @@ try {
     if (Test-Path dist) { Remove-Item dist -Recurse -Force }
     New-Item -ItemType Directory dist | Out-Null
 
-    $version = (Select-Xml -Path src/Devicer.App/Devicer.App.csproj -XPath '//Version').Node.InnerText
+    # XPath returns $null for an MSBuild SDK csproj that uses <PropertyGroup
+    # Condition="'$(...)'..."> wrapping or that exposes only AssemblyVersion. Fail loudly
+    # so a missing tag never silently produces an empty `Devicer-v-portable...zip`.
+    $versionNode = Select-Xml -Path src/Devicer.App/Devicer.App.csproj -XPath '//Version'
+    if (-not $versionNode) { throw 'Could not locate <Version> in src/Devicer.App/Devicer.App.csproj.' }
+    $version = $versionNode.Node.InnerText.Trim()
+    if (-not $version) { throw '<Version> in Devicer.App.csproj is empty.' }
     $tag = "v$version"
     Write-Host "==> Building Devicer $tag ($Configuration)" -ForegroundColor Cyan
 

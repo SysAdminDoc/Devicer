@@ -20,9 +20,15 @@ public interface IRomAggregatorService
 public sealed class RomAggregatorService : IRomAggregatorService, IDisposable
 {
     private readonly IReadOnlyList<IRomSource> _sources;
+    private readonly bool _ownsSources;
 
     public RomAggregatorService(IEnumerable<IRomSource>? sources = null)
     {
+        // We only own the default sources we constructed ourselves. Disposing externally
+        // supplied IRomSource instances would yank HttpClients out from under whoever
+        // built them — common pattern when tests inject mocks or when a future caller
+        // pools sources across services.
+        _ownsSources = sources is null;
         _sources = (sources ?? new IRomSource[]
         {
             new LineageOsRomSource(),
@@ -73,6 +79,7 @@ public sealed class RomAggregatorService : IRomAggregatorService, IDisposable
 
     public void Dispose()
     {
+        if (!_ownsSources) return;
         foreach (var s in _sources)
             (s as IDisposable)?.Dispose();
     }

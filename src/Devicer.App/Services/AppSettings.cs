@@ -42,6 +42,13 @@ public sealed class AppSettingsStore
 
     public string SettingsPath => _path;
 
+    /// <summary>
+    /// Last write error message, if the most recent <see cref="Save"/> couldn't reach disk
+    /// (full disk, ACL block, missing parent on roaming profiles, etc). Cleared on the next
+    /// successful save. Useful for surfacing a Diagnostic banner instead of swallowing.
+    /// </summary>
+    public string? LastSaveError { get; private set; }
+
     private AppSettings Load()
     {
         try
@@ -52,7 +59,9 @@ public sealed class AppSettingsStore
         }
         catch
         {
-            // Corrupt settings file shouldn't brick the app — start fresh, keep going.
+            // Corrupt settings file shouldn't brick the app — start fresh, keep going. The
+            // next save replaces the broken file (and the .bak preserves the old one for
+            // post-mortem if File.Replace was the path taken).
             return new AppSettings();
         }
     }
@@ -67,10 +76,13 @@ public sealed class AppSettingsStore
                 File.WriteAllText(tmp, JsonSerializer.Serialize(Settings, JsonOpts));
                 if (File.Exists(_path)) File.Replace(tmp, _path, _path + ".bak", ignoreMetadataErrors: true);
                 else File.Move(tmp, _path);
+                LastSaveError = null;
             }
-            catch
+            catch (Exception ex)
             {
-                // Disk full, ACL block, etc. — fail silently; user notices stale settings, not a crash.
+                // Disk full, ACL block, etc. — keep the in-memory state and surface the
+                // error so the UI can warn rather than silently lose user preferences.
+                LastSaveError = ex.Message;
             }
         }
     }

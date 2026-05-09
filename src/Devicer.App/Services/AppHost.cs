@@ -18,6 +18,7 @@ public sealed class AppHost
     public IBootPatchService BootPatch { get; }
     public IOdinInspectorService OdinInspector { get; }
     public IOemGuidanceService OemGuidance { get; }
+    public ImeiCache ImeiCache { get; }
     public AppSettingsStore SettingsStore { get; }
     public ThemeManager Theme { get; }
 
@@ -36,6 +37,7 @@ public sealed class AppHost
         BootPatch = new BootPatchService(Adb);
         OdinInspector = new OdinInspectorService();
         OemGuidance = new OemGuidanceService();
+        ImeiCache = new ImeiCache();
         SettingsStore = new AppSettingsStore();
         Theme = new ThemeManager(SettingsStore);
     }

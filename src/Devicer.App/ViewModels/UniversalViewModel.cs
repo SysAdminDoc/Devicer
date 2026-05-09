@@ -1,7 +1,7 @@
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Devicer.App.Services;
 using Devicer.Core.Models;
 using Devicer.Core.Services;
 
@@ -71,16 +71,14 @@ public partial class UniversalViewModel : ObservableObject
     public void OpenStep(OemStep? step)
     {
         if (step is null || string.IsNullOrWhiteSpace(step.Url)) return;
-        try { Process.Start(new ProcessStartInfo { FileName = step.Url, UseShellExecute = true }); }
-        catch (Exception ex) { Diagnostic = $"Could not open URL: {ex.Message}"; }
+        var err = UrlLauncher.TryOpen(step.Url);
+        if (err is not null) Diagnostic = err;
     }
 
     [RelayCommand]
     public void OpenPortal()
     {
-        var url = Guide?.PortalUrl;
-        if (string.IsNullOrWhiteSpace(url)) return;
-        try { Process.Start(new ProcessStartInfo { FileName = url, UseShellExecute = true }); }
-        catch (Exception ex) { Diagnostic = $"Could not open URL: {ex.Message}"; }
+        var err = UrlLauncher.TryOpen(Guide?.PortalUrl);
+        if (err is not null && Guide?.PortalUrl is not null) Diagnostic = err;
     }
 }

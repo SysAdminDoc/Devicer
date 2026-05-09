@@ -36,9 +36,14 @@
     <Color x:Key="AppMutedForegroundColor">#FFA6ADC8</Color>
     <Color x:Key="AppSubtleForegroundColor">#FF7F849C</Color>
     <Color x:Key="AppDisabledForegroundColor">#FF6C7086</Color>
-    <Color x:Key="AppAccentColor">#FFCBA6F7</Color>
-    <Color x:Key="AppAccentHoverColor">#FFDDB6FF</Color>
-    <Color x:Key="AppAccentPressedColor">#FFB989EF</Color>
+    <!-- Accent: Catppuccin Blue. Mauve (#CBA6F7) reads pink against the dark base; Blue
+         is the more common Mocha accent in VS Code / terminal screenshots and avoids
+         the pink undertone. To use a different Catppuccin accent, edit the three
+         AppAccent* values below — common alternatives are Sapphire (#74C7EC),
+         Lavender (#B4BEFE), Teal (#94E2D5), or Green (#A6E3A1). -->
+    <Color x:Key="AppAccentColor">#FF89B4FA</Color>
+    <Color x:Key="AppAccentHoverColor">#FFA0C4FB</Color>
+    <Color x:Key="AppAccentPressedColor">#FF6F9EE8</Color>
     <Color x:Key="AppAccentForegroundColor">#FF11111B</Color>
     <Color x:Key="AppFocusColor">#FF89B4FA</Color>
     <Color x:Key="AppDestructiveColor">#FFF38BA8</Color>

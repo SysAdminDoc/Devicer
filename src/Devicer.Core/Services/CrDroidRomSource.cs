@@ -25,7 +25,7 @@ public sealed class CrDroidRomSource : IRomSource, IDisposable
         _http = http ?? new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
         _ownsHttp = http is null;
         if (!_http.DefaultRequestHeaders.UserAgent.Any())
-            _http.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "Devicer/0.4 (+https://github.com/SysAdminDoc/Devicer)");
+            _http.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", $"Devicer/{HttpUserAgent.AssemblyVersion} (+https://github.com/SysAdminDoc/Devicer)");
     }
 
     public RomSource Source => RomSource.CrDroid;

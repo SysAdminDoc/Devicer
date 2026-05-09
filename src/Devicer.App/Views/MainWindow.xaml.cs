@@ -11,7 +11,7 @@ public partial class MainWindow : Window
         InitializeComponent();
 
         var deviceVm = new DeviceViewModel(App.Host.DeviceProbe, App.Host.SettingsStore.Settings.ProbeIntervalSeconds);
-        var firmwareVm = new FirmwareViewModel(App.Host.FirmwareCheck, App.Host.FirmwareDownloadFactory);
+        var firmwareVm = new FirmwareViewModel(App.Host.FirmwareCheck, App.Host.FirmwareDownloadFactory, App.Host.Adb, App.Host.ImeiCache);
         var romVm = new RomViewModel(App.Host.RomAggregator);
         var backupVm = new BackupViewModel(App.Host.Adb, App.Host.Backup);
         var patchVm = new PatchViewModel(App.Host.BootPatch);

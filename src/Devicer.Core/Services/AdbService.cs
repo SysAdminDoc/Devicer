@@ -20,6 +20,13 @@ public interface IAdbService
     Task<string?> ReadImeiAsync(string serial, CancellationToken ct = default);
 
     /// <summary>
+    /// Last-resort fallback: triggers <c>*#06#</c> on the phone so the IMEI dialog
+    /// pops on the device's screen. Used when programmatic reads are blocked
+    /// (modern One UI 7+ / Android 14+ even denies privileged reads via root).
+    /// </summary>
+    Task<bool> ShowImeiOnPhoneAsync(string serial, CancellationToken ct = default);
+
+    /// <summary>
     /// Lists the device's partitions via <c>/dev/block/by-name</c>. Requires root (the directory
     /// is unreadable as shell on most modern Android). Resolves each symlink to its block-device
     /// target and stats the file size.
@@ -174,13 +181,20 @@ public sealed class AdbService : IAdbService
 
         if (entries.Count == 0) return Array.Empty<Models.PartitionInfo>();
 
-        // Bulk-stat sizes via blockdev --getsize64. One call, semicolon-separated, parses cheaply.
-        var statCmd = "for p in " + string.Join(' ', entries.Select(e => Bash.Quote(e.BlockPath))) + "; do echo -n \"$p|\"; blockdev --getsize64 \"$p\" 2>/dev/null || echo 0; done";
-        var stat = await RunSuAsync(serial, statCmd, TimeSpan.FromSeconds(20), ct).ConfigureAwait(false);
-
+        // Bulk-stat sizes via blockdev --getsize64. Batched into chunks because a single
+        // shell command per device with 125+ quoted paths can blow past adb shell's
+        // ~16 KB argv limit on some platform-tools builds (manifests as a silent failure
+        // returning empty stdout). 40 paths/batch keeps every command well under 4 KB.
+        const int BatchSize = 40;
         var sizes = new Dictionary<string, long>(StringComparer.Ordinal);
-        if (stat.Success)
+        for (int batchStart = 0; batchStart < entries.Count; batchStart += BatchSize)
         {
+            ct.ThrowIfCancellationRequested();
+            var batch = entries.Skip(batchStart).Take(BatchSize);
+            var statCmd = "for p in " + string.Join(' ', batch.Select(e => Bash.Quote(e.BlockPath))) + "; do echo -n \"$p|\"; blockdev --getsize64 \"$p\" 2>/dev/null || echo 0; done";
+            var stat = await RunSuAsync(serial, statCmd, TimeSpan.FromSeconds(20), ct).ConfigureAwait(false);
+            if (!stat.Success) continue;
+
             foreach (var raw in stat.Stdout.Split('\n', StringSplitOptions.RemoveEmptyEntries))
             {
                 var line = raw.TrimEnd('\r');
@@ -200,6 +214,33 @@ public sealed class AdbService : IAdbService
             IsCritical = Models.PartitionInfo.CriticalNames.Contains(e.Name),
             CriticalReason = Models.PartitionInfo.ReasonFor(e.Name),
         }).OrderByDescending(p => p.IsCritical).ThenBy(p => p.Name, StringComparer.Ordinal).ToList();
+    }
+
+    /// <summary>
+    /// Opens the device's "About phone" / "Status" screen so the user can read the IMEI.
+    /// Used as a fallback when modern Android (One UI 7+ / Android 14+) blocks all
+    /// programmatic IMEI reads via the privileged service-binder. Returns true if the
+    /// intent was dispatched.
+    /// </summary>
+    /// <remarks>
+    /// We prefer the <c>android.settings.DEVICE_INFO_SETTINGS</c> action over the <c>*#06#</c>
+    /// MMI dial: modern Samsung dialers reject MMI codes from <c>am start</c> with "Connection
+    /// problem or invalid MMI code" because the calling package isn't a privileged dialer.
+    /// The Settings deep-link reliably opens the About-phone screen on every Android version.
+    /// </remarks>
+    public async Task<bool> ShowImeiOnPhoneAsync(string serial, CancellationToken ct = default)
+    {
+        try
+        {
+            var r = await _shell.RunAsync(Adb,
+                new[] { "-s", serial, "shell", "am", "start", "-a", "android.settings.DEVICE_INFO_SETTINGS" },
+                FastTimeout, ct).ConfigureAwait(false);
+            return r.Success;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     public async Task<string?> ReadImeiAsync(string serial, CancellationToken ct = default)
@@ -258,6 +299,13 @@ public sealed class AdbService : IAdbService
         // the length-prefix half-words in the parcel, then take the trailing 15.
         if (digits.Length < 14) return null;
         if (digits.Length > 15) digits = digits[^15..];
+        // Final sanity: reject obvious garbage that occasionally falls out of weird parcel
+        // shapes — Samsung's late-2024 protocol change made `service call` return parcels
+        // that include length-prefix runs of zeros, and we'd happily extract them as a
+        // "valid" IMEI of 0000…. The Smart Switch backend rejects those with FUS 408 anyway,
+        // but failing fast here surfaces the real cause instead of a confusing auth error.
+        if (digits.All(c => c == '0')) return null;
+        if (digits.Distinct().Count() == 1) return null;
         return digits;
     }
 
@@ -279,14 +327,24 @@ public sealed class AdbService : IAdbService
         }
     }
 
-    private static ConnectionState MapState(string state) => state switch
+    private static ConnectionState MapState(string state)
     {
-        "device" => ConnectionState.Adb,
-        "recovery" => ConnectionState.Recovery,
-        "sideload" => ConnectionState.Sideload,
-        "bootloader" or "fastboot" => ConnectionState.Fastboot,
-        "unauthorized" => ConnectionState.Unauthorized,
-        "offline" => ConnectionState.NotConnected,
-        _ => ConnectionState.Unknown,
-    };
+        // adb sometimes returns multi-word states like "no permissions; user in plugdev?"
+        // when the udev rules / WinUSB driver isn't right — keep the prefix so we still
+        // classify them as Unauthorized rather than silently falling into Unknown.
+        var first = state;
+        var space = state.IndexOfAny(new[] { ' ', '\t', ';' });
+        if (space > 0) first = state[..space];
+        return first switch
+        {
+            "device" => ConnectionState.Adb,
+            "recovery" => ConnectionState.Recovery,
+            "sideload" => ConnectionState.Sideload,
+            "bootloader" or "fastboot" => ConnectionState.Fastboot,
+            "unauthorized" or "no" => ConnectionState.Unauthorized,
+            "offline" => ConnectionState.NotConnected,
+            "host" => ConnectionState.NotConnected, // emulator host entries; not a real device
+            _ => ConnectionState.Unknown,
+        };
+    }
 }

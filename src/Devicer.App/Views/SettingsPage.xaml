@@ -107,6 +107,11 @@
                     <TextBlock Text="{Binding CrashlogPath}" Style="{StaticResource MonoValue}" />
                     <TextBlock Text="Tool cache" Style="{StaticResource FieldLabel}" />
                     <TextBlock Text="{Binding ToolsCachePath}" Style="{StaticResource MonoValue}" />
+                    <TextBlock Text="{Binding OpenFolderError}"
+                               Foreground="{DynamicResource AppWarning}"
+                               FontSize="11"
+                               TextWrapping="Wrap"
+                               Visibility="{Binding OpenFolderError, Converter={x:Static vm:NullToCollapsedConverter.Instance}}" />
                 </StackPanel>
             </Border>
         </StackPanel>

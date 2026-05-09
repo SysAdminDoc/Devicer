@@ -1,8 +1,8 @@
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Net.Http;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Devicer.App.Services;
 using Devicer.Core.Models;
 using Devicer.Core.Services;
 
@@ -95,27 +95,18 @@ public partial class RomViewModel : ObservableObject
     public void OpenDownload(RomEntry? entry)
     {
         if (entry is null) return;
-        try
-        {
-            Process.Start(new ProcessStartInfo { FileName = entry.DownloadUrl.ToString(), UseShellExecute = true });
-        }
-        catch (Exception ex)
-        {
-            Diagnostic = $"Could not open download URL: {ex.Message}";
-        }
+        // Route through UrlLauncher: ROM-feed URLs come from a third-party JSON
+        // (LineageOS / crDroid maintainers' repos) and a compromised feed could otherwise
+        // ship a `file:///c:/payload.exe` that ShellExecute would happily invoke.
+        var err = UrlLauncher.TryOpen(entry.DownloadUrl);
+        if (err is not null) Diagnostic = err;
     }
 
     [RelayCommand]
     public void OpenForum(RomEntry? entry)
     {
         if (entry?.ForumUrl is null) return;
-        try
-        {
-            Process.Start(new ProcessStartInfo { FileName = entry.ForumUrl.ToString(), UseShellExecute = true });
-        }
-        catch (Exception ex)
-        {
-            Diagnostic = $"Could not open forum link: {ex.Message}";
-        }
+        var err = UrlLauncher.TryOpen(entry.ForumUrl);
+        if (err is not null) Diagnostic = err;
     }
 }
