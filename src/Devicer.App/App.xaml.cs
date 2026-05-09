@@ -16,6 +16,9 @@ public partial class App : Application
         AppDomain.CurrentDomain.UnhandledException += (_, args) => LogCrash(args.ExceptionObject as Exception);
         DispatcherUnhandledException += (_, args) => { LogCrash(args.Exception); args.Handled = true; };
         TaskScheduler.UnobservedTaskException += (_, args) => { LogCrash(args.Exception); args.SetObserved(); };
+
+        // Apply persisted theme before the first window opens so we don't flash Mocha when Latte is saved.
+        Host.Theme.Apply(Host.SettingsStore.Settings.Theme);
     }
 
     private static void LogCrash(Exception? ex)

@@ -41,7 +41,7 @@
                 </Border>
                 <Border DockPanel.Dock="Bottom" Padding="20,8,20,16">
                     <StackPanel>
-                        <TextBlock Text="v0.2.1" Style="{StaticResource MutedTextBlock}" FontSize="11" />
+                        <TextBlock Text="v0.2.2" Style="{StaticResource MutedTextBlock}" FontSize="11" />
                         <TextBlock Text="Local-only build" Style="{StaticResource MutedTextBlock}" FontSize="10" Opacity="0.7" />
                     </StackPanel>
                 </Border>

@@ -15,7 +15,7 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private UserControl? _currentPage;
 
-    public MainViewModel(DeviceViewModel deviceVm)
+    public MainViewModel(DeviceViewModel deviceVm, SettingsViewModel settingsVm)
     {
         NavItems = new ObservableCollection<NavItem>
         {
@@ -24,7 +24,7 @@ public partial class MainViewModel : ObservableObject
             new("\uE7B8", "Backup",   () => new BackupPage()),
             new("\uE90F", "Patch",    () => new PatchPage()),
             new("\uE945", "Flash",    () => new FlashPage()),
-            new("\uE713", "Settings", () => new SettingsPage()),
+            new("\uE713", "Settings", () => new SettingsPage { DataContext = settingsVm }),
         };
         SelectedNavItem = NavItems[0];
     }

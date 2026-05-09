@@ -2,6 +2,21 @@
 
 All notable changes to Devicer are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [SemVer](https://semver.org/).
 
+## v0.2.2 — 2026-05-09 (Settings + Latte theme)
+
+### Added
+- **Settings store**: `AppSettings` (Theme / FirstRunCompleted / ProbeIntervalSeconds / LastDeviceSerial) persisted to `%LOCALAPPDATA%\Devicer\settings.json` with atomic write (`.tmp` → `File.Replace` → `.bak`).
+- **Catppuccin Latte light palette**: full `App*` token surface mirrored from Mocha, runtime-swappable via `ThemeManager.Apply(theme)` (replaces merged-dictionary slot 0).
+- **Settings page** (replaces stub): live theme picker (Mocha / Latte), probe-interval slider (2–30 s), platform-tools detection (adb + fastboot status with re-check button), about section (version / settings file / crashlog / tool cache paths), "Open data folder" launches Explorer.
+- Theme persists across launches; applied before first window paint to avoid theme flash.
+- Probe interval changes propagate live into `DeviceViewModel.SetProbeInterval`; throttle dynamically scales to 80% of the configured interval.
+
+### Verified
+- dotnet build clean (Release, 0/0).
+- Fresh install creates `settings.json` with sensible defaults.
+- Latte theme loads without XAML resolution errors (cleared crashlog after Latte launch).
+- Hot-plug timer respects user-configured interval.
+
 ## v0.2.1 — 2026-05-09 (UX polish)
 
 ### Added

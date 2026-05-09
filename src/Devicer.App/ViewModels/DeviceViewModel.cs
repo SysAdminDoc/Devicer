@@ -27,15 +27,20 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
 
     public ObservableCollection<DeviceInfo> Devices { get; } = new();
 
-    public DeviceViewModel(IDeviceProbeService probe)
+    public DeviceViewModel(IDeviceProbeService probe, int probeIntervalSeconds = 4)
     {
         _probe = probe;
 
-        // Hot-plug poller: re-probe every 4s if not already probing. Cheap (adb devices is fast)
-        // and a sensible upper bound on UX latency for "user just plugged in a phone".
-        _hotplugTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(4) };
+        // Hot-plug poller: re-probe at the user-configured interval if not already probing.
+        // Cheap (`adb devices` is fast) and a sensible upper bound on UX latency for "user just plugged in".
+        _hotplugTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(Math.Clamp(probeIntervalSeconds, 2, 30)) };
         _hotplugTimer.Tick += async (_, _) => await PollAsync();
         _hotplugTimer.Start();
+    }
+
+    public void SetProbeInterval(int seconds)
+    {
+        _hotplugTimer.Interval = TimeSpan.FromSeconds(Math.Clamp(seconds, 2, 30));
     }
 
     [RelayCommand]
@@ -71,8 +76,9 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
     private async Task PollAsync()
     {
         if (IsProbing) return;
-        // Throttle: don't re-probe more than once every 3.5s, even if the timer ticks early.
-        if ((DateTime.UtcNow - _lastProbeUtc).TotalSeconds < 3.5) return;
+        // Throttle: never re-probe within 80% of the configured interval, regardless of timer drift.
+        var minGap = _hotplugTimer.Interval.TotalSeconds * 0.8;
+        if ((DateTime.UtcNow - _lastProbeUtc).TotalSeconds < minGap) return;
         await RefreshAsync();
     }
 

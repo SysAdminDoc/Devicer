@@ -1,0 +1,114 @@
+<UserControl x:Class="Devicer.App.Views.SettingsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Devicer.App.ViewModels"
+             xmlns:svc="clr-namespace:Devicer.App.Services">
+    <UserControl.Resources>
+        <Style x:Key="SectionLabel" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource AppSubtleForeground}" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Typography.Capitals" Value="AllSmallCaps" />
+            <Setter Property="Margin" Value="0,0,0,8" />
+        </Style>
+        <Style x:Key="FieldLabel" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource AppMutedForeground}" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Margin" Value="0,0,0,4" />
+        </Style>
+        <Style x:Key="MonoValue" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Consolas, JetBrains Mono, Cascadia Mono" />
+            <Setter Property="Foreground" Value="{DynamicResource AppForeground}" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Margin" Value="0,0,0,8" />
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="32,28,32,32" MaxWidth="780" HorizontalAlignment="Left">
+            <TextBlock Text="Settings" Style="{StaticResource HeadingTextBlock}" />
+            <TextBlock Text="Theme, behavior, tool detection, and where Devicer keeps its data."
+                       Style="{StaticResource SubheadingTextBlock}" />
+
+            <!-- Appearance -->
+            <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="Appearance" Style="{StaticResource SectionLabel}" />
+                    <TextBlock Text="Theme" Style="{StaticResource FieldLabel}" />
+                    <ComboBox ItemsSource="{Binding Themes}"
+                              SelectedItem="{Binding SelectedTheme, Mode=TwoWay}"
+                              Width="200" HorizontalAlignment="Left" />
+                    <TextBlock Text="Catppuccin Mocha (dark) and Catppuccin Latte (light). Switches live."
+                               Style="{StaticResource MutedTextBlock}" FontSize="12" Margin="0,8,0,0" />
+                </StackPanel>
+            </Border>
+
+            <!-- Behavior -->
+            <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="Behavior" Style="{StaticResource SectionLabel}" />
+                    <TextBlock Text="Hot-plug probe interval (seconds)" Style="{StaticResource FieldLabel}" />
+                    <DockPanel LastChildFill="False">
+                        <TextBlock Text="{Binding ProbeIntervalSeconds, StringFormat={}{0}s}"
+                                   DockPanel.Dock="Right"
+                                   Foreground="{DynamicResource AppAccent}"
+                                   FontWeight="SemiBold"
+                                   Width="40" TextAlignment="Right" />
+                        <Slider Minimum="2" Maximum="30" TickFrequency="1" IsSnapToTickEnabled="True"
+                                Value="{Binding ProbeIntervalSeconds, Mode=TwoWay}"
+                                Margin="0,0,12,0" VerticalAlignment="Center" />
+                    </DockPanel>
+                    <TextBlock Text="Devicer re-probes adb / fastboot at this interval to catch USB plug / unplug events. Lower is more responsive but slightly more CPU; 4s is the default."
+                               Style="{StaticResource MutedTextBlock}" FontSize="12" Margin="0,8,0,0" />
+                </StackPanel>
+            </Border>
+
+            <!-- Tools -->
+            <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                <StackPanel>
+                    <DockPanel LastChildFill="False">
+                        <Button DockPanel.Dock="Right"
+                                Content="Re-check"
+                                Style="{StaticResource SecondaryButton}"
+                                Command="{Binding RefreshToolStatusCommand}" />
+                        <TextBlock Text="Platform-Tools" Style="{StaticResource SectionLabel}" />
+                    </DockPanel>
+                    <TextBlock Text="adb" Style="{StaticResource FieldLabel}" />
+                    <TextBlock Text="{Binding AdbStatus}" Style="{StaticResource MonoValue}" />
+                    <TextBlock Text="fastboot" Style="{StaticResource FieldLabel}" />
+                    <TextBlock Text="{Binding FastbootStatus}" Style="{StaticResource MonoValue}" />
+                    <TextBlock Style="{StaticResource MutedTextBlock}" FontSize="12">
+                        Install Android SDK Platform-Tools v37+ from
+                        <Hyperlink NavigateUri="https://developer.android.com/tools/releases/platform-tools"
+                                   RequestNavigate="Hyperlink_RequestNavigate"
+                                   Foreground="{DynamicResource AppAccent}">developer.android.com/tools/releases/platform-tools</Hyperlink>
+                        and ensure adb / fastboot are on your PATH.
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
+            <!-- About -->
+            <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                <StackPanel>
+                    <DockPanel LastChildFill="False">
+                        <Button DockPanel.Dock="Right"
+                                Content="Open data folder"
+                                Style="{StaticResource SecondaryButton}"
+                                Command="{Binding OpenSettingsFolderCommand}" />
+                        <TextBlock Text="About" Style="{StaticResource SectionLabel}" />
+                    </DockPanel>
+                    <TextBlock Text="Version" Style="{StaticResource FieldLabel}" />
+                    <TextBlock Style="{StaticResource MonoValue}">
+                        <Run Text="Devicer " /><Run Text="{Binding AppVersion, Mode=OneWay}" />
+                    </TextBlock>
+                    <TextBlock Text="Settings file" Style="{StaticResource FieldLabel}" />
+                    <TextBlock Text="{Binding SettingsPath}" Style="{StaticResource MonoValue}" />
+                    <TextBlock Text="Crash log" Style="{StaticResource FieldLabel}" />
+                    <TextBlock Text="{Binding CrashlogPath}" Style="{StaticResource MonoValue}" />
+                    <TextBlock Text="Tool cache" Style="{StaticResource FieldLabel}" />
+                    <TextBlock Text="{Binding ToolsCachePath}" Style="{StaticResource MonoValue}" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

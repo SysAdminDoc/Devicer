@@ -58,13 +58,3 @@ public sealed class FlashPage : StubPage
         "Subprocess-wrapped Thor Flash Utility (GPL-3.0, kept across the process boundary). EFS-Clear is OFF by default; Knox eFuse warning gates any custom AP flash.")
     { }
 }
-
-public sealed class SettingsPage : StubPage
-{
-    public SettingsPage() : base(
-        "Settings",
-        "Tool paths, theme, telemetry, log level.",
-        "Coming in v0.2.x.",
-        "Will surface platform-tools detection, downloaded tool versions, theme selection (Mocha / Latte), and the crash-log location.")
-    { }
-}

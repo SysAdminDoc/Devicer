@@ -23,11 +23,11 @@ Phased build plan derived from [docs/research.md](docs/research.md). Each versio
 
 ## v0.2.x polish (in progress)
 
-- [ ] First-run wizard (platform-tools detection + install prompt)
-- [ ] Catppuccin Latte light theme + runtime swap
-- [ ] Settings page implementation (theme, log level, tool paths)
+- [ ] First-run wizard (platform-tools detection + install prompt) — v0.2.3
+- [x] Catppuccin Latte light theme + runtime swap (v0.2.2)
+- [x] Settings page implementation (v0.2.2 — theme, probe interval, tool detection, about)
 - [x] Loading indicator during probe (v0.2.1 — animated accent stripe + status text)
-- [x] Hot-plug detection (v0.2.1 — 4 s polled re-probe with selection persistence)
+- [x] Hot-plug detection (v0.2.1 — 4 s polled re-probe with selection persistence; v0.2.2 — user-configurable interval)
 - [x] Banish pill / oval backdrops from theme (v0.2.1)
 
 ## v0.3.0 — Firmware download (Samsung) — **BLOCKED on backend choice**
