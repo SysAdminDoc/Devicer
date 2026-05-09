@@ -15,6 +15,7 @@ public sealed class AppHost
     public Func<IFirmwareDownloadService> FirmwareDownloadFactory { get; }
     public IRomAggregatorService RomAggregator { get; }
     public IBackupService Backup { get; }
+    public IBootPatchService BootPatch { get; }
     public AppSettingsStore SettingsStore { get; }
     public ThemeManager Theme { get; }
 
@@ -30,6 +31,7 @@ public sealed class AppHost
         FirmwareDownloadFactory = () => new FirmwareDownloadService();
         RomAggregator = new RomAggregatorService();
         Backup = new BackupService(Adb);
+        BootPatch = new BootPatchService(Adb);
         SettingsStore = new AppSettingsStore();
         Theme = new ThemeManager(SettingsStore);
     }

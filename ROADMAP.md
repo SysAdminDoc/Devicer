@@ -73,12 +73,15 @@ Phased build plan derived from [docs/research.md](docs/research.md). Each versio
 - [ ] App-data backup orchestration (Neo Backup driver via ADB) — deferred to v0.5.2
 - [ ] Restore flow with checksum verification — high risk, deferred to v0.5.3 with explicit double-confirm gating
 
-## v0.6.0 — Magisk patch
+## v0.6.0 — Magisk / KernelSU / APatch boot patcher — shipped 2026-05-09
 
-- [ ] Wrap [affggh/Magisk_patcher](https://github.com/affggh/Magisk_patcher) or [Magisk-Boot-Patcher](https://github.com/0xsharkboy/Magisk-Boot-Patcher)
-- [ ] Patch boot.img / init_boot.img on PC, no phone roundtrip
-- [ ] KernelSU patch path via `ksud boot-patch`
-- [ ] Output staged into a reproducible flash package
+- [x] **On-device patcher path** — push boot.img to `/data/local/tmp`, run the installed root manager's bundled patcher via `su`, pull the patched image to host, SHA256-verify. No PC-side Python required; uses the patcher already on the user's rooted device.
+- [x] Magisk path — `cd /data/adb/magisk && KEEPVERITY=true KEEPFORCEENCRYPT=true sh boot_patch.sh boot.img`. Output: `/data/adb/magisk/new-boot.img`.
+- [x] KernelSU path — `ksud boot-patch -b boot.img`. Output: `kernelsu_patched_*.img`.
+- [x] APatch path — `apd patch -b boot.img`. Output: `apatch_patched_*.img`.
+- [x] Output staged into a reproducible flash package at `%LOCALAPPDATA%\Devicer\patches\<serial>\<timestamp>\` with SHA256 captured.
+- [x] Pre-validation: refuses to run if no root manager detected; surfaces the detected manager + version on the page.
+- [ ] PC-side affggh/Magisk_patcher subprocess fallback (deferred to v0.6.1 — required when the connected device has no installed root manager but the user has a known-good boot.img)
 
 ## v0.7.0 — Flash
 

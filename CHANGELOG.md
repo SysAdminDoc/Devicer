@@ -2,6 +2,25 @@
 
 All notable changes to Devicer are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [SemVer](https://semver.org/).
 
+## v0.6.0 — 2026-05-09 (Boot-image patcher)
+
+### Added
+- **`BootPatchService`** — orchestrates the full patch pipeline: push boot.img to `/data/local/tmp`, run the installed root manager's patcher via `su`, pull the patched output back, SHA256-record it, write to `%LOCALAPPDATA%\Devicer\patches\<serial>\<timestamp>\`. Three branches:
+  - **Magisk**: `cp boot.img /data/adb/magisk/ && cd /data/adb/magisk && KEEPVERITY=true KEEPFORCEENCRYPT=true sh boot_patch.sh boot.img`. Output `/data/adb/magisk/new-boot.img`.
+  - **KernelSU**: `ksud boot-patch -b boot.img`. Output `kernelsu_patched_*.img`.
+  - **APatch**: `apd patch -b boot.img`. Output `apatch_patched_*.img`.
+- **Functional Patch page** (replaces stub): shows the detected device + root manager / version, a "Browse boot.img" picker, status updates with Cancel, output panel with the patched-image path + SHA256 + "Open folder" button. Pre-validation refuses to run if no root manager is installed.
+- `PatchResult` model captures input path, output path, SHA256, file size, the root manager that did the patching, and its version — all the data needed to feed the future v0.7.0 flasher.
+
+### Verified
+- dotnet build clean (4 projects, 0/0).
+- WPF app launches cleanly with the new Patch tab in nav.
+
+### Architecture notes
+- Subprocess wrapper boundary preserved: we never link any patcher binary into the .NET process; everything goes across the OS-level shell boundary, keeping Devicer's MIT license clean.
+- The on-device-patcher path was chosen over a PC-side Python `Magisk_patcher` subprocess because (a) every rooted user already has the patcher on the device, (b) avoiding a Python runtime dependency keeps the single-binary install promise, (c) the on-device patcher is automatically version-correct (it ships with the user's installed Magisk).
+- A v0.6.1 follow-up will add a PC-side patcher fallback for when the connected device has no installed root manager — needed when the user has obtained a boot.img out-of-band.
+
 ## v0.5.0 — 2026-05-09 (Partition backup)
 
 ### Added

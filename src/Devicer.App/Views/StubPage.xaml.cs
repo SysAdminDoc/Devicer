@@ -19,16 +19,6 @@ public partial class StubPage : UserControl
     }
 }
 
-public sealed class PatchPage : StubPage
-{
-    public PatchPage() : base(
-        "Patch",
-        "PC-side Magisk boot.img patcher — no phone roundtrip.",
-        "Coming in v0.6.0.",
-        "Wraps affggh/Magisk_patcher to patch boot.img / init_boot.img on the host. KernelSU patch path via ksud boot-patch is also planned.")
-    { }
-}
-
 public sealed class FlashPage : StubPage
 {
     public FlashPage() : base(

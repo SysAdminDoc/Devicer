@@ -2,7 +2,7 @@
 
 # Devicer
 
-[![Version](https://img.shields.io/badge/version-0.5.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.6.0-blue.svg)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows-0078d4.svg)](#)
 [![.NET](https://img.shields.io/badge/.NET-10-512bd4.svg)](#)
@@ -12,7 +12,7 @@
 
 ## Status
 
-**v0.5.0 — alpha.** Device + Firmware + ROMs + **Backup** tabs all functional. Backup performs root `dd` of selected partitions, pulls the images off-device, SHA256-verifies, and writes a versioned manifest to `%LOCALAPPDATA%\Devicer\backups\<serial>\<timestamp>\`. Critical Samsung partitions (EFS, modem NV, persist, modem state, FSC/FSG) are pre-selected and rendered with a CRITICAL badge + plain-language reason. Live-tested partition discovery on the connected S25 Ultra (125 partitions, all 6 critical correctly flagged). No Python, no JRE, no third-party servers. See [CHANGELOG.md](CHANGELOG.md). Tooling-landscape document at [docs/research.md](docs/research.md), phased build plan at [ROADMAP.md](ROADMAP.md).
+**v0.6.0 — alpha.** Device + Firmware + ROMs + Backup + **Patch** tabs all functional. Backup performs root `dd` of selected partitions, pulls the images off-device, SHA256-verifies, and writes a versioned manifest to `%LOCALAPPDATA%\Devicer\backups\<serial>\<timestamp>\`. Critical Samsung partitions (EFS, modem NV, persist, modem state, FSC/FSG) are pre-selected and rendered with a CRITICAL badge + plain-language reason. Live-tested partition discovery on the connected S25 Ultra (125 partitions, all 6 critical correctly flagged). No Python, no JRE, no third-party servers. See [CHANGELOG.md](CHANGELOG.md). Tooling-landscape document at [docs/research.md](docs/research.md), phased build plan at [ROADMAP.md](ROADMAP.md).
 
 ## Goals
 
