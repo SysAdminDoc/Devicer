@@ -11,7 +11,7 @@ public partial class MainWindow : Window
         InitializeComponent();
 
         var deviceVm = new DeviceViewModel(App.Host.DeviceProbe, App.Host.SettingsStore.Settings.ProbeIntervalSeconds);
-        var firmwareVm = new FirmwareViewModel(App.Host.FirmwareCheck);
+        var firmwareVm = new FirmwareViewModel(App.Host.FirmwareCheck, App.Host.FirmwareDownloadFactory);
         var settingsVm = new SettingsViewModel(
             App.Host.SettingsStore,
             App.Host.Theme,

@@ -34,6 +34,13 @@ public sealed record DeviceInfo
 
     public RootStatus Root { get; init; } = RootStatus.None;
 
+    /// <summary>
+    /// Device IMEI (14-15 digits). Probed via root <c>service call iphonesubinfo</c>.
+    /// Used by the FUS BinaryInform request — Samsung's API rejects the legacy "0000…" fake
+    /// IMEI as of late 2024.
+    /// </summary>
+    public string? Imei { get; init; }
+
     public bool IsSamsung =>
         (Manufacturer?.Contains("Samsung", StringComparison.OrdinalIgnoreCase) ?? false)
         || (Brand?.Contains("samsung", StringComparison.OrdinalIgnoreCase) ?? false);

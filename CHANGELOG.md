@@ -2,6 +2,35 @@
 
 All notable changes to Devicer are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [SemVer](https://semver.org/).
 
+## v0.3.1 — 2026-05-09 (Samsung firmware download — auth + decrypt)
+
+### Added
+- **Native FUS protocol implementation** (no Python, no JRE, single-binary preserved):
+  - `FusCrypto` — AES-CBC nonce decode, signature derivation (`KEY_1[c % 16] + KEY_2`), AES-CBC PKCS#7 sign, `LOGIC_CHECK` per-char index, MD5 firmware-key derivation (V2 + V4).
+  - `FusClient` — POST/GET session with rotating server NONCE + `Authorization: FUS …` header. Handles dual-keygen NONCE responses (Samsung's CDN serves under either `hqzdurufm2c8mf6bsjezu1qgveouv7c7` or the legacy `vicopx7dqu06emacgpnpy8j8zwhduwlh`); we try both and stay consistent across signature derivation.
+  - `FirmwareDownloadService` — orchestrates BinaryInform → streaming download → SHA256 verify → AES-128-ECB decrypt → cache-index.
+  - `FirmwareCipher` — chunked AES-ECB streaming decrypt, PKCS#7 unpad on the trailing block.
+  - `FirmwareCache` — `%LOCALAPPDATA%\Devicer\firmware\<model>_<region>_<pda>\` with `index.json` manifest (encrypted/decrypted size, SHA256, completed timestamp).
+- **Firmware-version normalization** (`FirmwareVersion.Normalized` — appends PDA as BOOT for 3-segment feeds; required by FUS BinaryInform).
+- **IMEI auto-probe + manual entry**: `AdbService.ReadImeiAsync` calls `service call iphonesubinfo 1 i32 0` via root, parses the Parcel ASCII back to digits. Surfaces as `DeviceInfo.Imei`. Required because Samsung's FUS rejects the legacy `0000…` fake IMEI as of late 2024 (FUS Status 408 / Authentication Failed).
+- **Functional Firmware page download flow**: "Download & decrypt" button, IMEI text field (auto-fills from probed device), live progress bar with phase + bytes-processed display, Cancel button (cooperative `CancellationToken`), "Open folder" on completion.
+- **Devicer.Smoke `--inform` flag**: opt-in BinaryInform end-to-end probe without burning bandwidth (auth + metadata only).
+
+### Verified
+- AES round-trip self-test: `ABCDEFGHIJKLMNOP` encrypt+decrypt cleanly recovers via `--crypto-self-test`.
+- Live FUS handshake against Samsung backend (SM-S938B / EUX): `NF_DownloadGenerateNonce.do` returns NONCE under the legacy KEY_1 generation; nonce decodes to a printable 16-char ASCII string (e.g. `zzva67fb8s0117ar`); BinaryInform Authorization header accepted.
+- BinaryInform itself is reached on the wire (FUS Status 408 returns when the IMEI is missing/fake — exactly the documented late-2024 server behavior). Will pass with a real IMEI.
+- dotnet build clean across Debug + Release (0/0).
+
+### Architecture notes
+- Decryption is **AES-128-ECB + PKCS#7 unpad** on the trailing block (NOT AES-CBC as the v0.3.0 ROADMAP entry stated — confirmed against samloader / Bifrost / SamFirm). v0.3.0 ROADMAP wording corrected.
+- Samsung's CDN puts the `NONCE` response header into `HttpResponseHeaders.NonValidated` because base64 contains `/` and `+` which trip .NET's strict header validator. We iterate `NonValidated` directly — `TryGetValues` only matches known header descriptors.
+- `Content-Type: application/xml` is sent without `charset=utf-8` (Samsung's parser is strict; the .NET `StringContent` ctor adds the charset automatically — we use `ByteArrayContent` to prevent it).
+- Cookie jar disabled (`UseCookies = false`): Imperva tracking cookies in the response trigger their bot-detection on subsequent requests.
+
+### Known limitations
+- IMEI auto-probe via `service call iphonesubinfo` returns a permission-error Parcel on modern Samsung Android 14/15/16 (One UI 7+). Manual entry on the Firmware page is the practical workflow until we add an alternative read path (e.g., `/efs` parsing or a privileged shim app).
+
 ## v0.3.0 — 2026-05-09 (Samsung firmware lookup)
 
 ### Added

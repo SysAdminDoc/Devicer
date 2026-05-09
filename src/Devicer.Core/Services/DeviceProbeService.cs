@@ -60,6 +60,11 @@ public sealed class DeviceProbeService : IDeviceProbeService
             ? await _adb.DetectRootAsync(serial, ct).ConfigureAwait(false)
             : RootStatus.None;
 
+        // IMEI requires root on modern Android. Skip if no root or non-Adb state — surface as null.
+        string? imei = null;
+        if (state == ConnectionState.Adb && root.Kind != RootKind.None)
+            imei = await _adb.ReadImeiAsync(serial, ct).ConfigureAwait(false);
+
         bool? oemUnlock = props.TryGetValue("sys.oem_unlock_allowed", out var oem)
             ? oem == "1"
             : null;
@@ -92,6 +97,7 @@ public sealed class DeviceProbeService : IDeviceProbeService
             OemUnlockSupported = oemUnlock,
             KnoxWarrantyBit = Get(props, "ro.boot.warranty_bit") ?? Get(props, "ro.warranty_bit"),
             Root = root,
+            Imei = imei,
         };
     }
 

@@ -32,11 +32,16 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="32,28,32,32" MaxWidth="900" HorizontalAlignment="Left">
             <DockPanel Margin="0,0,0,8" LastChildFill="True">
-                <Button DockPanel.Dock="Right"
-                        Content="Check latest"
-                        Style="{StaticResource PrimaryButton}"
-                        Command="{Binding CheckLatestCommand}"
-                        IsEnabled="{Binding IsChecking, Converter={x:Static vm:NotConverter.Instance}}" />
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top">
+                    <Button Content="Check latest"
+                            Style="{StaticResource PrimaryButton}"
+                            Command="{Binding CheckLatestCommand}"
+                            IsEnabled="{Binding IsIdle}"
+                            Margin="0,0,8,0" />
+                    <Button Content="Download &amp; decrypt"
+                            Style="{StaticResource PrimaryButton}"
+                            Command="{Binding DownloadLatestCommand}" />
+                </StackPanel>
                 <StackPanel>
                     <TextBlock Text="Firmware" Style="{StaticResource HeadingTextBlock}" />
                     <TextBlock Text="Latest official firmware available from Samsung's public OTA feed for the model + CSC pair below."
@@ -59,20 +64,26 @@
 
             <!-- Form -->
             <Border Style="{StaticResource Card}" Margin="0,0,0,16">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                        <TextBlock Text="MODEL" Style="{StaticResource FieldLabel}" />
-                        <TextBox Text="{Binding Model, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12" />
-                    </StackPanel>
-                    <StackPanel Grid.Column="1" Margin="8,0,0,0">
-                        <TextBlock Text="CSC" Style="{StaticResource FieldLabel}" />
-                        <TextBox Text="{Binding Csc, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12" />
-                    </StackPanel>
-                </Grid>
+                <StackPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                            <TextBlock Text="MODEL" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding Model, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                            <TextBlock Text="CSC" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding Csc, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12" />
+                        </StackPanel>
+                    </Grid>
+                    <TextBlock Text="IMEI (required for download)" Style="{StaticResource FieldLabel}" />
+                    <TextBox Text="{Binding Imei, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,4" />
+                    <TextBlock Style="{StaticResource MutedTextBlock}" FontSize="11" TextWrapping="Wrap"
+                               Text="Samsung's FUS rejects fake IMEIs as of late 2024. Devicer auto-fills this from a rooted connected device; otherwise, dial *#06# on the phone and copy the value here." />
+                </StackPanel>
             </Border>
 
             <!-- Result -->
@@ -113,6 +124,58 @@
                 </StackPanel>
             </Border>
 
+            <!-- Download progress -->
+            <Border Style="{StaticResource Card}"
+                    Margin="0,0,0,16"
+                    Visibility="{Binding IsDownloading, Converter={x:Static vm:BoolToVisibilityConverter.Instance}}">
+                <StackPanel>
+                    <DockPanel LastChildFill="True" Margin="0,0,0,12">
+                        <Button DockPanel.Dock="Right"
+                                Content="Cancel"
+                                Style="{StaticResource SecondaryButton}"
+                                Command="{Binding CancelDownloadCommand}" />
+                        <TextBlock Text="DOWNLOAD IN PROGRESS" Style="{StaticResource FieldLabel}" Margin="0" VerticalAlignment="Center" />
+                    </DockPanel>
+                    <ProgressBar Value="{Binding ProgressPercent, Mode=OneWay}"
+                                 Minimum="0" Maximum="100"
+                                 Height="10"
+                                 IsIndeterminate="{Binding HasProgressFraction, Converter={x:Static vm:NotConverter.Instance}}"
+                                 Background="{DynamicResource AppSurface}"
+                                 Foreground="{DynamicResource AppAccent}"
+                                 BorderBrush="{DynamicResource AppBorder}"
+                                 Margin="0,0,0,8" />
+                    <DockPanel LastChildFill="True">
+                        <TextBlock DockPanel.Dock="Right"
+                                   Text="{Binding ProgressDisplay, Mode=OneWay}"
+                                   Foreground="{DynamicResource AppMutedForeground}"
+                                   FontFamily="Consolas, JetBrains Mono, Cascadia Mono"
+                                   FontSize="12" />
+                        <TextBlock Text="{Binding DownloadStatus}"
+                                   Foreground="{DynamicResource AppForeground}"
+                                   TextWrapping="Wrap" />
+                    </DockPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Last download summary -->
+            <Border Style="{StaticResource Card}"
+                    Margin="0,0,0,16"
+                    Visibility="{Binding LastDecryptedPath, Converter={x:Static vm:NullToCollapsedConverter.Instance}}">
+                <StackPanel>
+                    <DockPanel LastChildFill="True" Margin="0,0,0,8">
+                        <Button DockPanel.Dock="Right"
+                                Content="Open folder"
+                                Style="{StaticResource SecondaryButton}"
+                                Command="{Binding OpenDownloadFolderCommand}" />
+                        <TextBlock Text="LAST DOWNLOAD" Style="{StaticResource FieldLabel}" Margin="0" VerticalAlignment="Center" />
+                    </DockPanel>
+                    <TextBlock Text="DECRYPTED" Style="{StaticResource FieldLabel}" />
+                    <TextBlock Text="{Binding LastDecryptedPath, FallbackValue='—'}" Style="{StaticResource MonoValue}" />
+                    <TextBlock Text="ENCRYPTED" Style="{StaticResource FieldLabel}" />
+                    <TextBlock Text="{Binding LastDownloadedPath, FallbackValue='—'}" Style="{StaticResource MonoValue}" />
+                </StackPanel>
+            </Border>
+
             <!-- History -->
             <Border Style="{StaticResource Card}"
                     Visibility="{Binding History.Count, Converter={x:Static vm:CountToVisibleIfPositiveConverter.Instance}}">
@@ -133,8 +196,9 @@
 
             <!-- Footer note -->
             <TextBlock Style="{StaticResource MutedTextBlock}" FontSize="12" Margin="0,12,0,0" TextWrapping="Wrap">
-                Devicer queries Samsung's public OTA feed (no authentication, no Samsung account) and never sends data anywhere else.
-                Actual firmware download (auth-protected, AES-CBC encrypted) ships in a future release.
+                Devicer talks directly to Samsung's FUS (Smart Switch protocol) — no Samsung account, no third-party servers.
+                Encrypted blobs and decrypted firmware are cached at <Run FontFamily="Consolas, JetBrains Mono, Cascadia Mono" Text="%LOCALAPPDATA%\Devicer\firmware\" />.
+                AES decryption (ECB + PKCS#7) runs locally; nothing leaves your machine.
             </TextBlock>
         </StackPanel>
     </ScrollViewer>

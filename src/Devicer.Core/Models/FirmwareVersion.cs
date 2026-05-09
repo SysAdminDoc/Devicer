@@ -35,4 +35,21 @@ public sealed record FirmwareVersion(string Pda, string Csc, string Cp, string? 
         // Compare lexicographically — Samsung PDAs sort correctly under string ordering for the same model.
         return string.Compare(a, b, StringComparison.Ordinal);
     }
+
+    /// <summary>
+    /// Normalizes a version string for FUS consumption:
+    ///   • If 3 parts, append PDA as BOOT (Samsung's BinaryInform endpoint expects 4).
+    ///   • If a middle part is empty, fill with PDA.
+    /// </summary>
+    public string Normalized
+    {
+        get
+        {
+            var pda = string.IsNullOrWhiteSpace(Pda) ? "" : Pda;
+            var csc = string.IsNullOrWhiteSpace(Csc) ? pda : Csc;
+            var cp  = string.IsNullOrWhiteSpace(Cp)  ? pda : Cp;
+            var boot = string.IsNullOrWhiteSpace(Boot) ? pda : Boot;
+            return $"{pda}/{csc}/{cp}/{boot}";
+        }
+    }
 }

@@ -41,14 +41,17 @@ Phased build plan derived from [docs/research.md](docs/research.md). Each versio
 - [x] Verified end-to-end against live S25 Ultra EUX (installed `S938BXXS6BYIF` → latest `S938BXXS9BZCH` correctly flagged as behind)
 - [ ] Per-CSC search across multiple regions in one query (v0.3.1)
 
-## v0.3.1 — Samsung firmware download (auth + download)
+## v0.3.1 — Samsung firmware download (auth + decrypt) — shipped 2026-05-09
 
-- [ ] FUS NONCE handshake: `POST NF_DownloadGenerateNonce.do` → `Set-Cookie: NONCE=...` + `NONCE: ...` header. XOR-decode each byte with `0x70`.
-- [ ] Auth-signature derivation: AES-128-CBC encrypt of `nonce + key2`, IV = first 16 bytes of `key2`. `key2` derived from decoded nonce via the per-char transform.
-- [ ] `NF_DownloadBinaryInform.do` — XML POST with model+CSC+target_version; returns `BINARY_NAME` / `BINARY_BYTE_SIZE` / `LOGIC_VALUE_FACTORY`.
-- [ ] Streaming download: `POST NF_DownloadBinaryForMass.do` returning the encrypted blob; SHA256 verification on the way down.
-- [ ] AES-CBC firmware decryption (key derived from version string + IMEI prefix); zero-byte padding strip.
-- [ ] Local firmware cache at `%LOCALAPPDATA%\Devicer\firmware\<model>_<csc>_<version>\` with index.
+- [x] FUS NONCE handshake: `POST NF_DownloadGenerateNonce.do` → `NONCE` response header. AES-CBC decrypt with KEY_1 (32 bytes UTF-8), IV = key[:16], strip padding. Dual-keygen support (current + legacy) — Samsung's CDN serves either depending on route.
+- [x] Auth-signature derivation: per-char `KEY_1[nonce[i] % 16]` for i=0..15, append KEY_2 → 32-byte AES-256 key. AES-CBC-encrypt the nonce, IV = key[:16], PKCS#7 padding, base64-encode → goes into `Authorization: FUS signature="…"` header.
+- [x] `NF_DownloadBinaryInform.do` — XML POST with model + CSC + target_version + IMEI + LOGIC_CHECK; parses `BINARY_NAME` / `BINARY_BYTE_SIZE` / `LATEST_FW_VERSION` / `LOGIC_VALUE_FACTORY` from the response.
+- [x] Streaming download: GET `NF_DownloadBinaryForMass.do?file=…` with optional `Range:` resume; chunked write + SHA256 over the encrypted blob.
+- [x] AES-128-ECB firmware decryption (NOT CBC — confirmed against samloader / Bifrost). PKCS#7 unpad on the final block. V4 key = MD5(LOGIC_CHECK(LATEST_FW_VERSION, LOGIC_VALUE_FACTORY)); V2 legacy key = MD5("REGION:MODEL:VERSION").
+- [x] Local firmware cache at `%LOCALAPPDATA%\Devicer\firmware\<model>_<region>_<pda>\` with `index.json` manifest.
+- [x] IMEI auto-probe via root + manual UI entry (Samsung's late-2024 protocol change requires a real IMEI; the legacy `0000…` fake yields FUS Status 408).
+- [ ] Per-CSC search across multiple regions in one query (deferred to v0.3.2)
+- [ ] Alternative IMEI read path for Samsung One UI 7+ (`service call iphonesubinfo` returns permission error even with root) — `/efs` parsing or privileged shim app (deferred to v0.3.2)
 
 ## v0.4.0 — Custom ROM search
 
