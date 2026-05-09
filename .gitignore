@@ -1,0 +1,48 @@
+# Local working notes — never commit (per global rule)
+CLAUDE.md
+CODEX_CHANGELOG.md
+.claude/
+*.bak
+
+# IDE / OS
+.vs/
+.idea/
+.vscode/
+*.user
+*.suo
+.DS_Store
+Thumbs.db
+
+# .NET build output
+bin/
+obj/
+out/
+publish/
+*.dll
+*.exe
+*.pdb
+*.cache
+TestResults/
+
+# Generic build dirs
+dist/
+build/
+node_modules/
+
+# Secrets & signing material
+.env
+.env.*
+*.pem
+*.keystore
+*.jks
+secrets/
+
+# Cached firmware downloads (large, never commit)
+cache/
+firmware/
+roms/
+backups/
+*.tar.md5
+*.lz4
+*.img
+*.bin
