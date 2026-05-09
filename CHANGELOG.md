@@ -2,6 +2,34 @@
 
 All notable changes to Devicer are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [SemVer](https://semver.org/).
 
+## v0.5.0 — 2026-05-09 (Partition backup)
+
+### Added
+- **Direct adb+root partition backup**:
+  - `PartitionInfo` model (name, block-device path, size, isCritical, criticalReason). Critical-name set covers Samsung EFS / modem NV / persist / modem-state / FSC/FSG / DRM / keystore.
+  - `AdbService.ListPartitionsAsync` — parses `ls -l /dev/block/by-name` via `su`, resolves each symlink to its block target, bulk-stats sizes via `blockdev --getsize64`. Critical partitions sorted to the top.
+  - `BackupService.RunAsync` — for each selected partition: `dd if=… of=/data/local/tmp/devicer_<name>.img` via root, `adb pull`, SHA256 verify, accumulate manifest. Per-partition failures isolated (one bad block doesn't kill the run). Generous timeouts proportional to partition size.
+  - `BackupManifest` JSON written to `%LOCALAPPDATA%\Devicer\backups\<serial>\<timestamp>\manifest.json` alongside the `.img` files (serial, model, codename, createdUtc, partitions[]: name/file/size/sha256/isCritical).
+  - `AdbService` gains `RunShellAsync` / `RunSuAsync` / `PullAsync` helpers used by the backup orchestration. `Bash.Quote` POSIX shell-quoting helper for safe command construction.
+- **Functional Backup page** (replaces stub):
+  - Permanent red **EFS / NVRAM IS ONE-WAY** banner above the controls.
+  - "Load partitions" button populates a checkbox list; critical partitions are pre-selected and badged.
+  - Each row shows the partition name (mono), critical reason (subtle), size (right-aligned mono).
+  - "Back up selected" runs the orchestration with status updates + coarse progress bar.
+  - "Cancel" cooperative `CancellationToken`.
+  - "Open folder" reveals the manifest folder in Explorer once the run completes.
+  - Per-partition failure warnings rendered inline beneath the result.
+- `Devicer.Smoke --partitions <serial>` flag prints the partition table for offline inspection.
+
+### Verified
+- Live partition listing against the connected Samsung S25 Ultra (SM-S938B, Magisk 30.7): 125 partitions enumerated; all 6 expected criticals (efs, fsc, fsg, modemst1, modemst2, persist) flagged correctly with their CRITICAL reasons. Sort order: critical-first, then alphabetical.
+- `dotnet build Devicer.sln -c Release` clean (4 projects, 0/0).
+- WPF app launches without XAML errors.
+
+### Architecture notes
+- We deliberately do NOT depend on tetherback / TWRP boot for v0.5.0. Most users have Magisk root on a working ROM and would rather not boot TWRP just to back up; the `dd`-via-root path covers them. tetherback subprocess integration is a v0.5.1 follow-up.
+- Restore flow is deliberately deferred — writing back to block devices is asymmetric in risk vs. reading, and the v0.5.3 release will gate it behind explicit double-confirm + dry-run.
+
 ## v0.4.0 — 2026-05-09 (Custom ROM search)
 
 ### Added

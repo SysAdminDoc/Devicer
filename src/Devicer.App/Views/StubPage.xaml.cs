@@ -19,16 +19,6 @@ public partial class StubPage : UserControl
     }
 }
 
-public sealed class BackupPage : StubPage
-{
-    public BackupPage() : base(
-        "Backup",
-        "PC-side backup orchestration — tetherback over ADB.",
-        "Coming in v0.5.0.",
-        "Streams TWRP partition images to the host with checksum verification. EFS/NV is mandatory before any AP flash on Samsung — losing EFS bricks the IMEI permanently.")
-    { }
-}
-
 public sealed class PatchPage : StubPage
 {
     public PatchPage() : base(

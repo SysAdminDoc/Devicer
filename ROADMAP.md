@@ -63,13 +63,15 @@ Phased build plan derived from [docs/research.md](docs/research.md). Each versio
 - [ ] Optional: PixelExperience, Evolution X indices (deferred — neither maintains a stable public JSON feed in 2026)
 - [ ] In-app download with chunked SHA256 verify + ROM cache (deferred to v0.4.1)
 
-## v0.5.0 — Backup (PC-side)
+## v0.5.0 — Backup (PC-side) — shipped 2026-05-09
 
-- [ ] tetherback wrapper for TWRP nandroid streams over ADB
-- [ ] Mandatory EFS/NV warning gate before any AP flash on Samsung
-- [ ] App-data backup orchestration (Neo Backup driver via ADB)
-- [ ] Versioned backup catalog with timestamps and partition manifests
-- [ ] Restore flow with checksum verification
+- [x] **Direct adb+root partition backup** — `dd` selected blocks on-device, `adb pull` to host, SHA256-verify each image, write a versioned manifest (no TWRP boot needed). Works against any rooted Android device that exposes `/dev/block/by-name`.
+- [x] **EFS/NV warning gate** — red EFS-is-one-way banner is permanently visible on the Backup page; critical partitions (EFS, modem NV, persist, modem-state, FSC/FSG) are pre-selected with a CRITICAL badge and a plain-language "what breaks if you lose this" reason.
+- [x] **Versioned backup catalog** at `%LOCALAPPDATA%\Devicer\backups\<serial>\<timestamp>\manifest.json` with per-partition entries (name, file, size, sha256, isCritical) plus device metadata (serial, model, codename, createdUtc).
+- [x] Per-partition warnings collected non-fatally — one bad partition doesn't kill the whole run; the user sees exactly which images couldn't be captured.
+- [ ] tetherback subprocess wrapper for TWRP nandroid streams (deferred to v0.5.1 — requires TWRP boot, separate workflow)
+- [ ] App-data backup orchestration (Neo Backup driver via ADB) — deferred to v0.5.2
+- [ ] Restore flow with checksum verification — high risk, deferred to v0.5.3 with explicit double-confirm gating
 
 ## v0.6.0 — Magisk patch
 

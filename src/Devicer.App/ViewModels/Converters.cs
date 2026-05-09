@@ -71,6 +71,15 @@ public sealed class InverseBoolToVisibilityConverter : IValueConverter
         => value is Visibility v && v == Visibility.Collapsed;
 }
 
+public sealed class FractionToPercentConverter : IValueConverter
+{
+    public static readonly FractionToPercentConverter Instance = new();
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => value is double d ? Math.Clamp(d * 100.0, 0, 100) : 0.0;
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => value is double d ? d / 100.0 : 0.0;
+}
+
 public sealed class KnoxIntactToVisibilityConverter : IValueConverter
 {
     public static readonly KnoxIntactToVisibilityConverter Instance = new();

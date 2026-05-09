@@ -21,6 +21,19 @@ if (args.Length > 0 && args[0] == "--crypto-self-test")
     return;
 }
 
+if (args.Length >= 2 && args[0] == "--partitions")
+{
+    var serialArg = args[1];
+    var ashell = new ShellRunner();
+    var aadb = new AdbService(ashell);
+    var parts = await aadb.ListPartitionsAsync(serialArg);
+    Console.WriteLine($"{parts.Count} partition(s):");
+    foreach (var p in parts.Take(60))
+        Console.WriteLine($"  {(p.IsCritical ? "[CRIT]" : "      ")} {p.Name,-20} {p.SizeDisplay,12}  {p.BlockPath}");
+    if (parts.Count > 60) Console.WriteLine($"  …and {parts.Count - 60} more.");
+    return;
+}
+
 if (args.Length >= 2 && args[0] == "--roms")
 {
     var codename = args[1];

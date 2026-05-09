@@ -18,6 +18,22 @@ public interface IAdbService
     /// when root is present. Returns null if neither path yields a valid 14–15 digit IMEI.
     /// </summary>
     Task<string?> ReadImeiAsync(string serial, CancellationToken ct = default);
+
+    /// <summary>
+    /// Lists the device's partitions via <c>/dev/block/by-name</c>. Requires root (the directory
+    /// is unreadable as shell on most modern Android). Resolves each symlink to its block-device
+    /// target and stats the file size.
+    /// </summary>
+    Task<IReadOnlyList<Models.PartitionInfo>> ListPartitionsAsync(string serial, CancellationToken ct = default);
+
+    /// <summary>Run an arbitrary shell command (no <c>su</c>) and return raw stdout/stderr.</summary>
+    Task<ShellResult> RunShellAsync(string serial, string command, TimeSpan? timeout = null, CancellationToken ct = default);
+
+    /// <summary>Run a shell command via <c>su -c</c>. Returns the result; check <c>Success</c>.</summary>
+    Task<ShellResult> RunSuAsync(string serial, string command, TimeSpan? timeout = null, CancellationToken ct = default);
+
+    /// <summary>Pull a file off the device via <c>adb pull</c>.</summary>
+    Task<ShellResult> PullAsync(string serial, string remotePath, string localPath, TimeSpan? timeout = null, CancellationToken ct = default);
 }
 
 public sealed class AdbService : IAdbService
@@ -122,6 +138,68 @@ public sealed class AdbService : IAdbService
             return new RootStatus(RootKind.Other, "su present");
 
         return RootStatus.None;
+    }
+
+    public Task<ShellResult> RunShellAsync(string serial, string command, TimeSpan? timeout = null, CancellationToken ct = default)
+        => _shell.RunAsync(Adb, new[] { "-s", serial, "shell", command }, timeout ?? SlowTimeout, ct);
+
+    public Task<ShellResult> RunSuAsync(string serial, string command, TimeSpan? timeout = null, CancellationToken ct = default)
+        => _shell.RunAsync(Adb, new[] { "-s", serial, "shell", "su", "-c", command }, timeout ?? SlowTimeout, ct);
+
+    public Task<ShellResult> PullAsync(string serial, string remotePath, string localPath, TimeSpan? timeout = null, CancellationToken ct = default)
+        => _shell.RunAsync(Adb, new[] { "-s", serial, "pull", remotePath, localPath }, timeout ?? TimeSpan.FromMinutes(20), ct);
+
+    public async Task<IReadOnlyList<Models.PartitionInfo>> ListPartitionsAsync(string serial, CancellationToken ct = default)
+    {
+        // ls -l prints: lrwxrwxrwx 1 root root 21 2026-05-08 16:39 efs -> /dev/block/sdc4
+        // We need both the by-name slug (left) and the block-device target (right) so we can dd it.
+        var ls = await RunSuAsync(serial, "ls -l /dev/block/by-name 2>/dev/null", TimeSpan.FromSeconds(15), ct).ConfigureAwait(false);
+        if (!ls.Success || string.IsNullOrWhiteSpace(ls.Stdout)) return Array.Empty<Models.PartitionInfo>();
+
+        var entries = new List<(string Name, string BlockPath)>();
+        foreach (var raw in ls.Stdout.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var line = raw.TrimEnd('\r', ' ', '\t');
+            // Look for "<name> -> <target>".
+            var arrow = line.IndexOf(" -> ", StringComparison.Ordinal);
+            if (arrow < 0) continue;
+            var lhs = line[..arrow].TrimEnd();
+            var rhs = line[(arrow + 4)..].Trim();
+            // The slug is the last token on the LHS.
+            var lastSpace = lhs.LastIndexOf(' ');
+            var slug = lastSpace >= 0 ? lhs[(lastSpace + 1)..] : lhs;
+            if (string.IsNullOrWhiteSpace(slug) || string.IsNullOrWhiteSpace(rhs)) continue;
+            entries.Add((slug, rhs));
+        }
+
+        if (entries.Count == 0) return Array.Empty<Models.PartitionInfo>();
+
+        // Bulk-stat sizes via blockdev --getsize64. One call, semicolon-separated, parses cheaply.
+        var statCmd = "for p in " + string.Join(' ', entries.Select(e => Bash.Quote(e.BlockPath))) + "; do echo -n \"$p|\"; blockdev --getsize64 \"$p\" 2>/dev/null || echo 0; done";
+        var stat = await RunSuAsync(serial, statCmd, TimeSpan.FromSeconds(20), ct).ConfigureAwait(false);
+
+        var sizes = new Dictionary<string, long>(StringComparer.Ordinal);
+        if (stat.Success)
+        {
+            foreach (var raw in stat.Stdout.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+            {
+                var line = raw.TrimEnd('\r');
+                var pipe = line.IndexOf('|');
+                if (pipe <= 0) continue;
+                var path = line[..pipe];
+                var sizeStr = line[(pipe + 1)..].Trim();
+                if (long.TryParse(sizeStr, out var sz)) sizes[path] = sz;
+            }
+        }
+
+        return entries.Select(e => new Models.PartitionInfo
+        {
+            Name = e.Name,
+            BlockPath = e.BlockPath,
+            SizeBytes = sizes.TryGetValue(e.BlockPath, out var s) ? s : 0,
+            IsCritical = Models.PartitionInfo.CriticalNames.Contains(e.Name),
+            CriticalReason = Models.PartitionInfo.ReasonFor(e.Name),
+        }).OrderByDescending(p => p.IsCritical).ThenBy(p => p.Name, StringComparer.Ordinal).ToList();
     }
 
     public async Task<string?> ReadImeiAsync(string serial, CancellationToken ct = default)

@@ -14,6 +14,7 @@ public sealed class AppHost
     public IFirmwareCheckService FirmwareCheck { get; }
     public Func<IFirmwareDownloadService> FirmwareDownloadFactory { get; }
     public IRomAggregatorService RomAggregator { get; }
+    public IBackupService Backup { get; }
     public AppSettingsStore SettingsStore { get; }
     public ThemeManager Theme { get; }
 
@@ -28,6 +29,7 @@ public sealed class AppHost
         // and per-download isolation lets the user run sequential downloads cleanly.
         FirmwareDownloadFactory = () => new FirmwareDownloadService();
         RomAggregator = new RomAggregatorService();
+        Backup = new BackupService(Adb);
         SettingsStore = new AppSettingsStore();
         Theme = new ThemeManager(SettingsStore);
     }
