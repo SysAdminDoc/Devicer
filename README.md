@@ -2,7 +2,7 @@
 
 # Devicer
 
-[![Version](https://img.shields.io/badge/version-0.2.3-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows-0078d4.svg)](#)
 [![.NET](https://img.shields.io/badge/.NET-10-512bd4.svg)](#)

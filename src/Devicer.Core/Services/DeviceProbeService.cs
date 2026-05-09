@@ -64,6 +64,9 @@ public sealed class DeviceProbeService : IDeviceProbeService
             ? oem == "1"
             : null;
 
+        var fingerprint = Get(props, "ro.build.fingerprint");
+        var (pda, cscVer) = ExtractSamsungPda(props, fingerprint);
+
         return new DeviceInfo
         {
             Serial = serial,
@@ -74,11 +77,13 @@ public sealed class DeviceProbeService : IDeviceProbeService
             Codename = Get(props, "ro.product.device") ?? Get(props, "ro.product.name"),
             AndroidVersion = Get(props, "ro.build.version.release"),
             AndroidSdk = Get(props, "ro.build.version.sdk"),
-            BuildFingerprint = Get(props, "ro.build.fingerprint"),
+            BuildFingerprint = fingerprint,
             BuildId = Get(props, "ro.build.id"),
             SecurityPatch = Get(props, "ro.build.version.security_patch"),
             Csc = Get(props, "ro.csc.sales_code") ?? Get(props, "ril.sales_code"),
             CscCountry = Get(props, "ro.csc.countryiso_code"),
+            SamsungPda = pda,
+            SamsungCscVersion = cscVer,
             BasebandVersion = Get(props, "gsm.version.baseband") ?? Get(props, "ro.baseband"),
             BootloaderVersion = Get(props, "ro.bootloader") ?? Get(props, "ro.boot.bootloader"),
             CurrentSlot = Get(props, "ro.boot.slot_suffix"),
@@ -118,4 +123,32 @@ public sealed class DeviceProbeService : IDeviceProbeService
 
     private static string? GetVar(IReadOnlyDictionary<string, string> d, string key)
         => d.TryGetValue(key, out var v) && !string.IsNullOrWhiteSpace(v) ? v : null;
+
+    /// <summary>
+    /// Extract Samsung PDA (AP version) and CSC version from props or build fingerprint.
+    /// Samsung's modern fingerprint format has the PDA_CSC pair as the 5th '/' segment, e.g.
+    /// <c>samsung/pa3qxxx/pa3q:16/BP2A.250605.031.A3/S938BXXS6BYIF_OXM6BYIF:user/release-keys</c>
+    /// — the segment <c>S938BXXS6BYIF_OXM6BYIF</c> splits on '_' into PDA + CSC. Older devices
+    /// expose <c>ro.build.PDA</c> directly; we prefer that when present.
+    /// </summary>
+    internal static (string? Pda, string? CscVer) ExtractSamsungPda(IReadOnlyDictionary<string, string> props, string? fingerprint)
+    {
+        var directPda = Get(props, "ro.build.PDA");
+        var directCsc = Get(props, "ro.build.PDA.SUB") ?? Get(props, "ro.csc.version");
+        if (!string.IsNullOrWhiteSpace(directPda)) return (directPda, directCsc);
+
+        if (string.IsNullOrWhiteSpace(fingerprint)) return (null, null);
+        var slashes = fingerprint!.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        if (slashes.Length < 5) return (null, null);
+
+        var seg = slashes[4];
+        // Strip the ":user"/":userdebug" suffix that follows the version pair.
+        var colon = seg.IndexOf(':');
+        if (colon > 0) seg = seg[..colon];
+
+        if (string.IsNullOrWhiteSpace(seg)) return (null, null);
+        var underscore = seg.IndexOf('_');
+        if (underscore <= 0) return (seg, null);
+        return (seg[..underscore], seg[(underscore + 1)..]);
+    }
 }

@@ -17,6 +17,13 @@ public sealed record DeviceInfo
 
     public string? Csc { get; init; }
     public string? CscCountry { get; init; }
+    /// <summary>
+    /// Samsung PDA (AP firmware version, e.g. <c>S938BXXS6BYIF</c>). Extracted from build fingerprint
+    /// or <c>ro.build.PDA</c>. Null on non-Samsung devices.
+    /// </summary>
+    public string? SamsungPda { get; init; }
+    /// <summary>Samsung CSC (carrier) firmware version, e.g. <c>S938BOXM6BYIF</c>.</summary>
+    public string? SamsungCscVersion { get; init; }
     public string? BasebandVersion { get; init; }
     public string? BootloaderVersion { get; init; }
     public string? CurrentSlot { get; init; }

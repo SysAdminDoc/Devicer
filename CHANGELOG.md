@@ -2,6 +2,25 @@
 
 All notable changes to Devicer are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [SemVer](https://semver.org/).
 
+## v0.3.0 — 2026-05-09 (Samsung firmware lookup)
+
+### Added
+- **Samsung OTA latest-version lookup** (no auth, no Samsung account, no Python dep). New `Devicer.Core/Services/FirmwareCheckService.cs` queries `https://fota-cloud-dn.ospserver.net/firmware/<csc>/<model>/version.xml`, parses the XML, returns `LatestFirmware` with the latest `FirmwareVersion` (PDA/CSC/CP/Boot) and the upgrade history list.
+- New `FirmwareVersion` record with `TryParse` (handles 3- and 4-segment slash-separated strings) and `ComparePda` (lexicographic ordering on Samsung's PDA strings).
+- **Functional Firmware page** (replaces stub): auto-fills Model + CSC + currently-installed PDA from the selected device on the Device tab; "Check latest" button hits the OTA endpoint; results card shows latest PDA / CSC / CP / Boot, "Update available" badge if behind, and the full upgrade history list. Handles the 404 / empty-feed case with a warning banner.
+- **Samsung PDA extraction**: `DeviceProbeService.ExtractSamsungPda` parses the AP firmware version from the build fingerprint's 5th '/' segment (e.g. `S938BXXS6BYIF_OXM6BYIF` → PDA `S938BXXS6BYIF` + CSC firmware `OXM6BYIF`). Prefers `ro.build.PDA` when present (older Samsungs). Surfaced on the Device tab as a new "Samsung PDA / CSC FW" field.
+- `DeviceInfo` gains `SamsungPda` and `SamsungCscVersion` fields.
+- Devicer.Smoke now prints OTA latest + behind/ahead/current status when a Samsung device is connected.
+
+### Architecture notes
+- Implementation is **Option C** from the v0.3.0 fork analysis: native C# HTTP client + XML parser, no external runtime dep. Latest-version endpoint is unauthenticated, so we ship this in v0.3.0 alpha. The auth-protected `NF_DownloadBinaryInform` and AES-CBC-encrypted download endpoints come in v0.3.1+.
+- All firmware HTTP traffic stays on the host; no telemetry; no Samsung account needed.
+
+### Verified end-to-end
+- Live test against connected Samsung Galaxy S25 Ultra (SM-S938B / EUX): installed PDA `S938BXXS6BYIF` (Oct 2025) → latest from Samsung `S938BXXS9BZCH` (Mar 2026, build code `o=16`). Devicer correctly reports "BEHIND (update available)" with 16-entry upgrade history.
+- dotnet build clean (Release, 0/0).
+- WPF launches clean, no crashlog.
+
 ## v0.2.3 — 2026-05-09 (First-run wizard)
 
 ### Added

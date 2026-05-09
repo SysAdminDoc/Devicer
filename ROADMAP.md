@@ -30,21 +30,25 @@ Phased build plan derived from [docs/research.md](docs/research.md). Each versio
 - [x] Hot-plug detection (v0.2.1 — 4 s polled re-probe with selection persistence; v0.2.2 — user-configurable interval)
 - [x] Banish pill / oval backdrops from theme (v0.2.1)
 
-## v0.3.0 — Firmware download (Samsung) — **BLOCKED on backend choice**
+## v0.3.0 alpha — Samsung firmware lookup (shipped 2026-05-09)
 
-Three viable backends, mutually exclusive, each with real tradeoffs. **Decision required from user before implementation:**
+**Decision: Option C** — native C#, no Python or JRE dep. Single-binary install preserved.
 
-- **Option A** — Subprocess-wrap Python `samloader` CLI. Pros: real CLI, well-documented protocol, maintained forks. Cons: forces a Python runtime dependency on the user's machine (we'd ship an embeddable Python or require the user to install one).
-- **Option B** — Subprocess-wrap a Bifrost / SamloaderKotlin CLI build. Pros: same protocol, maintained, native binary (Kotlin/Native or JVM jlink). Cons: Bifrost is currently GUI-only — needs a CLI fork or upstream PR; jlink path adds ~50 MB JRE bundle.
-- **Option C** — Native C# reimplementation of Samsung's Kies / FUS / NF protocol. Pros: zero external dependency, single-binary install, fastest UX. Cons: most work; protocol can change (Samsung has rotated keys / endpoints in past).
+- [x] FirmwareVersion model (4-segment + 3-segment parser, lexicographic PDA compare)
+- [x] FirmwareCheckService — public OTA endpoint at `fota-cloud-dn.ospserver.net/firmware/<csc>/<model>/version.xml`, no auth
+- [x] Samsung PDA extraction from build fingerprint (5th '/' segment, '_'-split)
+- [x] FirmwareViewModel + functional Firmware page (autofill from Device tab, current vs latest, upgrade history, "Update available" badge)
+- [x] Verified end-to-end against live S25 Ultra EUX (installed `S938BXXS6BYIF` → latest `S938BXXS9BZCH` correctly flagged as behind)
+- [ ] Per-CSC search across multiple regions in one query (v0.3.1)
 
-**Recommendation**: Option C if we want a clean MIT product. Option A is fastest if Python is acceptable.
+## v0.3.1 — Samsung firmware download (auth + download)
 
-Once backend chosen:
-
-- [ ] Per-CSC search, latest + history view, region picker
-- [ ] Decrypted streaming download with resume + integrity check
-- [ ] Local firmware cache at `%LOCALAPPDATA%\Devicer\firmware\<model>_<csc>_<version>\` with model/CSC/version index
+- [ ] FUS NONCE handshake: `POST NF_DownloadGenerateNonce.do` → `Set-Cookie: NONCE=...` + `NONCE: ...` header. XOR-decode each byte with `0x70`.
+- [ ] Auth-signature derivation: AES-128-CBC encrypt of `nonce + key2`, IV = first 16 bytes of `key2`. `key2` derived from decoded nonce via the per-char transform.
+- [ ] `NF_DownloadBinaryInform.do` — XML POST with model+CSC+target_version; returns `BINARY_NAME` / `BINARY_BYTE_SIZE` / `LOGIC_VALUE_FACTORY`.
+- [ ] Streaming download: `POST NF_DownloadBinaryForMass.do` returning the encrypted blob; SHA256 verification on the way down.
+- [ ] AES-CBC firmware decryption (key derived from version string + IMEI prefix); zero-byte padding strip.
+- [ ] Local firmware cache at `%LOCALAPPDATA%\Devicer\firmware\<model>_<csc>_<version>\` with index.
 
 ## v0.4.0 — Custom ROM search
 

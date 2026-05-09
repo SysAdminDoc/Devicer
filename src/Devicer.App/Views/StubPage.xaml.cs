@@ -19,16 +19,6 @@ public partial class StubPage : UserControl
     }
 }
 
-public sealed class FirmwarePage : StubPage
-{
-    public FirmwarePage() : base(
-        "Firmware",
-        "Stock firmware download (Samsung CSC-aware) — Bifrost wrapper.",
-        "Coming in v0.3.0.",
-        "Wraps Bifrost (SamloaderKotlin) to fetch and decrypt official Samsung firmware per CSC. Other-OEM portals link out (Google AFT, OnePlus MSM, Xiaomi MiFlash) in the universal-mode pass.")
-    { }
-}
-
 public sealed class BackupPage : StubPage
 {
     public BackupPage() : base(

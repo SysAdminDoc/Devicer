@@ -137,6 +137,13 @@
                         <TextBlock Text="BUILD FINGERPRINT" Style="{StaticResource FieldLabel}" />
                         <TextBlock Text="{Binding BuildFingerprint, FallbackValue=—, TargetNullValue=—}" Style="{StaticResource FieldValue}" />
 
+                        <TextBlock Text="SAMSUNG PDA / CSC FW" Style="{StaticResource FieldLabel}" />
+                        <TextBlock Style="{StaticResource FieldValue}">
+                            <Run Text="{Binding SamsungPda, FallbackValue=—, TargetNullValue=—}" />
+                            <Run Text=" / " />
+                            <Run Text="{Binding SamsungCscVersion, FallbackValue=—, TargetNullValue=—}" />
+                        </TextBlock>
+
                         <TextBlock Text="SECURITY PATCH" Style="{StaticResource FieldLabel}" />
                         <TextBlock Text="{Binding SecurityPatch, FallbackValue=—, TargetNullValue=—}" Style="{StaticResource FieldValue}" />
 

@@ -11,6 +11,7 @@ public sealed class AppHost
     public IAdbService Adb { get; }
     public IFastbootService Fastboot { get; }
     public IDeviceProbeService DeviceProbe { get; }
+    public IFirmwareCheckService FirmwareCheck { get; }
     public AppSettingsStore SettingsStore { get; }
     public ThemeManager Theme { get; }
 
@@ -20,6 +21,7 @@ public sealed class AppHost
         Adb = new AdbService(ShellRunner);
         Fastboot = new FastbootService(ShellRunner);
         DeviceProbe = new DeviceProbeService(Adb, Fastboot);
+        FirmwareCheck = new FirmwareCheckService();
         SettingsStore = new AppSettingsStore();
         Theme = new ThemeManager(SettingsStore);
     }
