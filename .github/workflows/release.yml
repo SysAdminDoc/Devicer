@@ -1,0 +1,51 @@
+name: release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version (without v prefix), e.g. 1.0.0'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore Devicer.sln
+
+      - name: Build (Release)
+        run: dotnet build Devicer.sln -c Release --no-restore
+
+      - name: Build portable ZIP + SHA256
+        shell: pwsh
+        run: |
+          pwsh tools/build-release.ps1
+          Get-ChildItem dist
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Devicer-v${{ inputs.version }}-portable
+          path: |
+            dist/*.zip
+            dist/*.sha256
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
+        run: |
+          $tag = "v${{ inputs.version }}"
+          gh release create $tag --title "Devicer $tag" --notes-file CHANGELOG.md (Get-ChildItem dist/*.zip, dist/*.sha256 | ForEach-Object FullName)

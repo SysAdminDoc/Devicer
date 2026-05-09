@@ -2,6 +2,27 @@
 
 All notable changes to Devicer are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [SemVer](https://semver.org/).
 
+## v1.0.0 — 2026-05-09 (Polish + feature-complete alpha)
+
+### Added
+- **`tools/build-release.ps1`** — PowerShell 7 build + packager. Produces `dist/Devicer-vX.Y.Z-portable-win-x64.zip` with a `.sha256` sidecar. `-SelfContained` switch swaps in a single-file framework-bundled build.
+- **`.github/workflows/release.yml`** — manual `workflow_dispatch` GitHub Actions release pipeline. Restores, builds Release, runs the build-release script, uploads the ZIP + sha256 as both an artifact and a GH Release. Active the moment the repo gets a remote.
+
+### Changed
+- `CommunityToolkit.Mvvm` bumped 8.4.0 → 8.4.2 (no breaking changes).
+- README `Status` and `Version` badges + body text updated to reflect "first feature-complete alpha".
+
+### Verified
+- **CVE scan** — `dotnet list package --vulnerable --include-transitive` returned zero vulnerable packages across `Devicer.Core`, `Devicer.App`, `Devicer.Smoke`.
+- **Theme parity** — every `App*` token is defined in both `CatppuccinMocha.xaml` and `CatppuccinLatte.xaml` (parity diff empty in both directions).
+- **Pill-backdrop ban** — repo-wide grep for `CornerRadius="999"`, `CornerRadius="100"`, `RoundedCornerShape(50)`, `border-radius:999` returned zero matches in `src/`.
+- **Build clean** — `dotnet build Devicer.sln -c Release` and `-c Debug` both 4 projects / 0 errors / 0 warnings after the Mvvm bump.
+
+### Deferred (post-1.0 polish)
+- Signed installer requires a real code-signing certificate; marked as a stretch.
+- DPI-aware README screenshots need a manual capture session per the user's "Ship screenshots" recipe.
+- Branch protection on `main` is N/A until the repo gets a GitHub remote.
+
 ## v0.8.0 — 2026-05-09 (Universal mode)
 
 ### Added

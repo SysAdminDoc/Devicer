@@ -103,14 +103,18 @@ Phased build plan derived from [docs/research.md](docs/research.md). Each versio
 - [x] **Universal sidebar tab** added between Flash and Settings.
 - [ ] Direct in-app fastboot flash queue with progress bar (deferred to v0.8.1 — uses the same `FastbootService` already in `Devicer.Core`)
 
-## v1.0.0 — Polish + first public release
+## v1.0.0 — Polish + first feature-complete alpha — shipped 2026-05-09
 
-- [ ] Full UX pass per `directive-ux-polish.md`
-- [ ] Theme audit per `directive-theming.md`
-- [ ] Dependency CVE scan per `directive-dependency-scan.md`
-- [ ] Signed installer + portable ZIP via GH Actions release workflow
-- [ ] README screenshots captured DPI-aware (125%)
-- [ ] Branch protection on `main`
+- [x] **Theme audit** — every `App*` token defined in both `CatppuccinMocha.xaml` and `CatppuccinLatte.xaml` (parity diff confirmed empty in both directions). No banned `CornerRadius="999"` / `RoundedCornerShape(50)` / `border-radius:999` anywhere in `src/`.
+- [x] **Dependency CVE scan** — `dotnet list package --vulnerable --include-transitive` clean across `Devicer.Core`, `Devicer.App`, `Devicer.Smoke`. CommunityToolkit.Mvvm bumped 8.4.0 → 8.4.2.
+- [x] **UX polish** — every nav item now has a real implementation page (Device / Firmware / ROMs / Backup / Patch / Flash / Universal + Settings); legacy stub classes deleted. Per-page diagnostics + status banners + cancel buttons + open-folder helpers consistent across the suite.
+- [x] **Portable ZIP build script** at `tools/build-release.ps1` (PowerShell 7) — produces `dist/Devicer-vX.Y.Z-portable-win-x64.zip` + `.sha256` sidecar; `-SelfContained` switch for single-file deploys.
+- [x] **GitHub Actions release workflow** at `.github/workflows/release.yml` — manual `workflow_dispatch` trigger, builds + uploads ZIP + SHA256, creates GH Release. Active once the repo gets a remote.
+- [ ] **Signed installer** (Inno Setup / WiX) — needs an actual code-signing cert; deferred until the user provides one.
+- [ ] **README screenshots** captured DPI-aware (125%) — needs a Win32 capture pass against the running app; deferred to a manual session per the user's screenshots ritual.
+- [ ] **Branch protection on `main`** — N/A while the repo is local-only; flag for activation immediately after the first `gh repo create`.
+
+## Stretch (post-1.0)
 
 ## Stretch (post-1.0)
 

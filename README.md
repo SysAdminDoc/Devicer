@@ -2,17 +2,17 @@
 
 # Devicer
 
-[![Version](https://img.shields.io/badge/version-0.8.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows-0078d4.svg)](#)
 [![.NET](https://img.shields.io/badge/.NET-10-512bd4.svg)](#)
-[![Status](https://img.shields.io/badge/status-alpha-orange.svg)](#)
+[![Status](https://img.shields.io/badge/status-1.0%20alpha-orange.svg)](#)
 
 > Unified Windows toolkit for managing rooted Android phones — identify, search ROMs, back up, patch, and flash from one shell.
 
 ## Status
 
-**v0.8.0 — alpha.** Device + Firmware + ROMs + Backup + Patch + Flash + **Universal** tabs all functional. Universal tab auto-detects manufacturer/brand and surfaces an OEM-specific cheat sheet — unlock procedure, recommended tooling, portal deep-link, and known quirks for Pixel / OnePlus / Xiaomi / Sony / ASUS / Motorola / Nothing / Samsung (8 OEM profiles). All writes are still gated to a future release; v0.8.0 ships the inspector + safety gates + OEM guidance so a user can validate the path before committing. Backup performs root `dd` of selected partitions, pulls the images off-device, SHA256-verifies, and writes a versioned manifest to `%LOCALAPPDATA%\Devicer\backups\<serial>\<timestamp>\`. Critical Samsung partitions (EFS, modem NV, persist, modem state, FSC/FSG) are pre-selected and rendered with a CRITICAL badge + plain-language reason. Live-tested partition discovery on the connected S25 Ultra (125 partitions, all 6 critical correctly flagged). No Python, no JRE, no third-party servers. See [CHANGELOG.md](CHANGELOG.md). Tooling-landscape document at [docs/research.md](docs/research.md), phased build plan at [ROADMAP.md](ROADMAP.md).
+**v1.0.0 — first feature-complete alpha.** Seven functional sidebar pages (Device / Firmware / ROMs / Backup / Patch / Flash / Universal) plus Settings, all built on a locked C# / .NET 10 WPF / subprocess-wrapper architecture. Verified end-to-end against a Samsung Galaxy S25 Ultra (SM-S938B / Android 16 / CSC EUX / Magisk 30.7) — Device probe, firmware lookup + native FUS download, ROM aggregation, partition backup, boot.img patch, and Odin inspector all live-tested. CommunityToolkit.Mvvm bumped to 8.4.2; CVE scan returned zero vulnerable packages across all three projects. Theme parity verified between Catppuccin Mocha and Latte. A portable-ZIP build script (`tools/build-release.ps1`) and a placeholder GitHub Actions release workflow (`.github/workflows/release.yml`) ship in the repo for when the user pushes to a remote. Backup performs root `dd` of selected partitions, pulls the images off-device, SHA256-verifies, and writes a versioned manifest to `%LOCALAPPDATA%\Devicer\backups\<serial>\<timestamp>\`. Critical Samsung partitions (EFS, modem NV, persist, modem state, FSC/FSG) are pre-selected and rendered with a CRITICAL badge + plain-language reason. Live-tested partition discovery on the connected S25 Ultra (125 partitions, all 6 critical correctly flagged). No Python, no JRE, no third-party servers. See [CHANGELOG.md](CHANGELOG.md). Tooling-landscape document at [docs/research.md](docs/research.md), phased build plan at [ROADMAP.md](ROADMAP.md).
 
 ## Goals
 
