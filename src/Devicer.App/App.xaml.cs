@@ -2,6 +2,8 @@ using System.IO;
 using System.Windows;
 using System.Windows.Threading;
 using Devicer.App.Services;
+using Devicer.App.ViewModels;
+using Devicer.App.Views;
 
 namespace Devicer.App;
 
@@ -19,6 +21,19 @@ public partial class App : Application
 
         // Apply persisted theme before the first window opens so we don't flash Mocha when Latte is saved.
         Host.Theme.Apply(Host.SettingsStore.Settings.Theme);
+
+        // First-run wizard runs modal. If the user closes it without completing, FirstRunCompleted stays
+        // false and they'll see it again next launch — no harm done.
+        if (!Host.SettingsStore.Settings.FirstRunCompleted)
+        {
+            var firstRunVm = new FirstRunViewModel(Host.SettingsStore, Host.Adb, Host.Fastboot);
+            var firstRun = new FirstRunWindow(firstRunVm);
+            firstRun.ShowDialog();
+        }
+
+        var main = new MainWindow();
+        MainWindow = main;
+        main.Show();
     }
 
     private static void LogCrash(Exception? ex)

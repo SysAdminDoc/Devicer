@@ -21,9 +21,9 @@ Phased build plan derived from [docs/research.md](docs/research.md). Each versio
 - [x] `tools/Devicer.Smoke` console verifier (CI-friendly E2E against connected device)
 - [ ] First-run wizard: detect/install platform-tools v37+, prompt for USB debugging — deferred to v0.2.x
 
-## v0.2.x polish (in progress)
+## v0.2.x polish (shipped)
 
-- [ ] First-run wizard (platform-tools detection + install prompt) — v0.2.3
+- [x] First-run wizard (v0.2.3 — modal env-check + USB-debugging walkthrough)
 - [x] Catppuccin Latte light theme + runtime swap (v0.2.2)
 - [x] Settings page implementation (v0.2.2 — theme, probe interval, tool detection, about)
 - [x] Loading indicator during probe (v0.2.1 — animated accent stripe + status text)

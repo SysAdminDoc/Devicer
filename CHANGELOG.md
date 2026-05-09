@@ -2,6 +2,18 @@
 
 All notable changes to Devicer are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [SemVer](https://semver.org/).
 
+## v0.2.3 — 2026-05-09 (First-run wizard)
+
+### Added
+- **First-run wizard**: when `settings.firstRunCompleted == false`, a modal `FirstRunWindow` shows on launch with the Devicer logo, environment checks (live adb / fastboot detection with success/error glyphs), step-by-step USB-debugging enablement on the phone, and a privacy note (no data leaves the host). "Re-check" re-runs detection; "Get started" sets `firstRunCompleted = true` and continues to MainWindow.
+- App startup converted from `StartupUri` to manual window creation in `App.OnStartup` to gate on first-run.
+- Logo bundled into the App assembly via `<Resource Include="..\..\branding\logo.png" Link="Resources\Images\logo.png" />`.
+
+### Verified
+- dotnet build clean (Release, 0/0).
+- `firstRunCompleted=false` → FirstRunWindow shows, MainWindow does not (process at ~127 MB, wizard-only).
+- `firstRunCompleted=true` → MainWindow shows directly, no wizard (process at ~140 MB, full app + hot-plug timer).
+
 ## v0.2.2 — 2026-05-09 (Settings + Latte theme)
 
 ### Added

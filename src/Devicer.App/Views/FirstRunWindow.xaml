@@ -1,0 +1,117 @@
+<Window x:Class="Devicer.App.Views.FirstRunWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:Devicer.App.ViewModels"
+        Title="Welcome to Devicer"
+        Width="640" Height="540"
+        MinWidth="540" MinHeight="480"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        Background="{DynamicResource AppBackground}"
+        Foreground="{DynamicResource AppForeground}">
+    <Window.Resources>
+        <Style x:Key="StatusRow" TargetType="Border">
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="14,10" />
+            <Setter Property="Margin" Value="0,0,0,8" />
+            <Setter Property="Background" Value="{DynamicResource AppSurfaceRaised}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AppBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+        <Style x:Key="StatusGlyph" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
+            <Setter Property="FontSize" Value="18" />
+            <Setter Property="Width" Value="24" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="32,24,32,24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+            <Image Source="pack://application:,,,/Resources/Images/logo.png"
+                   Width="44" Height="44" Margin="0,0,14,0" VerticalAlignment="Center" />
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="Welcome to Devicer" Style="{StaticResource HeadingTextBlock}" />
+                <TextBlock Text="Let's check your environment before you flash anything."
+                           Foreground="{DynamicResource AppMutedForeground}" FontSize="14" />
+            </StackPanel>
+        </StackPanel>
+
+        <!-- Tool detection -->
+        <StackPanel Grid.Row="1" Margin="0,16,0,0">
+            <TextBlock Text="ENVIRONMENT" Style="{StaticResource LabelTextBlock}" Margin="0,0,0,10" />
+
+            <Border Style="{StaticResource StatusRow}">
+                <DockPanel LastChildFill="True">
+                    <TextBlock DockPanel.Dock="Left"
+                               Text="&#xE73E;"
+                               Style="{StaticResource StatusGlyph}"
+                               Foreground="{DynamicResource AppSuccess}"
+                               Visibility="{Binding AdbAvailable, Converter={x:Static vm:BoolToVisibilityConverter.Instance}}" />
+                    <TextBlock DockPanel.Dock="Left"
+                               Text="&#xE783;"
+                               Style="{StaticResource StatusGlyph}"
+                               Foreground="{DynamicResource AppDestructive}"
+                               Visibility="{Binding AdbAvailable, Converter={x:Static vm:InverseBoolToVisibilityConverter.Instance}}" />
+                    <TextBlock Text="{Binding AdbStatusText}" VerticalAlignment="Center" Margin="6,0,0,0" />
+                </DockPanel>
+            </Border>
+
+            <Border Style="{StaticResource StatusRow}">
+                <DockPanel LastChildFill="True">
+                    <TextBlock DockPanel.Dock="Left"
+                               Text="&#xE73E;"
+                               Style="{StaticResource StatusGlyph}"
+                               Foreground="{DynamicResource AppSuccess}"
+                               Visibility="{Binding FastbootAvailable, Converter={x:Static vm:BoolToVisibilityConverter.Instance}}" />
+                    <TextBlock DockPanel.Dock="Left"
+                               Text="&#xE783;"
+                               Style="{StaticResource StatusGlyph}"
+                               Foreground="{DynamicResource AppDestructive}"
+                               Visibility="{Binding FastbootAvailable, Converter={x:Static vm:InverseBoolToVisibilityConverter.Instance}}" />
+                    <TextBlock Text="{Binding FastbootStatusText}" VerticalAlignment="Center" Margin="6,0,0,0" />
+                </DockPanel>
+            </Border>
+        </StackPanel>
+
+        <!-- USB debugging tip -->
+        <Border Grid.Row="2" Style="{StaticResource Card}" Margin="0,16,0,0">
+            <StackPanel>
+                <TextBlock Text="ON YOUR PHONE" Style="{StaticResource LabelTextBlock}" Margin="0,0,0,10" />
+                <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource AppForeground}">
+                    <Run Text="1. Open " /><Run Text="Settings" FontWeight="SemiBold" /><Run Text=" → " /><Run Text="About phone" FontWeight="SemiBold" /><Run Text=" → tap " /><Run Text="Build number" FontWeight="SemiBold" /><Run Text=" seven times to enable Developer options." />
+                </TextBlock>
+                <TextBlock TextWrapping="Wrap" Margin="0,8,0,0">
+                    <Run Text="2. Open " /><Run Text="Settings" FontWeight="SemiBold" /><Run Text=" → " /><Run Text="Developer options" FontWeight="SemiBold" /><Run Text=" → enable " /><Run Text="USB debugging" FontWeight="SemiBold" /><Run Text="." />
+                </TextBlock>
+                <TextBlock TextWrapping="Wrap" Margin="0,8,0,0">
+                    <Run Text="3. Plug the phone into this PC. Tap " /><Run Text="Allow" FontWeight="SemiBold" /><Run Text=" on the &quot;Allow USB debugging?&quot; prompt." />
+                </TextBlock>
+                <TextBlock TextWrapping="Wrap" Margin="0,12,0,0" Style="{StaticResource MutedTextBlock}" FontSize="12">
+                    Devicer never sends data anywhere. All probing happens locally over adb/fastboot.
+                </TextBlock>
+            </StackPanel>
+        </Border>
+
+        <!-- Spacer -->
+        <Grid Grid.Row="3" />
+
+        <!-- Footer -->
+        <DockPanel Grid.Row="4" LastChildFill="False" Margin="0,16,0,0">
+            <Button DockPanel.Dock="Left" Content="Re-check"
+                    Style="{StaticResource SecondaryButton}"
+                    Command="{Binding CheckCommand}" />
+            <Button DockPanel.Dock="Right" Content="Get started"
+                    Style="{StaticResource PrimaryButton}"
+                    Click="Continue_Click" />
+        </DockPanel>
+    </Grid>
+</Window>
