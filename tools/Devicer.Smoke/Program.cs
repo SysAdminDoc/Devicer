@@ -21,6 +21,26 @@ if (args.Length > 0 && args[0] == "--crypto-self-test")
     return;
 }
 
+if (args.Length >= 2 && args[0] == "--roms")
+{
+    var codename = args[1];
+    using var agg = new RomAggregatorService();
+    var romResult = await agg.SearchAsync(codename);
+    Console.WriteLine($"Codename : {codename}");
+    Console.WriteLine($"Sources  : queried {romResult.SourcesQueried.Count}, with-results {romResult.SourcesWithResults.Count}");
+    Console.WriteLine($"Builds   : {romResult.Entries.Count}");
+    foreach (var e in romResult.Entries.Take(10))
+    {
+        Console.WriteLine();
+        Console.WriteLine($"  [{e.SourceDisplay} {e.KindDisplay}] {e.Version}  {e.SizeDisplay}  ({e.BuildDate:yyyy-MM-dd})");
+        Console.WriteLine($"    {e.FileName}");
+        Console.WriteLine($"    {e.DownloadUrl}");
+        if (!string.IsNullOrEmpty(e.Sha256)) Console.WriteLine($"    sha256: {e.Sha256}");
+    }
+    if (romResult.Entries.Count > 10) Console.WriteLine($"  …and {romResult.Entries.Count - 10} more.");
+    return;
+}
+
 var shell = new ShellRunner();
 var adb = new AdbService(shell);
 var fastboot = new FastbootService(shell);

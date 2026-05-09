@@ -53,13 +53,15 @@ Phased build plan derived from [docs/research.md](docs/research.md). Each versio
 - [ ] Per-CSC search across multiple regions in one query (deferred to v0.3.2)
 - [ ] Alternative IMEI read path for Samsung One UI 7+ (`service call iphonesubinfo` returns permission error even with root) — `/efs` parsing or privileged shim app (deferred to v0.3.2)
 
-## v0.4.0 — Custom ROM search
+## v0.4.0 — Custom ROM search — shipped 2026-05-09
 
-- [ ] Aggregate LineageOS wiki, lineageosdevices.com, XDA forum tags
-- [ ] Optional: crDroid, PixelExperience, Evolution X indices
-- [ ] Filter results by device codename auto-derived from Job 1
-- [ ] Direct download where mirror policy permits, deep-link otherwise
-- [ ] Checksum verification on download complete
+- [x] Aggregate LineageOS official update API (`/api/v1/<codename>/<romtype>/*`) — nightly + weekly across the device matrix
+- [x] Aggregate crDroid OTA JSON from the `crdroidandroid/android_vendor_crDroidOTA` GitHub repo across branches 16.0 / 15.0 / 14.0
+- [x] Filter results by device codename, **auto-derived from the connected device's `ro.product.device`** on the Device tab
+- [x] Direct download via deep-link (one-click → opens browser/download manager); SHA256 displayed for every entry so post-download verification is trivial
+- [x] Built-in ROMs page with Catppuccin styling, search box, status line, per-build cards (source / kind / version / size / build-date / maintainer / forum link)
+- [ ] Optional: PixelExperience, Evolution X indices (deferred — neither maintains a stable public JSON feed in 2026)
+- [ ] In-app download with chunked SHA256 verify + ROM cache (deferred to v0.4.1)
 
 ## v0.5.0 — Backup (PC-side)
 

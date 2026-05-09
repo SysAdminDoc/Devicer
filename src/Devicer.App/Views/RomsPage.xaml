@@ -1,0 +1,159 @@
+<UserControl x:Class="Devicer.App.Views.RomsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Devicer.App.ViewModels">
+    <UserControl.Resources>
+        <Style x:Key="FieldLabel" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource AppSubtleForeground}" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Typography.Capitals" Value="AllSmallCaps" />
+            <Setter Property="Margin" Value="0,0,0,4" />
+        </Style>
+        <Style x:Key="MonoValue" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Consolas, JetBrains Mono, Cascadia Mono" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="{DynamicResource AppForeground}" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="Background" Value="{DynamicResource AppSurfaceRaised}" />
+            <Setter Property="Foreground" Value="{DynamicResource AppForeground}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AppBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="8,6" />
+            <Setter Property="MinHeight" Value="30" />
+            <Setter Property="FontFamily" Value="Consolas, JetBrains Mono, Cascadia Mono" />
+            <Setter Property="CaretBrush" Value="{DynamicResource AppAccent}" />
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="32,28,32,32">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Heading -->
+        <DockPanel Grid.Row="0" Margin="0,0,0,8" LastChildFill="True">
+            <Button DockPanel.Dock="Right"
+                    Content="Search"
+                    Style="{StaticResource PrimaryButton}"
+                    Command="{Binding SearchCommand}"
+                    IsEnabled="{Binding IsIdle}" />
+            <StackPanel>
+                <TextBlock Text="Custom ROMs" Style="{StaticResource HeadingTextBlock}" />
+                <TextBlock Text="Aggregated builds from LineageOS and crDroid for the device codename below."
+                           Style="{StaticResource SubheadingTextBlock}" />
+            </StackPanel>
+        </DockPanel>
+
+        <!-- Diagnostic -->
+        <Border Grid.Row="1"
+                Style="{StaticResource Card}"
+                Background="#22F9E2AF"
+                BorderBrush="{DynamicResource AppWarning}"
+                Margin="0,0,0,16"
+                Visibility="{Binding Diagnostic, Converter={x:Static vm:NullToCollapsedConverter.Instance}}">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="&#xE7BA;" FontFamily="Segoe MDL2 Assets" FontSize="18"
+                           Foreground="{DynamicResource AppWarning}" Margin="0,0,12,0" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding Diagnostic}" VerticalAlignment="Center" TextWrapping="Wrap" />
+            </StackPanel>
+        </Border>
+
+        <!-- Form -->
+        <Border Grid.Row="2" Style="{StaticResource Card}" Margin="0,0,0,16">
+            <StackPanel>
+                <TextBlock Text="DEVICE CODENAME" Style="{StaticResource FieldLabel}" />
+                <TextBox Text="{Binding Codename, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBlock Style="{StaticResource MutedTextBlock}" FontSize="11" Margin="0,4,0,0" TextWrapping="Wrap"
+                           Text="Lowercase, e.g. 'cheeseburger', 'alioth', 'pa3q'. Auto-fills from the connected device on the Device tab." />
+            </StackPanel>
+        </Border>
+
+        <!-- Status line -->
+        <TextBlock Grid.Row="3"
+                   Text="{Binding StatusText}"
+                   Foreground="{DynamicResource AppMutedForeground}"
+                   FontSize="12"
+                   Margin="0,0,0,12"
+                   Visibility="{Binding StatusText, Converter={x:Static vm:NullToCollapsedConverter.Instance}}" />
+
+        <!-- Results -->
+        <ScrollViewer Grid.Row="4" VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding Results}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="{Binding SourceDisplay}"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource AppAccent}"
+                                               Margin="0,0,12,0" />
+                                    <TextBlock Text="{Binding KindDisplay}"
+                                               FontSize="11"
+                                               Typography.Capitals="AllSmallCaps"
+                                               Foreground="{DynamicResource AppSubtleForeground}"
+                                               VerticalAlignment="Center"
+                                               Margin="0,0,12,0" />
+                                    <TextBlock Text="{Binding Version}"
+                                               Foreground="{DynamicResource AppForeground}"
+                                               VerticalAlignment="Center" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal">
+                                    <Button Content="Open forum"
+                                            Style="{StaticResource SecondaryButton}"
+                                            Margin="0,0,6,0"
+                                            Command="{Binding DataContext.OpenForumCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                            CommandParameter="{Binding}"
+                                            Visibility="{Binding ForumUrl, Converter={x:Static vm:NullToCollapsedConverter.Instance}}" />
+                                    <Button Content="Download"
+                                            Style="{StaticResource PrimaryButton}"
+                                            Command="{Binding DataContext.OpenDownloadCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                            CommandParameter="{Binding}" />
+                                </StackPanel>
+
+                                <TextBlock Grid.Row="1" Grid.ColumnSpan="2"
+                                           Text="{Binding FileName}"
+                                           Style="{StaticResource MonoValue}"
+                                           Margin="0,0,0,4" />
+
+                                <StackPanel Grid.Row="2" Grid.ColumnSpan="2" Orientation="Horizontal">
+                                    <TextBlock Foreground="{DynamicResource AppMutedForeground}" FontSize="11" Margin="0,0,16,0">
+                                        <Run Text="{Binding BuildDate, StringFormat='Built {0:yyyy-MM-dd}', Mode=OneWay}" />
+                                    </TextBlock>
+                                    <TextBlock Foreground="{DynamicResource AppMutedForeground}" FontSize="11" Margin="0,0,16,0"
+                                               Text="{Binding SizeDisplay}" />
+                                    <TextBlock Foreground="{DynamicResource AppMutedForeground}" FontSize="11" Margin="0,0,16,0"
+                                               Visibility="{Binding Maintainer, Converter={x:Static vm:NullToCollapsedConverter.Instance}}">
+                                        <Run Text="by " /><Run Text="{Binding Maintainer, Mode=OneWay}" />
+                                    </TextBlock>
+                                    <TextBlock Foreground="{DynamicResource AppMutedForeground}" FontSize="11"
+                                               Visibility="{Binding Sha256, Converter={x:Static vm:NullToCollapsedConverter.Instance}}">
+                                        <Run Text="SHA256 verified" />
+                                    </TextBlock>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

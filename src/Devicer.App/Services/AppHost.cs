@@ -13,6 +13,7 @@ public sealed class AppHost
     public IDeviceProbeService DeviceProbe { get; }
     public IFirmwareCheckService FirmwareCheck { get; }
     public Func<IFirmwareDownloadService> FirmwareDownloadFactory { get; }
+    public IRomAggregatorService RomAggregator { get; }
     public AppSettingsStore SettingsStore { get; }
     public ThemeManager Theme { get; }
 
@@ -26,6 +27,7 @@ public sealed class AppHost
         // Each download gets its own client; FUS sessions can rotate state mid-flight,
         // and per-download isolation lets the user run sequential downloads cleanly.
         FirmwareDownloadFactory = () => new FirmwareDownloadService();
+        RomAggregator = new RomAggregatorService();
         SettingsStore = new AppSettingsStore();
         Theme = new ThemeManager(SettingsStore);
     }

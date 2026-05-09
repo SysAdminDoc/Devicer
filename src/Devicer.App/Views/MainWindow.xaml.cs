@@ -12,6 +12,7 @@ public partial class MainWindow : Window
 
         var deviceVm = new DeviceViewModel(App.Host.DeviceProbe, App.Host.SettingsStore.Settings.ProbeIntervalSeconds);
         var firmwareVm = new FirmwareViewModel(App.Host.FirmwareCheck, App.Host.FirmwareDownloadFactory);
+        var romVm = new RomViewModel(App.Host.RomAggregator);
         var settingsVm = new SettingsViewModel(
             App.Host.SettingsStore,
             App.Host.Theme,
@@ -21,14 +22,17 @@ public partial class MainWindow : Window
         // When the user changes the probe interval in Settings, push it into the live DeviceViewModel.
         settingsVm.ProbeIntervalChanged += (_, secs) => deviceVm.SetProbeInterval(secs);
 
-        // Auto-fill Firmware tab from whatever device the user has selected on the Device tab.
+        // Auto-fill Firmware + ROM tabs from whatever device the user has selected on the Device tab.
         deviceVm.PropertyChanged += (_, args) =>
         {
             if (args.PropertyName == nameof(deviceVm.SelectedDevice))
+            {
                 firmwareVm.PrefillFrom(deviceVm.SelectedDevice);
+                romVm.PrefillFrom(deviceVm.SelectedDevice);
+            }
         };
 
-        DataContext = new MainViewModel(deviceVm, firmwareVm, settingsVm);
+        DataContext = new MainViewModel(deviceVm, firmwareVm, romVm, settingsVm);
 
         // Kick off an initial probe so the Device page lands on real data.
         Loaded += async (_, _) => await deviceVm.RefreshAsync();

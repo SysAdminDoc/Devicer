@@ -2,6 +2,28 @@
 
 All notable changes to Devicer are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [SemVer](https://semver.org/).
 
+## v0.4.0 — 2026-05-09 (Custom ROM search)
+
+### Added
+- **Custom ROM search aggregator**:
+  - `RomEntry` model unifies build metadata across sources (`Source`, `Kind`, `Version`, `BuildDate`, `SizeBytes`, `FileName`, `DownloadUrl`, `Sha256`, `Md5`, `Maintainer`, `ForumUrl`).
+  - `IRomSource` interface with two production implementations:
+    - `LineageOsRomSource` queries the official `https://download.lineageos.org/api/v1/<codename>/<romtype>/*` JSON endpoint across `nightly` + `weekly`. The `id` field is the SHA256 — surfaced verbatim.
+    - `CrDroidRomSource` queries `https://raw.githubusercontent.com/crdroidandroid/android_vendor_crDroidOTA/<branch>/<codename>.json` across branches 16.0 / 15.0 / 14.0, capturing `download` URL, SHA256, MD5, build-type, maintainer, and the XDA forum thread.
+  - `RomAggregatorService` fans out to every registered source in parallel, isolates per-source failures, merges + sorts newest-first, reports which sources had results.
+- **ROMs page** (new sidebar nav item between Firmware and Backup): codename text field auto-fills from the connected device's `ro.product.device`. Search button triggers the aggregator. Each result is a Catppuccin card with Source + Kind chips (no pill backdrops — square `CornerRadius="6"` per global rule), version, filename, build-date, size, maintainer, "Open forum" link (if available) and a "Download" button that deep-links to the official mirror in the user's default browser.
+- `Devicer.Smoke` `--roms <codename>` flag prints aggregated results to stdout for debugging / scripted use.
+
+### Verified
+- Live aggregation against `cheeseburger` (OnePlus 5): 5 builds returned, 3 LineageOS Nightly (22.2 builds, full SHA256 chain) + 2 crDroid Monthly (10.x + 11.x branches, SHA256 + MD5).
+- Auto-fill against the connected S25 Ultra (`pa3q`): 0 builds (device is too new for either aggregator's index) — surfaced cleanly via the diagnostic banner with a "verify codename" hint.
+- dotnet build clean across Debug + Release (4 projects, 0/0).
+
+### Architecture notes
+- Per-source failure isolation: any HTTP / JSON / timeout in one source returns an empty list rather than poisoning the aggregator. The `SourcesWithResults` list lets the UI tell the user which sources actually returned anything.
+- Direct in-app download is deferred to v0.4.1 — for now the user clicks Download and their browser/download manager takes the SHA256-verifiable URL. The hash is displayed inline so post-download verification is a one-command shellout.
+- PixelExperience and Evolution X both retired their public JSON feeds in the 2024-2025 cycle; we'll add them back when they re-publish a stable index.
+
 ## v0.3.1 — 2026-05-09 (Samsung firmware download — auth + decrypt)
 
 ### Added

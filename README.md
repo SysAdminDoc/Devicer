@@ -2,7 +2,7 @@
 
 # Devicer
 
-[![Version](https://img.shields.io/badge/version-0.3.1-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.4.0-blue.svg)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows-0078d4.svg)](#)
 [![.NET](https://img.shields.io/badge/.NET-10-512bd4.svg)](#)
@@ -12,7 +12,7 @@
 
 ## Status
 
-**v0.3.1 — alpha.** Stack locked, scaffold up, Device tab probes a connected phone end-to-end via `adb` / `fastboot`. Firmware tab queries Samsung's public OTA feed for the latest available firmware and runs the full FUS protocol (NONCE handshake, signature derivation, BinaryInform, streaming download with resume, AES-128-ECB decryption) natively in C#. No Python, no JRE, no Samsung account. Verified against a Samsung Galaxy S25 Ultra (SM-S938B, Android 16, CSC EUX, Magisk 30.7) — see [CHANGELOG.md](CHANGELOG.md). The 2026 tooling landscape, gap analysis, and recommended toolchain are documented in [docs/research.md](docs/research.md). Phased build plan lives in [ROADMAP.md](ROADMAP.md).
+**v0.4.0 — alpha.** Device tab probes a connected phone end-to-end via `adb` / `fastboot`. Firmware tab queries Samsung's public OTA feed and runs the full FUS protocol (NONCE handshake, signature derivation, BinaryInform, streaming download with resume, AES-128-ECB decryption) natively in C#. ROMs tab aggregates LineageOS + crDroid official build feeds for the connected device's codename, with one-click download deep-link and SHA256 displayed for post-download verification. No Python, no JRE, no Samsung account, no third-party servers. Verified against a Samsung Galaxy S25 Ultra (SM-S938B, Android 16, CSC EUX, Magisk 30.7) — see [CHANGELOG.md](CHANGELOG.md). The 2026 tooling landscape, gap analysis, and recommended toolchain are documented in [docs/research.md](docs/research.md). Phased build plan lives in [ROADMAP.md](ROADMAP.md).
 
 ## Goals
 
