@@ -46,3 +46,7 @@ backups/
 *.lz4
 *.img
 *.bin
+
+# Markdown files local-only (except README)
+*.md
+!README.md
