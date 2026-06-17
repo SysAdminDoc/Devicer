@@ -27,6 +27,7 @@ public sealed class AppHost
     public IThorService Thor { get; }
     public IHeimdallService Heimdall { get; }
     public IOemGuidanceService OemGuidance { get; }
+    public IHashService Hash { get; }
     public IOemPluginRegistry PluginRegistry { get; }
     public ImeiCache ImeiCache { get; }
     public AppSettingsStore SettingsStore { get; }
@@ -38,19 +39,20 @@ public sealed class AppHost
         Adb = new AdbService(ShellRunner);
         Fastboot = new FastbootService(ShellRunner);
         DeviceProbe = new DeviceProbeService(Adb, Fastboot);
+        Hash = new HashService();
         FirmwareCheck = new FirmwareCheckService();
         // Each download gets its own client; FUS sessions can rotate state mid-flight,
         // and per-download isolation lets the user run sequential downloads cleanly.
-        FirmwareDownloadFactory = () => new FirmwareDownloadService();
+        FirmwareDownloadFactory = () => new FirmwareDownloadService(Hash);
         RomAggregator = new RomAggregatorService();
         RomDownload = new RomDownloadService();
-        Backup = new BackupService(Adb);
-        Restore = new RestoreService(Adb);
+        Backup = new BackupService(Adb, Hash);
+        Restore = new RestoreService(Adb, Hash);
         ToolManager = new ToolManager();
         Tetherback = new TetherbackService(ShellRunner, ToolManager);
         NeoBackup = new NeoBackupService(Adb);
-        BootPatch = new BootPatchService(Adb);
-        PcPatch = new PcPatchService(ShellRunner, ToolManager);
+        BootPatch = new BootPatchService(Adb, Hash);
+        PcPatch = new PcPatchService(ShellRunner, ToolManager, Hash);
         OdinInspector = new OdinInspectorService();
         FastbootFlash = new FastbootFlashService(Fastboot);
         Thor = new ThorService(ShellRunner, ToolManager);

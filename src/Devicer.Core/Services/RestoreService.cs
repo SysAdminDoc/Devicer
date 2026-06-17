@@ -1,5 +1,4 @@
 using System.IO;
-using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Devicer.Core.Models;
@@ -52,6 +51,7 @@ public interface IRestoreService
 public sealed class RestoreService : IRestoreService
 {
     private readonly IAdbService _adb;
+    private readonly IHashService _hash;
 
     private static readonly JsonSerializerOptions JsonOpts = new()
     {
@@ -59,9 +59,10 @@ public sealed class RestoreService : IRestoreService
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
 
-    public RestoreService(IAdbService adb)
+    public RestoreService(IAdbService adb, IHashService hash)
     {
         _adb = adb;
+        _hash = hash;
     }
 
     public Task<BackupManifest?> LoadManifestAsync(string folderPath, CancellationToken ct = default)
@@ -143,7 +144,7 @@ public sealed class RestoreService : IRestoreService
                     RestorePhase.Hashing, i, selectedPartitions.Count, p.Name,
                     $"Verifying SHA256 for {p.Name}…"));
 
-                var actualHash = await ComputeSha256Async(localPath, ct).ConfigureAwait(false);
+                var actualHash = await _hash.ComputeSha256Async(localPath, ct).ConfigureAwait(false);
                 if (!string.Equals(actualHash, p.Sha256, StringComparison.OrdinalIgnoreCase))
                 {
                     warnings.Add($"{p.Name}: SHA256 mismatch (expected {p.Sha256}, got {actualHash}). Refusing to write corrupt data.");
@@ -236,18 +237,6 @@ public sealed class RestoreService : IRestoreService
         }
 
         return new ShellResult(proc.ExitCode, await stdoutTask, await stderrTask);
-    }
-
-    private static async Task<string> ComputeSha256Async(string path, CancellationToken ct)
-    {
-        await using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 1 << 16, useAsync: true);
-        using var sha = SHA256.Create();
-        var buf = new byte[1 << 16];
-        int n;
-        while ((n = await fs.ReadAsync(buf.AsMemory(), ct).ConfigureAwait(false)) > 0)
-            sha.TransformBlock(buf, 0, n, null, 0);
-        sha.TransformFinalBlock(Array.Empty<byte>(), 0, 0);
-        return Convert.ToHexString(sha.Hash!).ToLowerInvariant();
     }
 
     private static string FormatBytes(long bytes)

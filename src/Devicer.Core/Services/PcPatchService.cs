@@ -1,5 +1,4 @@
 using System.IO;
-using System.Security.Cryptography;
 
 namespace Devicer.Core.Services;
 
@@ -17,12 +16,14 @@ public sealed class PcPatchService : IPcPatchService
 {
     private readonly IShellRunner _shell;
     private readonly IToolManager _tools;
+    private readonly IHashService _hash;
     private readonly string _outRoot;
 
-    public PcPatchService(IShellRunner shell, IToolManager tools, string? outRoot = null)
+    public PcPatchService(IShellRunner shell, IToolManager tools, IHashService hash, string? outRoot = null)
     {
         _shell = shell;
         _tools = tools;
+        _hash = hash;
         _outRoot = outRoot ?? Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "Devicer", "patches", "pc-side");
@@ -66,7 +67,7 @@ public sealed class PcPatchService : IPcPatchService
             throw new InvalidOperationException("Could not locate patched output file. Check Magisk_patcher output.");
 
         progress?.Report(new PatchProgress(PatchPhase.Hashing, "Hashing patched image…"));
-        var sha = await ComputeSha256Async(outputPath, ct).ConfigureAwait(false);
+        var sha = await _hash.ComputeSha256Async(outputPath, ct).ConfigureAwait(false);
         var size = new FileInfo(outputPath).Length;
 
         progress?.Report(new PatchProgress(PatchPhase.Done, $"Done. Patched image at {outputPath}", 1.0));
@@ -104,16 +105,4 @@ public sealed class PcPatchService : IPcPatchService
     }
 
     private static string Tail(string s, int max) => s.Length <= max ? s : "..." + s[^max..];
-
-    private static async Task<string> ComputeSha256Async(string path, CancellationToken ct)
-    {
-        await using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 1 << 16, useAsync: true);
-        using var sha = SHA256.Create();
-        var buf = new byte[1 << 16];
-        int n;
-        while ((n = await fs.ReadAsync(buf.AsMemory(), ct).ConfigureAwait(false)) > 0)
-            sha.TransformBlock(buf, 0, n, null, 0);
-        sha.TransformFinalBlock(Array.Empty<byte>(), 0, 0);
-        return Convert.ToHexString(sha.Hash!).ToLowerInvariant();
-    }
 }

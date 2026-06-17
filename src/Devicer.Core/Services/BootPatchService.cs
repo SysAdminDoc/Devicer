@@ -1,5 +1,4 @@
 using System.IO;
-using System.Security.Cryptography;
 using Devicer.Core.Models;
 
 namespace Devicer.Core.Services;
@@ -45,11 +44,13 @@ public interface IBootPatchService
 public sealed class BootPatchService : IBootPatchService
 {
     private readonly IAdbService _adb;
+    private readonly IHashService _hash;
     private readonly string _outRoot;
 
-    public BootPatchService(IAdbService adb, string? outRoot = null)
+    public BootPatchService(IAdbService adb, IHashService hash, string? outRoot = null)
     {
         _adb = adb;
+        _hash = hash;
         _outRoot = outRoot ?? Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "Devicer", "patches");
@@ -110,7 +111,7 @@ public sealed class BootPatchService : IBootPatchService
                 throw new InvalidOperationException($"adb pull failed: {pull.Stderr.Trim()}");
 
             progress?.Report(new PatchProgress(PatchPhase.Hashing, "Hashing patched image…"));
-            var sha = await ComputeSha256Async(localOut, ct).ConfigureAwait(false);
+            var sha = await _hash.ComputeSha256Async(localOut, ct).ConfigureAwait(false);
             var size = new FileInfo(localOut).Length;
 
             // Cleanup remote artifacts (non-fatal). Use a fresh token so a Cancel pressed
@@ -260,18 +261,6 @@ public sealed class BootPatchService : IBootPatchService
     }
 
     private static string Tail(string s, int max) => s.Length <= max ? s : "…" + s[^max..];
-
-    private static async Task<string> ComputeSha256Async(string path, CancellationToken ct)
-    {
-        await using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 1 << 16, useAsync: true);
-        using var sha = SHA256.Create();
-        var buf = new byte[1 << 16];
-        int n;
-        while ((n = await fs.ReadAsync(buf.AsMemory(), ct).ConfigureAwait(false)) > 0)
-            sha.TransformBlock(buf, 0, n, null, 0);
-        sha.TransformFinalBlock(Array.Empty<byte>(), 0, 0);
-        return Convert.ToHexString(sha.Hash!).ToLowerInvariant();
-    }
 
     private static string SafeSlug(string input)
     {

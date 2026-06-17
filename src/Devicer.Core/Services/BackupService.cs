@@ -1,5 +1,4 @@
 using System.IO;
-using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Devicer.Core.Models;
@@ -50,6 +49,7 @@ public interface IBackupService
 public sealed class BackupService : IBackupService
 {
     private readonly IAdbService _adb;
+    private readonly IHashService _hash;
     private readonly string _root;
 
     private static readonly JsonSerializerOptions ManifestJsonOpts = new()
@@ -59,9 +59,10 @@ public sealed class BackupService : IBackupService
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
     };
 
-    public BackupService(IAdbService adb, string? rootDir = null)
+    public BackupService(IAdbService adb, IHashService hash, string? rootDir = null)
     {
         _adb = adb;
+        _hash = hash;
         _root = rootDir ?? Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "Devicer", "backups");
@@ -138,7 +139,7 @@ public sealed class BackupService : IBackupService
 
                 progress?.Report(new BackupProgress(BackupPhase.Hashing, p.Name, i, partitions.Count, 0, p.SizeBytes,
                     $"Hashing {p.Name}…"));
-                var sha = await ComputeSha256Async(localPath, ct).ConfigureAwait(false);
+                var sha = await _hash.ComputeSha256Async(localPath, ct).ConfigureAwait(false);
                 var size = new FileInfo(localPath).Length;
 
                 entries.Add(new PartitionBackupEntry
@@ -206,18 +207,6 @@ public sealed class BackupService : IBackupService
     }
 
     private static string Tail(string s, int max) => s.Length <= max ? s : "…" + s[^max..];
-
-    private static async Task<string> ComputeSha256Async(string path, CancellationToken ct)
-    {
-        await using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 1 << 16, useAsync: true);
-        using var sha = SHA256.Create();
-        var buf = new byte[1 << 16];
-        int n;
-        while ((n = await fs.ReadAsync(buf.AsMemory(), ct).ConfigureAwait(false)) > 0)
-            sha.TransformBlock(buf, 0, n, null, 0);
-        sha.TransformFinalBlock(Array.Empty<byte>(), 0, 0);
-        return Convert.ToHexString(sha.Hash!).ToLowerInvariant();
-    }
 
     private static TimeSpan EstimateDumpTimeout(long bytes)
     {

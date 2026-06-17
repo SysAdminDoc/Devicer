@@ -1,6 +1,5 @@
 using System.IO;
 using System.Net.Http;
-using System.Security.Cryptography;
 using System.Text;
 using System.Xml.Linq;
 using Devicer.Core.Models;
@@ -71,11 +70,13 @@ public sealed class FirmwareDownloadService : IFirmwareDownloadService, IDisposa
 {
     private readonly FusClient _fus;
     private readonly FirmwareCache _cache;
+    private readonly IHashService _hash;
 
-    public FirmwareDownloadService(FusClient? fus = null, FirmwareCache? cache = null)
+    public FirmwareDownloadService(IHashService? hash = null, FusClient? fus = null, FirmwareCache? cache = null)
     {
         _fus = fus ?? new FusClient();
         _cache = cache ?? new FirmwareCache();
+        _hash = hash ?? new HashService();
     }
 
     public async Task<FirmwareBinaryInfo> GetBinaryInfoAsync(string model, string region, string targetVersion, string imei, CancellationToken ct = default)
@@ -149,7 +150,7 @@ public sealed class FirmwareDownloadService : IFirmwareDownloadService, IDisposa
         // SHA256 over the encrypted blob (we don't have an authoritative hash from the server, so this
         // is informational — useful for cache-hit detection and integrity checks across resumes).
         progress?.Report(new FirmwareProgress(FirmwarePhase.Downloading, info.BinaryByteSize, info.BinaryByteSize, "Hashing encrypted blob…"));
-        var sha = await ComputeSha256Async(encPath, ct).ConfigureAwait(false);
+        var sha = await _hash.ComputeSha256Async(encPath, ct).ConfigureAwait(false);
 
         progress?.Report(new FirmwareProgress(FirmwarePhase.Decrypting, 0, info.BinaryByteSize, "Decrypting firmware…"));
         var key = info.IsV4
@@ -255,18 +256,6 @@ public sealed class FirmwareDownloadService : IFirmwareDownloadService, IDisposa
             }
         }
         progress?.Report(new FirmwareProgress(FirmwarePhase.Downloading, total, info.BinaryByteSize));
-    }
-
-    private static async Task<string> ComputeSha256Async(string path, CancellationToken ct)
-    {
-        await using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 1 << 16, useAsync: true);
-        using var sha = SHA256.Create();
-        var buf = new byte[1 << 16];
-        int n;
-        while ((n = await fs.ReadAsync(buf.AsMemory(), ct).ConfigureAwait(false)) > 0)
-            sha.TransformBlock(buf, 0, n, null, 0);
-        sha.TransformFinalBlock(Array.Empty<byte>(), 0, 0);
-        return Convert.ToHexString(sha.Hash!).ToLowerInvariant();
     }
 
     private static string FormatBytes(long bytes)
