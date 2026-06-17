@@ -16,6 +16,7 @@ public sealed class AppHost
     public IRomAggregatorService RomAggregator { get; }
     public IRomDownloadService RomDownload { get; }
     public IBackupService Backup { get; }
+    public IRestoreService Restore { get; }
     public IBootPatchService BootPatch { get; }
     public IPcPatchService PcPatch { get; }
     public IOdinInspectorService OdinInspector { get; }
@@ -41,6 +42,7 @@ public sealed class AppHost
         RomAggregator = new RomAggregatorService();
         RomDownload = new RomDownloadService();
         Backup = new BackupService(Adb);
+        Restore = new RestoreService(Adb);
         BootPatch = new BootPatchService(Adb);
         ToolManager = new ToolManager();
         PcPatch = new PcPatchService(ShellRunner, ToolManager);

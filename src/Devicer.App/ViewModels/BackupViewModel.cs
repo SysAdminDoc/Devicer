@@ -20,6 +20,7 @@ public partial class BackupViewModel : ObservableObject
 {
     private readonly IAdbService _adb;
     private readonly IBackupService _backup;
+    private readonly IRestoreService _restore;
 
     private DeviceInfo? _device;
     private CancellationTokenSource? _runCts;
@@ -59,12 +60,34 @@ public partial class BackupViewModel : ObservableObject
     [ObservableProperty]
     private string? _lastBackupFolder;
 
-    public bool IsIdle => !IsLoading && !IsRunning;
+    public bool IsIdle => !IsLoading && !IsRunning && !IsRestoring;
 
-    public BackupViewModel(IAdbService adb, IBackupService backup)
+    [ObservableProperty]
+    private string? _restoreManifestPath;
+
+    [ObservableProperty]
+    private BackupManifest? _restoreManifest;
+
+    [ObservableProperty]
+    private bool _restoreConfirmed;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsIdle))]
+    [NotifyCanExecuteChangedFor(nameof(RestoreCommand))]
+    [NotifyCanExecuteChangedFor(nameof(RestoreDryRunCommand))]
+    private bool _isRestoring;
+
+    [ObservableProperty]
+    private string? _restoreStatusText;
+
+    public ObservableCollection<PartitionRow> RestorePartitions { get; } = new();
+    public ObservableCollection<string> RestoreWarnings { get; } = new();
+
+    public BackupViewModel(IAdbService adb, IBackupService backup, IRestoreService restore)
     {
         _adb = adb;
         _backup = backup;
+        _restore = restore;
     }
 
     public void PrefillFrom(DeviceInfo? device)
@@ -188,4 +211,103 @@ public partial class BackupViewModel : ObservableObject
     private bool HasFolder() => !string.IsNullOrWhiteSpace(LastBackupFolder);
 
     partial void OnLastBackupFolderChanged(string? value) => OpenLastFolderCommand.NotifyCanExecuteChanged();
+
+    // ── Restore section ──
+
+    [RelayCommand]
+    public void BrowseRestoreFolder()
+    {
+        var dlg = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "Select a backup manifest.json",
+            Filter = "Manifest files (manifest.json)|manifest.json|All files (*.*)|*.*",
+        };
+        if (dlg.ShowDialog() != true) return;
+        var folder = Path.GetDirectoryName(dlg.FileName);
+        if (folder is null) return;
+        RestoreManifestPath = folder;
+        _ = LoadRestoreManifestAsync(folder);
+    }
+
+    private async Task LoadRestoreManifestAsync(string folder)
+    {
+        RestoreManifest = null;
+        RestorePartitions.Clear();
+        RestoreConfirmed = false;
+        var manifest = await _restore.LoadManifestAsync(folder).ConfigureAwait(true);
+        if (manifest is null)
+        {
+            Diagnostic = "Could not load manifest.json from the selected folder.";
+            return;
+        }
+        RestoreManifest = manifest;
+        foreach (var p in manifest.Partitions)
+            RestorePartitions.Add(new PartitionRow { Info = new PartitionInfo { Name = p.Name, BlockPath = "", IsCritical = p.IsCritical, SizeBytes = p.SizeBytes, CriticalReason = null }, Selected = false });
+    }
+
+    [RelayCommand(CanExecute = nameof(CanRestoreDryRun))]
+    public async Task RestoreDryRunAsync()
+    {
+        if (RestoreManifest is null || RestoreManifestPath is null) return;
+        var selected = GetSelectedRestoreEntries();
+        if (selected.Count == 0) { Diagnostic = "Select at least one partition to restore."; return; }
+        var plan = await _restore.GeneratePlanAsync(RestoreManifestPath, selected).ConfigureAwait(true);
+        RestoreStatusText = plan;
+    }
+
+    private bool CanRestoreDryRun() => RestoreManifest is not null && !IsRestoring;
+
+    [RelayCommand(CanExecute = nameof(CanRestore))]
+    public async Task RestoreAsync()
+    {
+        if (RestoreManifest is null || RestoreManifestPath is null || string.IsNullOrWhiteSpace(Serial)) return;
+        if (!RestoreConfirmed) { Diagnostic = "Check the confirmation box to proceed."; return; }
+        var selected = GetSelectedRestoreEntries();
+        if (selected.Count == 0) { Diagnostic = "Select at least one partition to restore."; return; }
+
+        IsRestoring = true;
+        Diagnostic = null;
+        RestoreWarnings.Clear();
+        RestoreStatusText = "Starting restore…";
+        RestoreConfirmed = false;
+        _runCts?.Dispose();
+        _runCts = new CancellationTokenSource();
+        var ct = _runCts.Token;
+
+        var progress = new Progress<RestoreProgress>(p =>
+        {
+            RestoreStatusText = p.Message ?? $"{p.Phase} {p.PartitionName}";
+        });
+
+        try
+        {
+            var result = await _restore.RestoreAsync(Serial!, RestoreManifestPath, selected, progress, ct).ConfigureAwait(true);
+            foreach (var w in result.WarningMessages) RestoreWarnings.Add(w);
+            RestoreStatusText = result.FailedPartitions.Count == 0
+                ? $"Restored {result.SucceededPartitions}/{result.TotalPartitions} partitions."
+                : $"Restored {result.SucceededPartitions}/{result.TotalPartitions}. Failed: {string.Join(", ", result.FailedPartitions)}.";
+        }
+        catch (OperationCanceledException)
+        {
+            RestoreStatusText = "Restore cancelled.";
+        }
+        catch (Exception ex)
+        {
+            Diagnostic = $"Restore failed: {ex.Message}";
+            RestoreStatusText = null;
+        }
+        finally
+        {
+            IsRestoring = false;
+        }
+    }
+
+    private bool CanRestore() => RestoreManifest is not null && !IsRestoring && !string.IsNullOrWhiteSpace(Serial);
+
+    private IReadOnlyList<PartitionBackupEntry> GetSelectedRestoreEntries()
+    {
+        if (RestoreManifest is null) return [];
+        var selectedNames = RestorePartitions.Where(r => r.Selected).Select(r => r.Info.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        return RestoreManifest.Partitions.Where(p => selectedNames.Contains(p.Name)).ToList();
+    }
 }
