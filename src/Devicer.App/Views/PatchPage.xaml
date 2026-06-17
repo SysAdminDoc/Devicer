@@ -37,6 +37,21 @@
                 </StackPanel>
             </DockPanel>
 
+            <!-- Play Integrity warning -->
+            <Border Style="{StaticResource Card}"
+                    Background="#22F9E2AF"
+                    BorderBrush="{DynamicResource AppWarning}"
+                    Margin="0,0,0,12">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#xE7BA;" FontFamily="Segoe MDL2 Assets" FontSize="18"
+                               Foreground="{DynamicResource AppWarning}" Margin="0,0,12,0" VerticalAlignment="Top" />
+                    <TextBlock VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12">
+                        <Run FontWeight="SemiBold" Text="Play Integrity impact: " />
+                        <Run Text="Root patching will fail Play Integrity DEVICE and STRONG verdicts. Samsung Pay, Google Wallet, banking apps, and enterprise enrollment will stop working. Bypasses (Magisk DenyList / Play Integrity Fix module) exist but break frequently." />
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
             <Border Style="{StaticResource Card}" Margin="0,0,0,12">
                 <StackPanel>
                     <TextBlock Text="DEVICE" Style="{StaticResource FieldLabel}" />

@@ -15,6 +15,9 @@
     <Description>Core services and models for Devicer — adb/fastboot wrappers, device probe, root detection.</Description>
   </PropertyGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="Devicer.Core.Tests" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="9.0.4" />
   </ItemGroup>
 </Project>
