@@ -1,4 +1,6 @@
+using System.ComponentModel;
 using System.Windows;
+using System.Windows.Media;
 using Devicer.App.Services;
 using Devicer.App.ViewModels;
 
@@ -23,10 +25,8 @@ public partial class MainWindow : Window
             App.Host.Adb,
             App.Host.Fastboot);
 
-        // When the user changes the probe interval in Settings, push it into the live DeviceViewModel.
         settingsVm.ProbeIntervalChanged += (_, secs) => deviceVm.SetProbeInterval(secs);
 
-        // Auto-fill Firmware + ROM tabs from whatever device the user has selected on the Device tab.
         deviceVm.PropertyChanged += (_, args) =>
         {
             if (args.PropertyName == nameof(deviceVm.SelectedDevice))
@@ -42,7 +42,31 @@ public partial class MainWindow : Window
 
         DataContext = new MainViewModel(deviceVm, firmwareVm, romVm, backupVm, patchVm, flashVm, universalVm, settingsVm);
 
-        // Kick off an initial probe so the Device page lands on real data.
+        App.Host.Snackbar.PropertyChanged += OnSnackbarChanged;
+
         Loaded += async (_, _) => await deviceVm.RefreshAsync();
+    }
+
+    private void OnSnackbarChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(SnackbarService.IsVisible)) return;
+        var svc = App.Host.Snackbar;
+        if (svc.IsVisible)
+        {
+            SnackbarText.Text = svc.Message;
+            SnackbarText.Foreground = (Brush)FindResource("AppForeground");
+            SnackbarHost.Background = svc.Severity switch
+            {
+                SnackbarSeverity.Success => new SolidColorBrush(Color.FromArgb(0xDD, 0x40, 0xA0, 0x2B)),
+                SnackbarSeverity.Warning => new SolidColorBrush(Color.FromArgb(0xDD, 0xDF, 0x8E, 0x1D)),
+                SnackbarSeverity.Error => new SolidColorBrush(Color.FromArgb(0xDD, 0xD2, 0x00, 0x32)),
+                _ => new SolidColorBrush(Color.FromArgb(0xDD, 0x45, 0x47, 0x5A)),
+            };
+            SnackbarHost.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            SnackbarHost.Visibility = Visibility.Collapsed;
+        }
     }
 }

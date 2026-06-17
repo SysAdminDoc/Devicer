@@ -31,6 +31,7 @@ public sealed class AppHost
     public IHashService Hash { get; }
     public IOemPluginRegistry PluginRegistry { get; }
     public ImeiCache ImeiCache { get; }
+    public SnackbarService Snackbar { get; }
     public AppSettingsStore SettingsStore { get; }
     public ThemeManager Theme { get; }
 
@@ -61,6 +62,7 @@ public sealed class AppHost
         Heimdall = new HeimdallService(ShellRunner, ToolManager);
         OemGuidance = new OemGuidanceService();
         PluginRegistry = new OemPluginRegistry();
+        Snackbar = new SnackbarService();
         ImeiCache = new ImeiCache();
         SettingsStore = new AppSettingsStore();
         Theme = new ThemeManager(SettingsStore);

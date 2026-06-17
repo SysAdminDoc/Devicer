@@ -63,7 +63,21 @@
             </DockPanel>
         </Border>
 
-        <!-- Main content -->
-        <ContentControl Grid.Column="1" Content="{Binding CurrentPage}" />
+        <!-- Main content + snackbar overlay -->
+        <Grid Grid.Column="1">
+            <ContentControl Content="{Binding CurrentPage}" />
+
+            <Border x:Name="SnackbarHost"
+                    VerticalAlignment="Bottom" HorizontalAlignment="Center"
+                    Margin="0,0,0,16"
+                    CornerRadius="8"
+                    Padding="20,12"
+                    MinWidth="300" MaxWidth="700"
+                    Visibility="Collapsed">
+                <TextBlock x:Name="SnackbarText"
+                           FontSize="13" TextWrapping="Wrap"
+                           TextAlignment="Center" />
+            </Border>
+        </Grid>
     </Grid>
 </Window>
