@@ -11,6 +11,49 @@ using Devicer.Core.Services;
 
 namespace Devicer.App.ViewModels;
 
+public sealed class FirmwareRegionResultItem
+{
+    public FirmwareRegionResultItem(RegionalFirmwareResult result, string? currentBuildId)
+    {
+        Csc = result.Csc;
+        Latest = result.Firmware?.Latest;
+        UpgradeHistory = result.Firmware?.UpgradeHistory ?? Array.Empty<FirmwareVersion>();
+        Error = result.Error;
+
+        if (Latest is null)
+        {
+            StatusText = string.IsNullOrWhiteSpace(Error) ? "No firmware feed" : $"Lookup failed: {Error}";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(currentBuildId))
+        {
+            StatusText = "Latest feed found";
+            return;
+        }
+
+        var diff = FirmwareVersion.ComparePda(Latest.Pda, currentBuildId);
+        UpdateAvailable = diff > 0;
+        StatusText = diff > 0
+            ? "Update available"
+            : diff < 0
+                ? "Installed PDA is newer"
+                : "Current";
+    }
+
+    public string Csc { get; }
+    public FirmwareVersion? Latest { get; }
+    public IReadOnlyList<FirmwareVersion> UpgradeHistory { get; }
+    public string? Error { get; }
+    public bool HasFirmware => Latest is not null;
+    public bool UpdateAvailable { get; }
+    public string StatusText { get; }
+    public string LatestPda => Latest?.Pda ?? "—";
+    public string LatestCsc => Latest?.Csc ?? "—";
+    public string LatestCp => Latest?.Cp ?? "—";
+    public string LatestBoot => Latest?.Boot ?? "—";
+}
+
 public partial class FirmwareViewModel : ObservableObject
 {
     private readonly IFirmwareCheckService _firmware;
@@ -21,6 +64,7 @@ public partial class FirmwareViewModel : ObservableObject
     private string? _serial;
 
     public ObservableCollection<FirmwareVersion> History { get; } = new();
+    public ObservableCollection<FirmwareRegionResultItem> RegionResults { get; } = new();
 
     [ObservableProperty]
     private string? _model;
@@ -49,6 +93,23 @@ public partial class FirmwareViewModel : ObservableObject
 
     [ObservableProperty]
     private FirmwareVersion? _latest;
+
+    [ObservableProperty]
+    private FirmwareRegionResultItem? _selectedRegionResult;
+
+    partial void OnSelectedRegionResultChanged(FirmwareRegionResultItem? value)
+    {
+        Latest = value?.Latest;
+        History.Clear();
+        if (value is not null)
+        {
+            foreach (var v in value.UpgradeHistory) History.Add(v);
+        }
+
+        UpdateAvailable = value?.UpdateAvailable ?? false;
+        StatusText = value?.HasFirmware == true ? value.StatusText : null;
+        DownloadLatestCommand.NotifyCanExecuteChanged();
+    }
 
     [ObservableProperty]
     private bool _isChecking;
@@ -155,6 +216,8 @@ public partial class FirmwareViewModel : ObservableObject
 
         // Reset latest so we don't show a stale match.
         Latest = null;
+        RegionResults.Clear();
+        SelectedRegionResult = null;
         UpdateAvailable = false;
         StatusText = null;
         Diagnostic = null;
@@ -163,40 +226,49 @@ public partial class FirmwareViewModel : ObservableObject
     [RelayCommand]
     public async Task CheckLatestAsync()
     {
-        if (string.IsNullOrWhiteSpace(Model) || string.IsNullOrWhiteSpace(Csc))
+        var cscs = FirmwareCheckService.ParseCscList(Csc);
+        if (string.IsNullOrWhiteSpace(Model) || cscs.Count == 0)
         {
-            Diagnostic = "Enter model + CSC, or select a device on the Device tab to autofill.";
+            Diagnostic = "Enter model + one or more CSCs, or select a device on the Device tab to autofill.";
             return;
         }
 
         IsChecking = true;
         OnPropertyChanged(nameof(IsIdle));
         Diagnostic = null;
-        StatusText = "Querying Samsung OTA feed…";
+        StatusText = cscs.Count == 1
+            ? "Querying Samsung OTA feed…"
+            : $"Querying {cscs.Count} Samsung OTA feeds…";
         try
         {
-            var result = await _firmware.GetLatestAsync(Model, Csc).ConfigureAwait(true);
-            if (result is null)
+            var results = await _firmware.GetLatestAcrossRegionsAsync(Model, cscs).ConfigureAwait(true);
+            RegionResults.Clear();
+            foreach (var result in results)
+                RegionResults.Add(new FirmwareRegionResultItem(result, CurrentBuildId));
+
+            SelectedRegionResult = RegionResults.FirstOrDefault(r => r.UpdateAvailable)
+                ?? RegionResults.FirstOrDefault(r => r.HasFirmware)
+                ?? RegionResults.FirstOrDefault();
+
+            if (SelectedRegionResult?.HasFirmware != true)
             {
                 StatusText = null;
-                Diagnostic = $"Samsung returned no firmware feed for {Model} / {Csc}. The model+CSC pair may be invalid, or the device is too new for the public feed.";
+                var detail = string.Join("; ", RegionResults.Select(r => $"{r.Csc}: {r.StatusText}"));
+                Diagnostic = $"Samsung returned no firmware feed for {Model} / {string.Join(", ", cscs)}. The model+CSC pair may be invalid, or the device is too new for the public feed."
+                    + (string.IsNullOrWhiteSpace(detail) ? string.Empty : $" Details: {detail}");
                 Latest = null;
                 History.Clear();
                 UpdateAvailable = false;
                 return;
             }
 
-            Latest = result.Latest;
-            History.Clear();
-            foreach (var v in result.UpgradeHistory) History.Add(v);
-
-            UpdateAvailable = !string.IsNullOrWhiteSpace(CurrentBuildId)
-                && !string.Equals(CurrentBuildId, Latest.Pda, StringComparison.OrdinalIgnoreCase)
-                && FirmwareVersion.ComparePda(Latest.Pda, CurrentBuildId) > 0;
-
-            StatusText = UpdateAvailable
-                ? "Update available"
-                : "You're on the latest";
+            var misses = RegionResults
+                .Where(r => !r.HasFirmware)
+                .Select(r => $"{r.Csc}: {r.StatusText}")
+                .ToArray();
+            Diagnostic = misses.Length > 0
+                ? $"Some CSC feeds did not return firmware: {string.Join("; ", misses)}"
+                : null;
         }
         catch (HttpRequestException ex)
         {
@@ -218,7 +290,8 @@ public partial class FirmwareViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanDownload))]
     public async Task DownloadLatestAsync()
     {
-        if (Latest is null || string.IsNullOrWhiteSpace(Model) || string.IsNullOrWhiteSpace(Csc)) return;
+        var downloadCsc = GetActiveCsc();
+        if (Latest is null || string.IsNullOrWhiteSpace(Model) || string.IsNullOrWhiteSpace(downloadCsc)) return;
 
         var imeiCandidate = (Imei ?? string.Empty).Trim();
         // Strip whitespace and dashes the user might have pasted from a phone-info screen
@@ -238,7 +311,7 @@ public partial class FirmwareViewModel : ObservableObject
 
         // Persist the IMEI so the user doesn't have to retype 15 digits on every retry.
         // Pair it with the model+CSC it's being used with so the dropdown can label entries.
-        _imeiCache?.AddOrTouch(imeiCandidate, Model, Csc);
+        _imeiCache?.AddOrTouch(imeiCandidate, Model, downloadCsc);
         RefreshImeiHistory();
 
         IsDownloading = true;
@@ -268,7 +341,7 @@ public partial class FirmwareViewModel : ObservableObject
         var dl = _downloadFactory();
         try
         {
-            var result = await dl.DownloadAndDecryptAsync(Model!, Csc!, Latest.Normalized, imeiCandidate, progress, ct).ConfigureAwait(true);
+            var result = await dl.DownloadAndDecryptAsync(Model!, downloadCsc, Latest.Normalized, imeiCandidate, progress, ct).ConfigureAwait(true);
             LastDownloadedPath = result.EncryptedPath;
             LastDecryptedPath = result.DecryptedPath;
             DownloadStatus = $"Done. Decrypted to {result.DecryptedPath}";
@@ -279,7 +352,7 @@ public partial class FirmwareViewModel : ObservableObject
         }
         catch (FusProtocolException ex)
         {
-            var friendly = FusErrorClassifier.Classify(ex, Csc);
+            var friendly = FusErrorClassifier.Classify(ex, downloadCsc);
             var sb = new System.Text.StringBuilder();
             sb.Append("⚠  ").AppendLine(friendly.Title);
             sb.AppendLine();
@@ -302,7 +375,7 @@ public partial class FirmwareViewModel : ObservableObject
             // can pivot to a non-region-locked download without leaving Devicer.
             ShowMirrorFailover = friendly.IsGeofence
                 && !string.IsNullOrWhiteSpace(Model)
-                && !string.IsNullOrWhiteSpace(Csc);
+                && !string.IsNullOrWhiteSpace(downloadCsc);
         }
         catch (Exception ex)
         {
@@ -319,7 +392,7 @@ public partial class FirmwareViewModel : ObservableObject
         }
     }
 
-    private bool CanDownload() => Latest is not null && !IsDownloading && !IsChecking;
+    private bool CanDownload() => Latest is not null && !IsDownloading && !IsChecking && !string.IsNullOrWhiteSpace(GetActiveCsc());
 
     [RelayCommand(CanExecute = nameof(CanCancel))]
     public void CancelDownload()
@@ -340,8 +413,9 @@ public partial class FirmwareViewModel : ObservableObject
     [RelayCommand]
     public void OpenMirror(FirmwareMirror? mirror)
     {
-        if (mirror is null || string.IsNullOrWhiteSpace(Model) || string.IsNullOrWhiteSpace(Csc)) return;
-        var url = mirror.BuildUrl(Model!, Csc!);
+        var activeCsc = GetActiveCsc();
+        if (mirror is null || string.IsNullOrWhiteSpace(Model) || string.IsNullOrWhiteSpace(activeCsc)) return;
+        var url = mirror.BuildUrl(Model!, activeCsc);
         var err = UrlLauncher.TryOpen(url);
         if (err is not null) Diagnostic = $"Could not open {mirror.Name}: {err}";
     }
@@ -387,6 +461,11 @@ public partial class FirmwareViewModel : ObservableObject
     }
 
     private bool HasDecryptedPath() => !string.IsNullOrWhiteSpace(LastDecryptedPath) || !string.IsNullOrWhiteSpace(LastDownloadedPath);
+
+    private string? GetActiveCsc() =>
+        SelectedRegionResult?.HasFirmware == true
+            ? SelectedRegionResult.Csc
+            : FirmwareCheckService.ParseCscList(Csc).FirstOrDefault();
 
     partial void OnLatestChanged(FirmwareVersion? value)
     {

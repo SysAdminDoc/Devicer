@@ -20,6 +20,39 @@
         <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
             <Setter Property="FontFamily" Value="Consolas, JetBrains Mono, Cascadia Mono" />
         </Style>
+        <Style x:Key="RegionResultItem" TargetType="ListBoxItem">
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0,0,0,6" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource AppForeground}" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="bd"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{DynamicResource AppBorder}"
+                                BorderThickness="1"
+                                CornerRadius="6"
+                                Padding="10,8">
+                            <ContentPresenter HorizontalAlignment="Stretch"
+                                              VerticalAlignment="Center"
+                                              TextElement.Foreground="{TemplateBinding Foreground}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="{DynamicResource AppSurfaceHover}" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="{DynamicResource AppSurfaceRaised}" />
+                                <Setter TargetName="bd" Property="BorderBrush" Value="{DynamicResource AppAccent}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </UserControl.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -37,7 +70,7 @@
                 </StackPanel>
                 <StackPanel>
                     <TextBlock Text="Firmware" Style="{StaticResource HeadingTextBlock}" />
-                    <TextBlock Text="Latest official firmware available from Samsung's public OTA feed for the model + CSC pair below."
+                    <TextBlock Text="Latest official firmware available from Samsung's public OTA feed for the model + CSC region(s) below."
                                Style="{StaticResource SubheadingTextBlock}" />
                 </StackPanel>
             </DockPanel>
@@ -96,8 +129,10 @@
                             <TextBox Text="{Binding Model, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12" />
                         </StackPanel>
                         <StackPanel Grid.Column="1" Margin="8,0,0,0">
-                            <TextBlock Text="CSC" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding Csc, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12" />
+                            <TextBlock Text="CSC / REGIONS" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding Csc, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="Separate multiple CSCs with commas or spaces"
+                                     Margin="0,0,0,12" />
                         </StackPanel>
                     </Grid>
                     <DockPanel LastChildFill="True" Margin="0,0,0,4">
@@ -150,6 +185,61 @@
                     </ComboBox>
                     <TextBlock Style="{StaticResource MutedTextBlock}" FontSize="11" TextWrapping="Wrap"
                                Text="Samsung's FUS rejects fake IMEIs as of late 2024. Modern One UI 7+ blocks programmatic IMEI reads even via root — click 'Open IMEI on phone' to pop the Settings page on the device, then enter the 15-digit number above. Devicer remembers every IMEI you've used; pick one from the dropdown to skip the typing." />
+                </StackPanel>
+            </Border>
+
+            <!-- Region results -->
+            <Border Style="{StaticResource Card}"
+                    Margin="0,0,0,16"
+                    Visibility="{Binding RegionResults.Count, Converter={x:Static vm:CountToVisibleIfPositiveConverter.Instance}}">
+                <StackPanel>
+                    <TextBlock Text="CSC RESULTS" Style="{StaticResource FieldLabel}" Margin="0,0,0,8" />
+                    <ListBox ItemsSource="{Binding RegionResults}"
+                             SelectedItem="{Binding SelectedRegionResult}"
+                             ItemContainerStyle="{StaticResource RegionResultItem}"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             Padding="0"
+                             ToolTip="Selected row controls which CSC is used by Download &amp; decrypt">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="78" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="150" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0"
+                                               Text="{Binding Csc}"
+                                               FontFamily="Consolas, JetBrains Mono, Cascadia Mono"
+                                               FontWeight="SemiBold"
+                                               VerticalAlignment="Center" />
+                                    <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                                        <TextBlock Text="{Binding LatestPda}"
+                                                   FontFamily="Consolas, JetBrains Mono, Cascadia Mono"
+                                                   FontSize="13"
+                                                   TextWrapping="NoWrap" />
+                                        <TextBlock Foreground="{DynamicResource AppMutedForeground}"
+                                                   FontFamily="Consolas, JetBrains Mono, Cascadia Mono"
+                                                   FontSize="11"
+                                                   TextWrapping="NoWrap">
+                                            <Run Text="CSC " />
+                                            <Run Text="{Binding LatestCsc}" />
+                                            <Run Text=" / CP " />
+                                            <Run Text="{Binding LatestCp}" />
+                                            <Run Text=" / BOOT " />
+                                            <Run Text="{Binding LatestBoot}" />
+                                        </TextBlock>
+                                    </StackPanel>
+                                    <TextBlock Grid.Column="2"
+                                               Text="{Binding StatusText}"
+                                               Foreground="{DynamicResource AppMutedForeground}"
+                                               TextAlignment="Right"
+                                               VerticalAlignment="Center" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
                 </StackPanel>
             </Border>
 

@@ -8,6 +8,8 @@ using Devicer.Core.Services;
 //   --inform                       Probe + run a FUS BinaryInform on the connected Samsung's latest firmware.
 //                                  Verifies auth crypto end-to-end without downloading the blob.
 //   --inform <model> <csc> <pda>   Same, but with explicit model/CSC/PDA — useful when no device is connected.
+//   --firmware-regions <model> <csc...>
+//                                  Query several Samsung CSC feeds for one model.
 
 if (args.Length > 0 && args[0] == "--inform" && args.Length >= 5)
 {
@@ -20,6 +22,12 @@ if (args.Length >= 5 && args[0] == "--download-headers")
     // Probes the full FUS pipeline through the download-init step and prints the
     // exact URL we'd hit, including MODEL_PATH. Does NOT actually download bytes.
     await DownloadHeaderProbeAsync(args[1], args[2], args[3], args[4]);
+    return;
+}
+
+if (args.Length >= 3 && args[0] == "--firmware-regions")
+{
+    await FirmwareRegionsAsync(args[1], args.Skip(2));
     return;
 }
 
@@ -148,6 +156,27 @@ foreach (var dev in result.Devices)
         {
             Console.WriteLine($"OTA query failed: {ex.Message}");
         }
+    }
+}
+
+static async Task FirmwareRegionsAsync(string model, IEnumerable<string> regions)
+{
+    using var fw = new FirmwareCheckService();
+    var results = await fw.GetLatestAcrossRegionsAsync(model, regions);
+    Console.WriteLine($"Model  : {model}");
+    Console.WriteLine($"Regions: {results.Count}");
+    foreach (var r in results)
+    {
+        Console.WriteLine();
+        Console.WriteLine($"[{r.Csc}]");
+        if (r.Firmware is null)
+        {
+            Console.WriteLine(string.IsNullOrWhiteSpace(r.Error) ? "  no firmware feed" : $"  error: {r.Error}");
+            continue;
+        }
+
+        Console.WriteLine($"  latest : {r.Firmware.Latest.Raw}");
+        Console.WriteLine($"  history: {r.Firmware.UpgradeHistory.Count}");
     }
 }
 

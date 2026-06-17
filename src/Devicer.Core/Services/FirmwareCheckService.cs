@@ -6,6 +6,11 @@ namespace Devicer.Core.Services;
 
 public sealed record LatestFirmware(FirmwareVersion Latest, IReadOnlyList<FirmwareVersion> UpgradeHistory);
 
+public sealed record RegionalFirmwareResult(string Csc, LatestFirmware? Firmware, string? Error = null)
+{
+    public bool HasFirmware => Firmware is not null;
+}
+
 public interface IFirmwareCheckService
 {
     /// <summary>
@@ -13,6 +18,12 @@ public interface IFirmwareCheckService
     /// for a given <paramref name="model"/> + <paramref name="csc"/> pair. No auth required.
     /// </summary>
     Task<LatestFirmware?> GetLatestAsync(string model, string csc, CancellationToken ct = default);
+
+    /// <summary>
+    /// Queries several CSC feeds for the same model. Region failures are isolated so one
+    /// unavailable feed does not hide valid results from other regions.
+    /// </summary>
+    Task<IReadOnlyList<RegionalFirmwareResult>> GetLatestAcrossRegionsAsync(string model, IEnumerable<string> cscs, CancellationToken ct = default);
 }
 
 public sealed class FirmwareCheckService : IFirmwareCheckService, IDisposable
@@ -47,6 +58,49 @@ public sealed class FirmwareCheckService : IFirmwareCheckService, IDisposable
         var xml = await resp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
         return ParseVersionXml(xml);
     }
+
+    public async Task<IReadOnlyList<RegionalFirmwareResult>> GetLatestAcrossRegionsAsync(string model, IEnumerable<string> cscs, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(model))
+            throw new ArgumentException("model is required");
+
+        var regions = NormalizeCscs(cscs).ToArray();
+        if (regions.Length == 0)
+            throw new ArgumentException("at least one CSC is required");
+
+        var tasks = regions.Select(async csc =>
+        {
+            try
+            {
+                var firmware = await GetLatestAsync(model, csc, ct).ConfigureAwait(false);
+                return new RegionalFirmwareResult(csc, firmware);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                return new RegionalFirmwareResult(csc, null, ex.Message);
+            }
+        });
+
+        return await Task.WhenAll(tasks).ConfigureAwait(false);
+    }
+
+    public static IReadOnlyList<string> ParseCscList(string? input)
+    {
+        if (string.IsNullOrWhiteSpace(input)) return Array.Empty<string>();
+
+        return NormalizeCscs(input.Split([',', ';', '|', ' ', '\t', '\r', '\n'], StringSplitOptions.RemoveEmptyEntries));
+    }
+
+    private static IReadOnlyList<string> NormalizeCscs(IEnumerable<string> cscs) =>
+        cscs
+            .Select(c => c.Trim().ToUpperInvariant())
+            .Where(c => c.Length > 0)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
 
     internal static LatestFirmware? ParseVersionXml(string xml)
     {

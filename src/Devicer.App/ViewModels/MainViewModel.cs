@@ -24,7 +24,7 @@ public partial class MainViewModel : ObservableObject
     private UserControl? _currentPage;
 
     /// <summary>
-    /// Pretty-printed version string for the sidebar (<c>v1.0.0</c>). Sourced from
+    /// Pretty-printed version string for the sidebar (<c>v1.1.0</c>). Sourced from
     /// the executing assembly so it can never drift from the build the user is running.
     /// </summary>
     public string AppVersionDisplay { get; }
