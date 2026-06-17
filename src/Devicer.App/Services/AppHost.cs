@@ -18,6 +18,7 @@ public sealed class AppHost
     public IBackupService Backup { get; }
     public IBootPatchService BootPatch { get; }
     public IOdinInspectorService OdinInspector { get; }
+    public IFastbootFlashService FastbootFlash { get; }
     public IOemGuidanceService OemGuidance { get; }
     public ImeiCache ImeiCache { get; }
     public AppSettingsStore SettingsStore { get; }
@@ -38,6 +39,7 @@ public sealed class AppHost
         Backup = new BackupService(Adb);
         BootPatch = new BootPatchService(Adb);
         OdinInspector = new OdinInspectorService();
+        FastbootFlash = new FastbootFlashService(Fastboot);
         OemGuidance = new OemGuidanceService();
         ImeiCache = new ImeiCache();
         SettingsStore = new AppSettingsStore();

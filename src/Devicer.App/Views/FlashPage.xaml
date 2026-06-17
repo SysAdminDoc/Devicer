@@ -11,119 +11,111 @@
             <Setter Property="Margin" Value="0,0,0,4" />
         </Style>
     </UserControl.Resources>
-    <Grid Margin="32,28,32,32">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
 
-        <!-- Heading -->
-        <DockPanel Grid.Row="0" Margin="0,0,0,8" LastChildFill="True">
-            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top">
-                <Button Content="Browse"
-                        Style="{StaticResource SecondaryButton}"
-                        Command="{Binding BrowseArchiveCommand}"
-                        Margin="0,0,8,0" />
-                <Button Content="Inspect"
-                        Style="{StaticResource SecondaryButton}"
-                        Command="{Binding InspectCommand}"
-                        Margin="0,0,8,0" />
-                <Button Content="Dry-run plan"
-                        Style="{StaticResource PrimaryButton}"
-                        Command="{Binding DryRunCommand}" />
-            </StackPanel>
-            <StackPanel>
-                <TextBlock Text="Flash" Style="{StaticResource HeadingTextBlock}" />
-                <TextBlock Style="{StaticResource SubheadingTextBlock}"
-                           Text="Inspect Samsung Odin tar/.tar.md5 packages and dry-run a flash plan. Actual writes are gated to a future release; v0.7.0 ships the inspector + safety gates so you can validate a firmware before committing." />
-            </StackPanel>
-        </DockPanel>
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="32,28,32,32">
 
-        <!-- Knox banner -->
-        <Border Grid.Row="1"
-                Style="{StaticResource Card}"
-                Background="#22F38BA8"
-                BorderBrush="{DynamicResource AppDestructive}"
-                Margin="0,0,0,12"
-                Visibility="{Binding IsKnoxIntact, Converter={x:Static vm:BoolToVisibilityConverter.Instance}}">
-            <StackPanel>
-                <TextBlock Text="KNOX IS INTACT — DON'T LOSE IT BY ACCIDENT" FontWeight="Bold" Foreground="{DynamicResource AppDestructive}" Margin="0,0,0,4" />
-                <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource AppForeground}">
-                    Flashing a custom AP / kernel / boot image WILL trip the Knox eFuse permanently and disable Samsung Pay, Secure Folder, Health, and corporate enrollment. Once tripped, only board replacement reverses it. Flash stock-only via Odin to keep Knox alive.
-                </TextBlock>
-            </StackPanel>
-        </Border>
+            <!-- Heading -->
+            <TextBlock Text="Flash" Style="{StaticResource HeadingTextBlock}" Margin="0,0,0,4" />
+            <TextBlock Style="{StaticResource SubheadingTextBlock}" Margin="0,0,0,16"
+                       Text="Samsung Odin archive inspection + fastboot flash queue for non-Samsung devices." />
 
-        <Border Grid.Row="1"
-                Style="{StaticResource Card}"
-                Background="#22F9E2AF"
-                BorderBrush="{DynamicResource AppWarning}"
-                Margin="0,0,0,12"
-                Visibility="{Binding IsKnoxTripped, Converter={x:Static vm:BoolToVisibilityConverter.Instance}}">
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="&#xE7BA;" FontFamily="Segoe MDL2 Assets" FontSize="18"
-                           Foreground="{DynamicResource AppWarning}" Margin="0,0,12,0" VerticalAlignment="Center" />
-                <TextBlock VerticalAlignment="Center" TextWrapping="Wrap">
-                    <Run Text="Knox eFuse is already tripped (warranty bit ≠ 0). Custom flashing has been performed before; further flashes won't restore Knox features." />
-                </TextBlock>
-            </StackPanel>
-        </Border>
+            <!-- Knox banner -->
+            <Border Style="{StaticResource Card}"
+                    Background="#22F38BA8"
+                    BorderBrush="{DynamicResource AppDestructive}"
+                    Margin="0,0,0,12"
+                    Visibility="{Binding IsKnoxIntact, Converter={x:Static vm:BoolToVisibilityConverter.Instance}}">
+                <StackPanel>
+                    <TextBlock Text="KNOX IS INTACT" FontWeight="Bold" Foreground="{DynamicResource AppDestructive}" Margin="0,0,0,4" />
+                    <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource AppForeground}">
+                        Flashing a custom AP / kernel / boot image WILL trip the Knox eFuse permanently and disable Samsung Pay, Secure Folder, Health, and corporate enrollment. Once tripped, only board replacement reverses it. Flash stock-only via Odin to keep Knox alive.
+                    </TextBlock>
+                </StackPanel>
+            </Border>
 
-        <!-- EFS-Clear gate -->
-        <Border Grid.Row="2" Style="{StaticResource Card}" Margin="0,0,0,12">
-            <StackPanel>
-                <CheckBox IsChecked="{Binding EfsClearEnabled, Mode=TwoWay}">
-                    <CheckBox.Content>
-                        <TextBlock>
-                            <Run Text="EFS-Clear" FontWeight="Bold" /><Run Text=" — wipe /efs (IMEI / NVRAM). DO NOT enable unless you have an EFS backup AND know exactly why." />
-                        </TextBlock>
-                    </CheckBox.Content>
-                </CheckBox>
-                <TextBlock Style="{StaticResource MutedTextBlock}" FontSize="11" Margin="24,4,0,0" TextWrapping="Wrap">
-                    OFF by default (correct). Toggling this is one of the fastest ways to brick a Samsung permanently.
-                </TextBlock>
-            </StackPanel>
-        </Border>
+            <Border Style="{StaticResource Card}"
+                    Background="#22F9E2AF"
+                    BorderBrush="{DynamicResource AppWarning}"
+                    Margin="0,0,0,12"
+                    Visibility="{Binding IsKnoxTripped, Converter={x:Static vm:BoolToVisibilityConverter.Instance}}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#xE7BA;" FontFamily="Segoe MDL2 Assets" FontSize="18"
+                               Foreground="{DynamicResource AppWarning}" Margin="0,0,12,0" VerticalAlignment="Center" />
+                    <TextBlock VerticalAlignment="Center" TextWrapping="Wrap">
+                        <Run Text="Knox eFuse is already tripped (warranty bit != 0). Further flashes won't restore Knox features." />
+                    </TextBlock>
+                </StackPanel>
+            </Border>
 
-        <!-- Diagnostic -->
-        <Border Grid.Row="3"
-                Style="{StaticResource Card}"
-                Background="#22F9E2AF"
-                BorderBrush="{DynamicResource AppWarning}"
-                Margin="0,0,0,12"
-                Visibility="{Binding Diagnostic, Converter={x:Static vm:NullToCollapsedConverter.Instance}}">
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="&#xE7BA;" FontFamily="Segoe MDL2 Assets" FontSize="18"
-                           Foreground="{DynamicResource AppWarning}" Margin="0,0,12,0" VerticalAlignment="Center" />
-                <TextBlock Text="{Binding Diagnostic}" VerticalAlignment="Center" TextWrapping="Wrap" />
-            </StackPanel>
-        </Border>
+            <!-- Diagnostic -->
+            <Border Style="{StaticResource Card}"
+                    Background="#22F9E2AF"
+                    BorderBrush="{DynamicResource AppWarning}"
+                    Margin="0,0,0,12"
+                    Visibility="{Binding Diagnostic, Converter={x:Static vm:NullToCollapsedConverter.Instance}}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#xE7BA;" FontFamily="Segoe MDL2 Assets" FontSize="18"
+                               Foreground="{DynamicResource AppWarning}" Margin="0,0,12,0" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding Diagnostic}" VerticalAlignment="Center" TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
 
-        <!-- Archive path -->
-        <Border Grid.Row="4" Style="{StaticResource Card}" Margin="0,0,0,12">
-            <StackPanel>
-                <TextBlock Text="ARCHIVE" Style="{StaticResource FieldLabel}" />
-                <TextBlock Text="{Binding ArchivePath, FallbackValue='(none)', TargetNullValue='(none)'}"
-                           FontFamily="Consolas, JetBrains Mono, Cascadia Mono"
-                           FontSize="12"
-                           Foreground="{DynamicResource AppForeground}"
-                           TextWrapping="Wrap"
-                           Margin="0,0,0,4" />
-                <TextBlock Style="{StaticResource MutedTextBlock}" FontSize="11" TextWrapping="Wrap"
-                           Visibility="{Binding Info, Converter={x:Static vm:NullToCollapsedConverter.Instance}}">
-                    <Run Text="Package hint:" /><Run Text="{Binding Info.PackageHint, FallbackValue='?', Mode=OneWay}" />
-                </TextBlock>
-            </StackPanel>
-        </Border>
+            <!-- ═══ Samsung Odin Section ═══ -->
+            <TextBlock Text="Samsung Odin" FontWeight="SemiBold" FontSize="16"
+                       Foreground="{DynamicResource AppForeground}" Margin="0,4,0,8" />
 
-        <!-- Entries -->
-        <Border Grid.Row="5" Style="{StaticResource Card}">
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <!-- EFS-Clear gate -->
+            <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+                <StackPanel>
+                    <CheckBox IsChecked="{Binding EfsClearEnabled, Mode=TwoWay}">
+                        <CheckBox.Content>
+                            <TextBlock>
+                                <Run Text="EFS-Clear" FontWeight="Bold" /><Run Text=" — wipe /efs (IMEI / NVRAM). DO NOT enable unless you have an EFS backup AND know exactly why." />
+                            </TextBlock>
+                        </CheckBox.Content>
+                    </CheckBox>
+                    <TextBlock Style="{StaticResource MutedTextBlock}" FontSize="11" Margin="24,4,0,0" TextWrapping="Wrap">
+                        OFF by default (correct). Toggling this is one of the fastest ways to brick a Samsung permanently.
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
+            <!-- Archive path + buttons -->
+            <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+                <StackPanel>
+                    <DockPanel Margin="0,0,0,6">
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                            <Button Content="Browse"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Command="{Binding BrowseArchiveCommand}"
+                                    Margin="0,0,6,0" />
+                            <Button Content="Inspect"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Command="{Binding InspectCommand}"
+                                    Margin="0,0,6,0" />
+                            <Button Content="Dry-run plan"
+                                    Style="{StaticResource PrimaryButton}"
+                                    Command="{Binding DryRunCommand}" />
+                        </StackPanel>
+                        <TextBlock Text="ARCHIVE" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" />
+                    </DockPanel>
+                    <TextBlock Text="{Binding ArchivePath, FallbackValue='(none)', TargetNullValue='(none)'}"
+                               FontFamily="Consolas, JetBrains Mono, Cascadia Mono"
+                               FontSize="12"
+                               Foreground="{DynamicResource AppForeground}"
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,4" />
+                    <TextBlock Style="{StaticResource MutedTextBlock}" FontSize="11" TextWrapping="Wrap"
+                               Visibility="{Binding Info, Converter={x:Static vm:NullToCollapsedConverter.Instance}}">
+                        <Run Text="Package hint:" /><Run Text="{Binding Info.PackageHint, FallbackValue='?', Mode=OneWay}" />
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
+            <!-- Odin entries -->
+            <Border Style="{StaticResource Card}" Margin="0,0,0,12"
+                    Visibility="{Binding Entries.Count, Converter={x:Static vm:CountToVisibleIfPositiveConverter.Instance}}">
                 <ItemsControl ItemsSource="{Binding Entries}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
@@ -143,7 +135,7 @@
                                                FontSize="13"
                                                Foreground="{DynamicResource AppForeground}" />
                                     <TextBlock Foreground="{DynamicResource AppMutedForeground}" FontSize="11">
-                                        <Run Text="→ " /><Run Text="{Binding Entry.PartitionGuess, Mode=OneWay}" />
+                                        <Run Text="-> " /><Run Text="{Binding Entry.PartitionGuess, Mode=OneWay}" />
                                     </TextBlock>
                                 </StackPanel>
                                 <TextBlock Grid.Column="2"
@@ -157,20 +149,171 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-            </ScrollViewer>
-        </Border>
+            </Border>
 
-        <!-- Status / dry-run output -->
-        <Border Grid.Row="6" Style="{StaticResource Card}" Margin="0,12,0,0"
-                Visibility="{Binding StatusText, Converter={x:Static vm:NullToCollapsedConverter.Instance}}">
-            <StackPanel>
-                <TextBlock Text="STATUS" Style="{StaticResource FieldLabel}" />
-                <TextBlock Text="{Binding StatusText}"
-                           FontFamily="Consolas, JetBrains Mono, Cascadia Mono"
-                           FontSize="12"
-                           Foreground="{DynamicResource AppForeground}"
-                           TextWrapping="Wrap" />
-            </StackPanel>
-        </Border>
-    </Grid>
+            <!-- Odin status / dry-run output -->
+            <Border Style="{StaticResource Card}" Margin="0,0,0,16"
+                    Visibility="{Binding StatusText, Converter={x:Static vm:NullToCollapsedConverter.Instance}}">
+                <StackPanel>
+                    <TextBlock Text="ODIN STATUS" Style="{StaticResource FieldLabel}" />
+                    <TextBlock Text="{Binding StatusText}"
+                               FontFamily="Consolas, JetBrains Mono, Cascadia Mono"
+                               FontSize="12"
+                               Foreground="{DynamicResource AppForeground}"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+
+            <!-- ═══ Fastboot Flash Section ═══ -->
+            <Border Height="1" Background="{DynamicResource AppCardBorder}" Margin="0,8,0,16" />
+            <TextBlock Text="Fastboot Flash" FontWeight="SemiBold" FontSize="16"
+                       Foreground="{DynamicResource AppForeground}" Margin="0,0,0,4" />
+            <TextBlock Style="{StaticResource SubheadingTextBlock}" Margin="0,0,0,12"
+                       Text="Flash individual .img files via fastboot for non-Samsung devices (Pixel, OnePlus, Xiaomi, etc.)." />
+
+            <!-- Fastboot image list + buttons -->
+            <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+                <StackPanel>
+                    <DockPanel Margin="0,0,0,6">
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                            <Button Content="Add images"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Command="{Binding AddFastbootImagesCommand}"
+                                    Margin="0,0,6,0" />
+                            <Button Content="Clear"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Command="{Binding ClearFastbootImagesCommand}"
+                                    Margin="0,0,6,0" />
+                            <Button Content="Dry-run"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Command="{Binding FastbootDryRunCommand}"
+                                    Margin="0,0,6,0" />
+                            <Button Content="Flash"
+                                    Style="{StaticResource PrimaryButton}"
+                                    Command="{Binding FastbootFlashCommand}" />
+                        </StackPanel>
+                        <TextBlock Text="IMAGES" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" />
+                    </DockPanel>
+
+                    <ItemsControl ItemsSource="{Binding FastbootImages}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,3">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="120" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <CheckBox Grid.Column="0"
+                                              IsChecked="{Binding Selected, Mode=TwoWay}"
+                                              VerticalAlignment="Center"
+                                              Margin="0,0,8,0" />
+                                    <TextBox Grid.Column="1"
+                                             Text="{Binding Partition, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                             FontFamily="Consolas, JetBrains Mono, Cascadia Mono"
+                                             FontSize="12"
+                                             VerticalAlignment="Center"
+                                             Margin="0,0,8,0" />
+                                    <TextBlock Grid.Column="2"
+                                               Text="{Binding FileName}"
+                                               FontFamily="Consolas, JetBrains Mono, Cascadia Mono"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource AppForeground}"
+                                               VerticalAlignment="Center"
+                                               TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Grid.Column="3"
+                                               Text="{Binding SizeDisplay}"
+                                               FontFamily="Consolas, JetBrains Mono, Cascadia Mono"
+                                               FontSize="11"
+                                               Foreground="{DynamicResource AppMutedForeground}"
+                                               VerticalAlignment="Center"
+                                               Margin="12,0,8,0" />
+                                    <Button Grid.Column="4"
+                                            Content="X"
+                                            Style="{StaticResource SecondaryButton}"
+                                            FontSize="10"
+                                            Padding="4,2"
+                                            Command="{Binding DataContext.RemoveFastbootImageCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                            CommandParameter="{Binding}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <!-- Fastboot options -->
+            <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+                <StackPanel>
+                    <DockPanel Margin="0,0,0,6">
+                        <TextBox DockPanel.Dock="Right" Width="48"
+                                 Text="{Binding ActiveSlotValue, UpdateSourceTrigger=PropertyChanged}"
+                                 FontFamily="Consolas, JetBrains Mono, Cascadia Mono"
+                                 FontSize="12"
+                                 IsEnabled="{Binding SetActiveSlot}"
+                                 VerticalAlignment="Center" />
+                        <CheckBox IsChecked="{Binding SetActiveSlot, Mode=TwoWay}" VerticalAlignment="Center">
+                            <CheckBox.Content>
+                                <TextBlock Text="Set active slot after flash (A/B devices)" />
+                            </CheckBox.Content>
+                        </CheckBox>
+                    </DockPanel>
+                    <CheckBox IsChecked="{Binding RebootAfterFlash, Mode=TwoWay}">
+                        <CheckBox.Content>
+                            <TextBlock Text="Reboot after flash (only if all partitions succeed)" />
+                        </CheckBox.Content>
+                    </CheckBox>
+                </StackPanel>
+            </Border>
+
+            <!-- Flash progress -->
+            <Border Style="{StaticResource Card}" Margin="0,0,0,12"
+                    Visibility="{Binding FlashStatusText, Converter={x:Static vm:NullToCollapsedConverter.Instance}}">
+                <StackPanel>
+                    <DockPanel Margin="0,0,0,6">
+                        <Button DockPanel.Dock="Right"
+                                Content="Cancel"
+                                Style="{StaticResource SecondaryButton}"
+                                Command="{Binding CancelFlashCommand}"
+                                Visibility="{Binding IsFlashing, Converter={x:Static vm:BoolToVisibilityConverter.Instance}}" />
+                        <TextBlock Text="FLASH STATUS" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" />
+                    </DockPanel>
+                    <TextBlock Text="{Binding FlashStatusText}"
+                               FontFamily="Consolas, JetBrains Mono, Cascadia Mono"
+                               FontSize="12"
+                               Foreground="{DynamicResource AppForeground}"
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,4" />
+                    <ProgressBar Height="4"
+                                 Minimum="0" Maximum="100"
+                                 Value="{Binding FlashProgressFraction, Converter={x:Static vm:FractionToPercentConverter.Instance}}"
+                                 Foreground="{DynamicResource AppAccent}"
+                                 Background="{DynamicResource AppCardBackground}"
+                                 Visibility="{Binding IsFlashing, Converter={x:Static vm:BoolToVisibilityConverter.Instance}}" />
+                </StackPanel>
+            </Border>
+
+            <!-- Flash warnings -->
+            <Border Style="{StaticResource Card}" Margin="0,0,0,12"
+                    Visibility="{Binding FlashWarnings.Count, Converter={x:Static vm:CountToVisibleIfPositiveConverter.Instance}}">
+                <StackPanel>
+                    <TextBlock Text="WARNINGS" Style="{StaticResource FieldLabel}" />
+                    <ItemsControl ItemsSource="{Binding FlashWarnings}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}"
+                                           Foreground="{DynamicResource AppWarning}"
+                                           FontSize="12"
+                                           TextWrapping="Wrap"
+                                           Margin="0,2" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
 </UserControl>

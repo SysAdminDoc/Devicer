@@ -10,6 +10,11 @@ public interface IFastbootService
     Task<IReadOnlyList<FastbootDevice>> ListDevicesAsync(CancellationToken ct = default);
     Task<string?> GetVarAsync(string serial, string name, CancellationToken ct = default);
     Task<IReadOnlyDictionary<string, string>> GetAllVarsAsync(string serial, CancellationToken ct = default);
+    Task<bool> FlashAsync(string serial, string partition, string imagePath, CancellationToken ct = default);
+    Task<bool> EraseAsync(string serial, string partition, CancellationToken ct = default);
+    Task<bool> SetActiveSlotAsync(string serial, string slot, CancellationToken ct = default);
+    Task<bool> RebootAsync(string serial, CancellationToken ct = default);
+    Task<bool> RebootBootloaderAsync(string serial, CancellationToken ct = default);
 }
 
 public sealed class FastbootService : IFastbootService
@@ -17,6 +22,7 @@ public sealed class FastbootService : IFastbootService
     private const string Fastboot = "fastboot";
     private static readonly TimeSpan FastTimeout = TimeSpan.FromSeconds(8);
     private static readonly TimeSpan SlowTimeout = TimeSpan.FromSeconds(20);
+    private static readonly TimeSpan FlashTimeout = TimeSpan.FromMinutes(10);
 
     private readonly IShellRunner _shell;
 
@@ -27,7 +33,6 @@ public sealed class FastbootService : IFastbootService
         try
         {
             var r = await _shell.RunAsync(Fastboot, new[] { "--version" }, FastTimeout, ct).ConfigureAwait(false);
-            // fastboot writes its banner to stdout on success.
             return r.Success;
         }
         catch
@@ -56,12 +61,10 @@ public sealed class FastbootService : IFastbootService
     public async Task<string?> GetVarAsync(string serial, string name, CancellationToken ct = default)
     {
         var r = await _shell.RunAsync(Fastboot, new[] { "-s", serial, "getvar", name }, FastTimeout, ct).ConfigureAwait(false);
-        // fastboot writes getvar output to stderr historically, stdout on newer builds.
         var combined = string.IsNullOrWhiteSpace(r.Stderr) ? r.Stdout : r.Stderr;
         foreach (var raw in combined.Split('\n', StringSplitOptions.RemoveEmptyEntries))
         {
             var line = raw.Trim();
-            // expected line: "<name>: <value>"
             if (!line.StartsWith(name, StringComparison.OrdinalIgnoreCase)) continue;
             var sep = line.IndexOf(':');
             if (sep < 0) continue;
@@ -78,7 +81,6 @@ public sealed class FastbootService : IFastbootService
         foreach (var raw in combined.Split('\n', StringSplitOptions.RemoveEmptyEntries))
         {
             var line = raw.Trim();
-            // typical: "(bootloader) name: value"
             const string boot = "(bootloader)";
             if (line.StartsWith(boot, StringComparison.OrdinalIgnoreCase))
                 line = line[boot.Length..].Trim();
@@ -91,5 +93,40 @@ public sealed class FastbootService : IFastbootService
             dict[k] = v;
         }
         return dict;
+    }
+
+    public async Task<bool> FlashAsync(string serial, string partition, string imagePath, CancellationToken ct = default)
+    {
+        DevicerLog.Info("Fastboot", $"flash {partition} ← {imagePath}");
+        var r = await _shell.RunAsync(Fastboot, new[] { "-s", serial, "flash", partition, imagePath }, FlashTimeout, ct).ConfigureAwait(false);
+        if (!r.Success)
+            DevicerLog.Error("Fastboot", $"flash {partition} failed (exit {r.ExitCode}): {r.Stderr}");
+        return r.Success;
+    }
+
+    public async Task<bool> EraseAsync(string serial, string partition, CancellationToken ct = default)
+    {
+        DevicerLog.Info("Fastboot", $"erase {partition}");
+        var r = await _shell.RunAsync(Fastboot, new[] { "-s", serial, "erase", partition }, SlowTimeout, ct).ConfigureAwait(false);
+        return r.Success;
+    }
+
+    public async Task<bool> SetActiveSlotAsync(string serial, string slot, CancellationToken ct = default)
+    {
+        DevicerLog.Info("Fastboot", $"set_active {slot}");
+        var r = await _shell.RunAsync(Fastboot, new[] { "-s", serial, "--set-active=" + slot }, FastTimeout, ct).ConfigureAwait(false);
+        return r.Success;
+    }
+
+    public async Task<bool> RebootAsync(string serial, CancellationToken ct = default)
+    {
+        var r = await _shell.RunAsync(Fastboot, new[] { "-s", serial, "reboot" }, FastTimeout, ct).ConfigureAwait(false);
+        return r.Success;
+    }
+
+    public async Task<bool> RebootBootloaderAsync(string serial, CancellationToken ct = default)
+    {
+        var r = await _shell.RunAsync(Fastboot, new[] { "-s", serial, "reboot-bootloader" }, FastTimeout, ct).ConfigureAwait(false);
+        return r.Success;
     }
 }
