@@ -25,10 +25,12 @@
                     <Button Content="Browse boot.img"
                             Style="{StaticResource SecondaryButton}"
                             Command="{Binding BrowseBootImageCommand}"
-                            Margin="0,0,8,0" />
+                            Margin="0,0,8,0"
+                            AutomationProperties.Name="Browse for boot image file" />
                     <Button Content="Patch on-device"
                             Style="{StaticResource PrimaryButton}"
-                            Command="{Binding PatchCommand}" />
+                            Command="{Binding PatchCommand}"
+                            AutomationProperties.Name="Patch boot image on connected device" />
                 </StackPanel>
                 <StackPanel>
                     <TextBlock Text="Patch boot image" Style="{StaticResource HeadingTextBlock}" />
@@ -80,7 +82,8 @@
                                 Content="Cancel"
                                 Style="{StaticResource SecondaryButton}"
                                 Command="{Binding CancelCommand}"
-                                Visibility="{Binding IsPatching, Converter={x:Static vm:BoolToVisibilityConverter.Instance}}" />
+                                Visibility="{Binding IsPatching, Converter={x:Static vm:BoolToVisibilityConverter.Instance}}"
+                                AutomationProperties.Name="Cancel boot image patching" />
                         <TextBlock Text="STATUS" Style="{StaticResource FieldLabel}" Margin="0" VerticalAlignment="Center" />
                     </DockPanel>
                     <TextBlock Text="{Binding StatusText}" Foreground="{DynamicResource AppForeground}" TextWrapping="Wrap" />
@@ -105,7 +108,8 @@
                         <Button DockPanel.Dock="Right"
                                 Content="Open folder"
                                 Style="{StaticResource SecondaryButton}"
-                                Command="{Binding OpenOutputFolderCommand}" />
+                                Command="{Binding OpenOutputFolderCommand}"
+                                AutomationProperties.Name="Open patched output folder" />
                         <TextBlock Text="PATCHED OUTPUT" Style="{StaticResource FieldLabel}" Margin="0" VerticalAlignment="Center" />
                     </DockPanel>
                     <TextBlock Text="{Binding OutputPath}" Style="{StaticResource MonoValue}" />
@@ -120,7 +124,8 @@
                 <Button DockPanel.Dock="Right"
                         Content="PC-side patch"
                         Style="{StaticResource PrimaryButton}"
-                        Command="{Binding PcPatchCommand}" />
+                        Command="{Binding PcPatchCommand}"
+                        AutomationProperties.Name="Patch boot image on this PC" />
                 <StackPanel>
                     <TextBlock Text="PC-side patcher" FontWeight="SemiBold" FontSize="16"
                                Foreground="{DynamicResource AppForeground}" Margin="0,0,0,4" />

@@ -99,7 +99,8 @@
                 <!-- EFS-Clear gate -->
                 <Border Style="{StaticResource Card}" Margin="0,0,0,12">
                     <StackPanel>
-                        <CheckBox IsChecked="{Binding EfsClearEnabled, Mode=TwoWay}">
+                        <CheckBox IsChecked="{Binding EfsClearEnabled, Mode=TwoWay}"
+                                  AutomationProperties.Name="EFS clear toggle">
                             <CheckBox.Content>
                                 <TextBlock>
                                     <Run Text="EFS-Clear" FontWeight="Bold" /><Run Text=" — wipe /efs (IMEI / NVRAM). DO NOT enable unless you have an EFS backup AND know exactly why." />
@@ -117,9 +118,9 @@
                     <StackPanel>
                         <DockPanel Margin="0,0,0,6">
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                                <Button Content="Browse" Style="{StaticResource SecondaryButton}" Command="{Binding BrowseArchiveCommand}" Margin="0,0,6,0" />
-                                <Button Content="Inspect" Style="{StaticResource SecondaryButton}" Command="{Binding InspectCommand}" Margin="0,0,6,0" />
-                                <Button Content="Dry-run plan" Style="{StaticResource PrimaryButton}" Command="{Binding DryRunCommand}" />
+                                <Button Content="Browse" Style="{StaticResource SecondaryButton}" Command="{Binding BrowseArchiveCommand}" Margin="0,0,6,0" AutomationProperties.Name="Browse for Odin archive file" />
+                                <Button Content="Inspect" Style="{StaticResource SecondaryButton}" Command="{Binding InspectCommand}" Margin="0,0,6,0" AutomationProperties.Name="Inspect Odin archive contents" />
+                                <Button Content="Dry-run plan" Style="{StaticResource PrimaryButton}" Command="{Binding DryRunCommand}" AutomationProperties.Name="Preview Odin flash plan without writing" />
                             </StackPanel>
                             <TextBlock Text="ARCHIVE" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" />
                         </DockPanel>
@@ -168,8 +169,8 @@
                             Thor Flash Utility writes the selected entries to the device. This CANNOT be undone. Run a dry-run first.
                         </TextBlock>
                         <DockPanel>
-                            <Button DockPanel.Dock="Right" Content="Execute Flash" Style="{StaticResource PrimaryButton}" Command="{Binding ThorFlashCommand}" IsEnabled="{Binding IsIdle}" />
-                            <CheckBox IsChecked="{Binding ThorConfirmed, Mode=TwoWay}" VerticalAlignment="Center">
+                            <Button DockPanel.Dock="Right" Content="Execute Flash" Style="{StaticResource PrimaryButton}" Command="{Binding ThorFlashCommand}" IsEnabled="{Binding IsIdle}" AutomationProperties.Name="Execute Thor flash to device" />
+                            <CheckBox IsChecked="{Binding ThorConfirmed, Mode=TwoWay}" VerticalAlignment="Center" AutomationProperties.Name="Confirm destructive flash operation">
                                 <CheckBox.Content>
                                     <TextBlock Text="I understand this writes to the device and cannot be undone" FontWeight="SemiBold" />
                                 </CheckBox.Content>
@@ -197,7 +198,7 @@
                     <StackPanel>
                         <DockPanel Margin="0,0,0,6">
                             <Button DockPanel.Dock="Right" Content="Cancel" Style="{StaticResource SecondaryButton}" Command="{Binding CancelFlashCommand}"
-                                    Visibility="{Binding IsFlashing, Converter={x:Static vm:BoolToVisibilityConverter.Instance}}" />
+                                    Visibility="{Binding IsFlashing, Converter={x:Static vm:BoolToVisibilityConverter.Instance}}" AutomationProperties.Name="Cancel Thor flash" />
                             <TextBlock Text="THOR STATUS" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" />
                         </DockPanel>
                         <TextBlock Text="{Binding FlashStatusText}" FontFamily="Consolas, JetBrains Mono, Cascadia Mono" FontSize="12" Foreground="{DynamicResource AppForeground}" TextWrapping="Wrap" Margin="0,0,0,4" />
@@ -252,10 +253,10 @@
                     <StackPanel>
                         <DockPanel Margin="0,0,0,6">
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                                <Button Content="Add images" Style="{StaticResource SecondaryButton}" Command="{Binding AddFastbootImagesCommand}" Margin="0,0,6,0" />
-                                <Button Content="Clear" Style="{StaticResource SecondaryButton}" Command="{Binding ClearFastbootImagesCommand}" Margin="0,0,6,0" />
-                                <Button Content="Dry-run" Style="{StaticResource SecondaryButton}" Command="{Binding FastbootDryRunCommand}" Margin="0,0,6,0" />
-                                <Button Content="Flash" Style="{StaticResource PrimaryButton}" Command="{Binding FastbootFlashCommand}" />
+                                <Button Content="Add images" Style="{StaticResource SecondaryButton}" Command="{Binding AddFastbootImagesCommand}" Margin="0,0,6,0" AutomationProperties.Name="Add fastboot image files" />
+                                <Button Content="Clear" Style="{StaticResource SecondaryButton}" Command="{Binding ClearFastbootImagesCommand}" Margin="0,0,6,0" AutomationProperties.Name="Clear fastboot image list" />
+                                <Button Content="Dry-run" Style="{StaticResource SecondaryButton}" Command="{Binding FastbootDryRunCommand}" Margin="0,0,6,0" AutomationProperties.Name="Preview fastboot flash plan" />
+                                <Button Content="Flash" Style="{StaticResource PrimaryButton}" Command="{Binding FastbootFlashCommand}" AutomationProperties.Name="Flash images via fastboot" />
                             </StackPanel>
                             <TextBlock Text="IMAGES" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" />
                         </DockPanel>
@@ -289,15 +290,15 @@
                 <Border Style="{StaticResource Card}" Margin="0,0,0,12">
                     <StackPanel>
                         <DockPanel Margin="0,0,0,6">
-                            <TextBox DockPanel.Dock="Right" Width="48" Text="{Binding ActiveSlotValue, UpdateSourceTrigger=PropertyChanged}" FontFamily="Consolas, JetBrains Mono, Cascadia Mono" FontSize="12" IsEnabled="{Binding SetActiveSlot}" VerticalAlignment="Center" />
-                            <CheckBox IsChecked="{Binding SetActiveSlot, Mode=TwoWay}" VerticalAlignment="Center">
+                            <TextBox DockPanel.Dock="Right" Width="48" Text="{Binding ActiveSlotValue, UpdateSourceTrigger=PropertyChanged}" FontFamily="Consolas, JetBrains Mono, Cascadia Mono" FontSize="12" IsEnabled="{Binding SetActiveSlot}" VerticalAlignment="Center" AutomationProperties.Name="Active slot value" />
+                            <CheckBox IsChecked="{Binding SetActiveSlot, Mode=TwoWay}" VerticalAlignment="Center" AutomationProperties.Name="Set active slot after flash toggle">
                                 <CheckBox.Content><TextBlock Text="Set active slot after flash (A/B devices)" /></CheckBox.Content>
                             </CheckBox>
                         </DockPanel>
-                        <CheckBox IsChecked="{Binding RebootAfterFlash, Mode=TwoWay}">
+                        <CheckBox IsChecked="{Binding RebootAfterFlash, Mode=TwoWay}" AutomationProperties.Name="Reboot device after flash toggle">
                             <CheckBox.Content><TextBlock Text="Reboot after flash (only if all partitions succeed)" /></CheckBox.Content>
                         </CheckBox>
-                        <CheckBox IsChecked="{Binding DisableAvb, Mode=TwoWay}" Margin="0,6,0,0">
+                        <CheckBox IsChecked="{Binding DisableAvb, Mode=TwoWay}" Margin="0,6,0,0" AutomationProperties.Name="Disable AVB verification toggle">
                             <CheckBox.Content>
                                 <TextBlock TextWrapping="Wrap" Text="Disable AVB verification (flash vbmeta with --disable-verity --disable-verification). Required when flashing custom boot/recovery images on devices with locked or relocked bootloaders." />
                             </CheckBox.Content>
@@ -311,7 +312,7 @@
                     <StackPanel>
                         <DockPanel Margin="0,0,0,6">
                             <Button DockPanel.Dock="Right" Content="Cancel" Style="{StaticResource SecondaryButton}" Command="{Binding CancelFlashCommand}"
-                                    Visibility="{Binding IsFlashing, Converter={x:Static vm:BoolToVisibilityConverter.Instance}}" />
+                                    Visibility="{Binding IsFlashing, Converter={x:Static vm:BoolToVisibilityConverter.Instance}}" AutomationProperties.Name="Cancel fastboot flash" />
                             <TextBlock Text="FLASH STATUS" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" />
                         </DockPanel>
                         <TextBlock Text="{Binding FlashStatusText}" FontFamily="Consolas, JetBrains Mono, Cascadia Mono" FontSize="12" Foreground="{DynamicResource AppForeground}" TextWrapping="Wrap" Margin="0,0,0,4" />

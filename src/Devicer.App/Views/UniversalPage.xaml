@@ -47,7 +47,8 @@
                         Content="{Binding Guide.PortalLabel, FallbackValue='Open portal', TargetNullValue='Open portal'}"
                         Style="{StaticResource PrimaryButton}"
                         Command="{Binding OpenPortalCommand}"
-                        Visibility="{Binding Guide.PortalUrl, Converter={x:Static vm:NullToCollapsedConverter.Instance}}" />
+                        Visibility="{Binding Guide.PortalUrl, Converter={x:Static vm:NullToCollapsedConverter.Instance}}"
+                        AutomationProperties.Name="Open OEM bootloader unlock portal" />
                 <StackPanel>
                     <TextBlock Text="Universal" Style="{StaticResource HeadingTextBlock}" />
                     <TextBlock Style="{StaticResource SubheadingTextBlock}"

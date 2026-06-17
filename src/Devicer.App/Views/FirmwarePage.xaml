@@ -63,10 +63,12 @@
                             Style="{StaticResource PrimaryButton}"
                             Command="{Binding CheckLatestCommand}"
                             IsEnabled="{Binding IsIdle}"
-                            Margin="0,0,8,0" />
+                            Margin="0,0,8,0"
+                            AutomationProperties.Name="Check latest firmware from Samsung OTA" />
                     <Button Content="Download &amp; decrypt"
                             Style="{StaticResource PrimaryButton}"
-                            Command="{Binding DownloadLatestCommand}" />
+                            Command="{Binding DownloadLatestCommand}"
+                            AutomationProperties.Name="Download and decrypt firmware" />
                 </StackPanel>
                 <StackPanel>
                     <TextBlock Text="Firmware" Style="{StaticResource HeadingTextBlock}" />
@@ -122,13 +124,15 @@
                     <Grid ColumnDefinitions="*,*">
                         <StackPanel Grid.Column="0" Margin="0,0,8,0">
                             <TextBlock Text="MODEL" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding Model, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12" />
+                            <TextBox Text="{Binding Model, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12"
+                                     AutomationProperties.Name="Device model number" />
                         </StackPanel>
                         <StackPanel Grid.Column="1" Margin="8,0,0,0">
                             <TextBlock Text="CSC / REGIONS" Style="{StaticResource FieldLabel}" />
                             <TextBox Text="{Binding Csc, UpdateSourceTrigger=PropertyChanged}"
                                      ToolTip="Separate multiple CSCs with commas or spaces"
-                                     Margin="0,0,0,12" />
+                                     Margin="0,0,0,12"
+                                     AutomationProperties.Name="CSC region codes" />
                         </StackPanel>
                     </Grid>
                     <DockPanel LastChildFill="True" Margin="0,0,0,4">
@@ -137,7 +141,8 @@
                                 Content="Open IMEI on phone"
                                 Style="{StaticResource SecondaryButton}"
                                 Command="{Binding ShowImeiOnPhoneCommand}"
-                                HorizontalAlignment="Right" />
+                                HorizontalAlignment="Right"
+                                AutomationProperties.Name="Show IMEI settings page on phone" />
                     </DockPanel>
                     <!-- Editable ComboBox: type a new 15-digit IMEI OR pick a previously-used one. -->
                     <ComboBox IsEditable="True"
@@ -148,7 +153,8 @@
                               Text="{Binding Imei, UpdateSourceTrigger=PropertyChanged}"
                               SelectedItem="{Binding SelectedImeiEntry}"
                               FontFamily="Consolas, JetBrains Mono, Cascadia Mono"
-                              Margin="0,0,0,4">
+                              Margin="0,0,0,4"
+                              AutomationProperties.Name="IMEI input and history">
                         <ComboBox.ItemTemplate>
                             <DataTemplate>
                                 <Grid MinWidth="420" ColumnDefinitions="*,Auto">
@@ -192,7 +198,8 @@
                              Background="Transparent"
                              BorderThickness="0"
                              Padding="0"
-                             ToolTip="Selected row controls which CSC is used by Download &amp; decrypt">
+                             ToolTip="Selected row controls which CSC is used by Download &amp; decrypt"
+                             AutomationProperties.Name="CSC region firmware results">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <Grid ColumnDefinitions="78,*,150">
@@ -277,7 +284,8 @@
                         <Button DockPanel.Dock="Right"
                                 Content="Cancel"
                                 Style="{StaticResource SecondaryButton}"
-                                Command="{Binding CancelDownloadCommand}" />
+                                Command="{Binding CancelDownloadCommand}"
+                                AutomationProperties.Name="Cancel firmware download" />
                         <TextBlock Text="DOWNLOAD IN PROGRESS" Style="{StaticResource FieldLabel}" Margin="0" VerticalAlignment="Center" />
                     </DockPanel>
                     <ProgressBar Value="{Binding ProgressPercent, Mode=OneWay}"
@@ -310,7 +318,8 @@
                         <Button DockPanel.Dock="Right"
                                 Content="Open folder"
                                 Style="{StaticResource SecondaryButton}"
-                                Command="{Binding OpenDownloadFolderCommand}" />
+                                Command="{Binding OpenDownloadFolderCommand}"
+                                AutomationProperties.Name="Open downloaded firmware folder" />
                         <TextBlock Text="LAST DOWNLOAD" Style="{StaticResource FieldLabel}" Margin="0" VerticalAlignment="Center" />
                     </DockPanel>
                     <TextBlock Text="DECRYPTED" Style="{StaticResource FieldLabel}" />

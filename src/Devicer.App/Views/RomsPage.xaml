@@ -29,7 +29,8 @@
                     Content="Search"
                     Style="{StaticResource PrimaryButton}"
                     Command="{Binding SearchCommand}"
-                    IsEnabled="{Binding IsIdle}" />
+                    IsEnabled="{Binding IsIdle}"
+                    AutomationProperties.Name="Search for custom ROMs" />
             <StackPanel>
                 <TextBlock Text="Custom ROMs" Style="{StaticResource HeadingTextBlock}" />
                 <TextBlock Text="Aggregated builds from LineageOS and crDroid for the device codename below."
@@ -55,7 +56,8 @@
         <Border Grid.Row="2" Style="{StaticResource Card}" Margin="0,0,0,16">
             <StackPanel>
                 <TextBlock Text="DEVICE CODENAME" Style="{StaticResource FieldLabel}" />
-                <TextBox Text="{Binding Codename, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBox Text="{Binding Codename, UpdateSourceTrigger=PropertyChanged}"
+                         AutomationProperties.Name="Device codename input" />
                 <TextBlock Style="{StaticResource MutedTextBlock}" FontSize="11" Margin="0,4,0,0" TextWrapping="Wrap"
                            Text="Lowercase, e.g. 'cheeseburger', 'alioth', 'pa3q'. Auto-fills from the connected device on the Device tab." />
             </StackPanel>
@@ -73,11 +75,13 @@
                                 Style="{StaticResource SecondaryButton}"
                                 Command="{Binding OpenDownloadFolderCommand}"
                                 Margin="0,0,6,0"
-                                Visibility="{Binding LastDownloadPath, Converter={x:Static vm:NullToCollapsedConverter.Instance}}" />
+                                Visibility="{Binding LastDownloadPath, Converter={x:Static vm:NullToCollapsedConverter.Instance}}"
+                                AutomationProperties.Name="Open ROM download folder" />
                         <Button Content="Cancel"
                                 Style="{StaticResource SecondaryButton}"
                                 Command="{Binding CancelDownloadCommand}"
-                                Visibility="{Binding IsDownloading, Converter={x:Static vm:BoolToVisibilityConverter.Instance}}" />
+                                Visibility="{Binding IsDownloading, Converter={x:Static vm:BoolToVisibilityConverter.Instance}}"
+                                AutomationProperties.Name="Cancel ROM download" />
                     </StackPanel>
                     <TextBlock Text="{Binding DownloadStatusText}"
                                Foreground="{DynamicResource AppForeground}"

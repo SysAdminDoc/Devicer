@@ -109,10 +109,12 @@
         <DockPanel Grid.Row="4" LastChildFill="False" Margin="0,16,0,0">
             <Button DockPanel.Dock="Left" Content="Re-check"
                     Style="{StaticResource SecondaryButton}"
-                    Command="{Binding CheckCommand}" />
+                    Command="{Binding CheckCommand}"
+                    AutomationProperties.Name="Re-check environment tools" />
             <Button DockPanel.Dock="Right" Content="Get started"
                     Style="{StaticResource PrimaryButton}"
-                    Click="Continue_Click" />
+                    Click="Continue_Click"
+                    AutomationProperties.Name="Dismiss setup and open Devicer" />
         </DockPanel>
     </Grid>
 </Window>

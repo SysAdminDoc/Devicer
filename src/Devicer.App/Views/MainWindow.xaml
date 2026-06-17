@@ -50,7 +50,8 @@
                          SelectedItem="{Binding SelectedNavItem, Mode=TwoWay}"
                          Style="{StaticResource NavListBox}"
                          BorderThickness="0"
-                         Margin="6,8,6,0">
+                         Margin="6,8,6,0"
+                         AutomationProperties.Name="Navigation menu">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal">

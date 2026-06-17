@@ -43,7 +43,8 @@
                     <Button Content="Refresh"
                             Style="{StaticResource PrimaryButton}"
                             Command="{Binding RefreshCommand}"
-                            IsEnabled="{Binding IsProbing, Converter={x:Static vm:NotConverter.Instance}}" />
+                            IsEnabled="{Binding IsProbing, Converter={x:Static vm:NotConverter.Instance}}"
+                            AutomationProperties.Name="Refresh device detection" />
                 </StackPanel>
                 <StackPanel>
                     <TextBlock Text="Device" Style="{StaticResource HeadingTextBlock}" />
@@ -84,7 +85,8 @@
                     <ListBox ItemsSource="{Binding Devices}"
                              SelectedItem="{Binding SelectedDevice, Mode=TwoWay}"
                              Background="Transparent"
-                             BorderThickness="0">
+                             BorderThickness="0"
+                             AutomationProperties.Name="Connected devices list">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal" Margin="0,4">

@@ -64,7 +64,8 @@
                     <TextBlock Text="Theme" Style="{StaticResource FieldLabel}" />
                     <ComboBox ItemsSource="{Binding Themes}"
                               SelectedItem="{Binding SelectedTheme, Mode=TwoWay}"
-                              Width="200" HorizontalAlignment="Left" />
+                              Width="200" HorizontalAlignment="Left"
+                              AutomationProperties.Name="Theme selector" />
                     <TextBlock Text="Catppuccin Mocha (dark) and Catppuccin Latte (light). Switches live."
                                Style="{StaticResource MutedTextBlock}" FontSize="12" Margin="0,8,0,0" />
                 </StackPanel>
@@ -83,7 +84,8 @@
                                    Width="40" TextAlignment="Right" />
                         <Slider Minimum="2" Maximum="30" TickFrequency="1" IsSnapToTickEnabled="True"
                                 Value="{Binding ProbeIntervalSeconds, Mode=TwoWay}"
-                                Margin="0,0,12,0" VerticalAlignment="Center" />
+                                Margin="0,0,12,0" VerticalAlignment="Center"
+                                AutomationProperties.Name="Probe interval seconds" />
                     </DockPanel>
                     <TextBlock Text="Devicer re-probes adb / fastboot at this interval to catch USB plug / unplug events. Lower is more responsive but slightly more CPU; 4s is the default."
                                Style="{StaticResource MutedTextBlock}" FontSize="12" Margin="0,8,0,0" />
@@ -97,7 +99,8 @@
                         <Button DockPanel.Dock="Right"
                                 Content="Re-check"
                                 Style="{StaticResource SecondaryButton}"
-                                Command="{Binding RefreshToolStatusCommand}" />
+                                Command="{Binding RefreshToolStatusCommand}"
+                                AutomationProperties.Name="Re-check platform tools availability" />
                         <TextBlock Text="Platform-Tools" Style="{StaticResource SectionLabel}" />
                     </DockPanel>
                     <TextBlock Text="adb" Style="{StaticResource FieldLabel}" />
@@ -121,7 +124,8 @@
                         <Button DockPanel.Dock="Right"
                                 Content="Open data folder"
                                 Style="{StaticResource SecondaryButton}"
-                                Command="{Binding OpenSettingsFolderCommand}" />
+                                Command="{Binding OpenSettingsFolderCommand}"
+                                AutomationProperties.Name="Open Devicer data folder" />
                         <TextBlock Text="About" Style="{StaticResource SectionLabel}" />
                     </DockPanel>
                     <TextBlock Text="Version" Style="{StaticResource FieldLabel}" />
@@ -137,7 +141,8 @@
                     <Button Content="Re-run setup wizard"
                             Style="{StaticResource SecondaryButton}"
                             Command="{Binding RerunSetupWizardCommand}"
-                            Margin="0,4,0,4" HorizontalAlignment="Left" />
+                            Margin="0,4,0,4" HorizontalAlignment="Left"
+                            AutomationProperties.Name="Re-run first-run setup wizard" />
                     <TextBlock Text="{Binding OpenFolderError}"
                                Foreground="{DynamicResource AppWarning}"
                                FontSize="11"
