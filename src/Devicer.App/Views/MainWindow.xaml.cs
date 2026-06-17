@@ -20,6 +20,7 @@ public partial class MainWindow : Window
         var odinVm = new OdinFlashViewModel(App.Host.OdinInspector, App.Host.Thor);
         var fastbootVm = new FastbootFlashViewModel(App.Host.FastbootFlash, App.Host.Fastboot);
         var flashVm = new FlashPageViewModel(odinVm, fastbootVm);
+        var debloatVm = new DebloatViewModel(App.Host.Debloat);
         var universalVm = new UniversalViewModel(App.Host.OemGuidance);
         var settingsVm = new SettingsViewModel(
             App.Host.SettingsStore,
@@ -38,11 +39,12 @@ public partial class MainWindow : Window
                 backupVm.PrefillFrom(deviceVm.SelectedDevice);
                 patchVm.PrefillFrom(deviceVm.SelectedDevice);
                 flashVm.PrefillFrom(deviceVm.SelectedDevice);
+                debloatVm.PrefillFrom(deviceVm.SelectedDevice);
                 universalVm.PrefillFrom(deviceVm.SelectedDevice);
             }
         };
 
-        DataContext = new MainViewModel(deviceVm, firmwareVm, romVm, backupVm, patchVm, flashVm, universalVm, settingsVm);
+        DataContext = new MainViewModel(deviceVm, firmwareVm, romVm, backupVm, patchVm, flashVm, debloatVm, universalVm, settingsVm);
 
         App.Host.Snackbar.PropertyChanged += OnSnackbarChanged;
 

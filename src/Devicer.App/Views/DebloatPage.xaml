@@ -1,0 +1,163 @@
+<UserControl x:Class="Devicer.App.Views.DebloatPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Devicer.App.ViewModels">
+    <UserControl.Resources>
+        <Style x:Key="FieldLabel" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource AppSubtleForeground}" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Typography.Capitals" Value="AllSmallCaps" />
+            <Setter Property="Margin" Value="0,0,0,4" />
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="32,28,32,32" RowDefinitions="Auto,Auto,Auto,Auto,*">
+
+        <!-- Heading -->
+        <DockPanel Grid.Row="0" Margin="0,0,0,8" LastChildFill="True">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top">
+                <Button Content="Load packages"
+                        Style="{StaticResource SecondaryButton}"
+                        Command="{Binding LoadPackagesCommand}"
+                        Margin="0,0,6,0"
+                        AutomationProperties.Name="Load installed packages" />
+                <Button Content="Disable selected"
+                        Style="{StaticResource PrimaryButton}"
+                        Command="{Binding DisableSelectedCommand}"
+                        Margin="0,0,6,0"
+                        AutomationProperties.Name="Disable selected packages" />
+                <Button Content="Enable selected"
+                        Style="{StaticResource SecondaryButton}"
+                        Command="{Binding EnableSelectedCommand}"
+                        AutomationProperties.Name="Enable selected packages" />
+            </StackPanel>
+            <StackPanel>
+                <TextBlock Text="Debloat" Style="{StaticResource HeadingTextBlock}" />
+                <TextBlock Text="Disable or uninstall pre-installed packages via ADB. No root required. Select packages and use Disable/Enable."
+                           Style="{StaticResource SubheadingTextBlock}" />
+            </StackPanel>
+        </DockPanel>
+
+        <!-- Warning -->
+        <Border Grid.Row="1"
+                Style="{StaticResource Card}"
+                Background="#22F9E2AF"
+                BorderBrush="{DynamicResource AppWarning}"
+                Margin="0,0,0,12">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="&#xE7BA;" FontFamily="Segoe MDL2 Assets" FontSize="18"
+                           Foreground="{DynamicResource AppWarning}" Margin="0,0,12,0" VerticalAlignment="Top" />
+                <TextBlock VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12">
+                    <Run FontWeight="SemiBold" Text="Safety ratings: " />
+                    <Run Text="Safe = bloatware/adware, can safely disable. Advanced = OEM utility apps. Expert = system services, may affect functionality. Unsafe = critical system components, DO NOT disable." />
+                </TextBlock>
+            </StackPanel>
+        </Border>
+
+        <!-- Diagnostic -->
+        <Border Grid.Row="2"
+                Style="{StaticResource Card}"
+                Background="#22F9E2AF"
+                BorderBrush="{DynamicResource AppWarning}"
+                Margin="0,0,0,12"
+                Visibility="{Binding Diagnostic, Converter={x:Static vm:NullToCollapsedConverter.Instance}}">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="&#xE7BA;" FontFamily="Segoe MDL2 Assets" FontSize="18"
+                           Foreground="{DynamicResource AppWarning}" Margin="0,0,12,0" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding Diagnostic}" VerticalAlignment="Center" TextWrapping="Wrap" />
+            </StackPanel>
+        </Border>
+
+        <!-- Status -->
+        <TextBlock Grid.Row="3"
+                   Text="{Binding StatusText}"
+                   Foreground="{DynamicResource AppMutedForeground}"
+                   FontSize="12"
+                   Margin="0,0,0,12"
+                   Visibility="{Binding StatusText, Converter={x:Static vm:NullToCollapsedConverter.Instance}}" />
+
+        <!-- Package list -->
+        <Border Grid.Row="4" Style="{StaticResource Card}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding Packages}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="0,3">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="70" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <CheckBox Grid.Column="0"
+                                          IsChecked="{Binding Selected, Mode=TwoWay}"
+                                          VerticalAlignment="Center"
+                                          Margin="0,0,8,0" />
+                                <Border Grid.Column="1"
+                                        CornerRadius="4"
+                                        Padding="6,2"
+                                        Margin="0,0,8,0"
+                                        VerticalAlignment="Center"
+                                        HorizontalAlignment="Left">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="{DynamicResource AppCardBackground}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Package.Safety}" Value="Safe">
+                                                    <Setter Property="Background" Value="#2240A02B" />
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource AppSuccess}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Package.Safety}" Value="Advanced">
+                                                    <Setter Property="Background" Value="#22DF8E1D" />
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource AppWarning}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Package.Safety}" Value="Expert">
+                                                    <Setter Property="Background" Value="#22F38BA8" />
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource AppDestructive}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Package.Safety}" Value="Unsafe">
+                                                    <Setter Property="Background" Value="#44D20032" />
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource AppDestructive}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <TextBlock Text="{Binding Package.Safety}" FontSize="10" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource AppForeground}" />
+                                </Border>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="{Binding Package.PackageName}"
+                                               FontFamily="Consolas, JetBrains Mono, Cascadia Mono"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource AppForeground}" />
+                                    <TextBlock Text="{Binding Package.Description}"
+                                               FontSize="11"
+                                               Foreground="{DynamicResource AppMutedForeground}"
+                                               Visibility="{Binding Package.Description, Converter={x:Static vm:NullToCollapsedConverter.Instance}}" />
+                                </StackPanel>
+                                <TextBlock Grid.Column="3"
+                                           FontSize="11"
+                                           Foreground="{DynamicResource AppMutedForeground}"
+                                           VerticalAlignment="Center"
+                                           Margin="8,0,0,0">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Text" Value="enabled" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Package.IsEnabled}" Value="False">
+                                                    <Setter Property="Text" Value="disabled" />
+                                                    <Setter Property="Foreground" Value="{DynamicResource AppWarning}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Border>
+    </Grid>
+</UserControl>

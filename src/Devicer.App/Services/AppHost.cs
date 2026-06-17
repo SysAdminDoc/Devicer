@@ -28,6 +28,7 @@ public sealed class AppHost
     public IToolManager ToolManager { get; }
     public IThorService Thor { get; }
     public IHeimdallService Heimdall { get; }
+    public IDebloatService Debloat { get; }
     public IOemGuidanceService OemGuidance { get; }
     public IHashService Hash { get; }
     public IOemPluginRegistry PluginRegistry { get; }
@@ -62,6 +63,7 @@ public sealed class AppHost
         FastbootFlash = new FastbootFlashService(Fastboot);
         Thor = new ThorService(ShellRunner, ToolManager);
         Heimdall = new HeimdallService(ShellRunner, ToolManager);
+        Debloat = new DebloatService(Adb);
         OemGuidance = new OemGuidanceService();
         PluginRegistry = new OemPluginRegistry();
         Snackbar = new SnackbarService();
