@@ -151,6 +151,33 @@
                 </ItemsControl>
             </Border>
 
+            <!-- Thor execute gate -->
+            <Border Style="{StaticResource Card}" Margin="0,0,0,12"
+                    Visibility="{Binding Entries.Count, Converter={x:Static vm:CountToVisibleIfPositiveConverter.Instance}}">
+                <StackPanel>
+                    <TextBlock Text="FLASH VIA THOR" Style="{StaticResource FieldLabel}" />
+                    <TextBlock Style="{StaticResource MutedTextBlock}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,8">
+                        Thor Flash Utility writes the selected entries to the device. This CANNOT be undone. Run a dry-run first.
+                    </TextBlock>
+                    <DockPanel>
+                        <Button DockPanel.Dock="Right"
+                                Content="Execute Flash"
+                                Style="{StaticResource PrimaryButton}"
+                                Command="{Binding ThorFlashCommand}"
+                                IsEnabled="{Binding IsIdle}" />
+                        <CheckBox IsChecked="{Binding ThorConfirmed, Mode=TwoWay}" VerticalAlignment="Center">
+                            <CheckBox.Content>
+                                <TextBlock Text="I understand this writes to the device and cannot be undone" FontWeight="SemiBold" />
+                            </CheckBox.Content>
+                        </CheckBox>
+                    </DockPanel>
+                    <TextBlock Style="{StaticResource MutedTextBlock}" FontSize="11" Margin="0,4,0,0"
+                               Visibility="{Binding IsThorAvailable, Converter={x:Static vm:InverseBoolToVisibilityConverter.Instance}}">
+                        Thor Flash Utility not found on PATH or in the tools cache. Install Thor or set the path in Settings.
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
             <!-- Odin status / dry-run output -->
             <Border Style="{StaticResource Card}" Margin="0,0,0,16"
                     Visibility="{Binding StatusText, Converter={x:Static vm:NullToCollapsedConverter.Instance}}">

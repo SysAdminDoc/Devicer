@@ -2,11 +2,11 @@
 
 # Devicer
 
-[![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.4.0-blue.svg)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows-0078d4.svg)](#)
 [![.NET](https://img.shields.io/badge/.NET-10-512bd4.svg)](#)
-[![Status](https://img.shields.io/badge/status-1.3%20alpha-orange.svg)](#)
+[![Status](https://img.shields.io/badge/status-1.4%20alpha-orange.svg)](#)
 
 > Unified Windows toolkit for managing rooted Android phones — identify, search ROMs, back up, patch, and flash from one shell.
 

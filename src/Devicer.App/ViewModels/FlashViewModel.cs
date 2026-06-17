@@ -51,6 +51,7 @@ public partial class FlashViewModel : ObservableObject
     private readonly IOdinInspectorService _inspector;
     private readonly IFastbootFlashService _fbFlash;
     private readonly IFastbootService _fb;
+    private readonly IThorService _thor;
     private DeviceInfo? _device;
     private CancellationTokenSource? _flashCts;
 
@@ -104,16 +105,21 @@ public partial class FlashViewModel : ObservableObject
     [ObservableProperty]
     private bool _rebootAfterFlash;
 
+    [ObservableProperty]
+    private bool _thorConfirmed;
+
     public bool IsKnoxIntact => string.Equals(KnoxBit, "0", StringComparison.Ordinal);
     public bool IsKnoxTripped => !string.IsNullOrWhiteSpace(KnoxBit) && !IsKnoxIntact;
     public bool IsIdle => !IsFlashing;
     public bool IsSamsung => _device?.Manufacturer?.Contains("samsung", StringComparison.OrdinalIgnoreCase) == true;
+    public bool IsThorAvailable => _thor.IsAvailable;
 
-    public FlashViewModel(IOdinInspectorService inspector, IFastbootFlashService fbFlash, IFastbootService fb)
+    public FlashViewModel(IOdinInspectorService inspector, IFastbootFlashService fbFlash, IFastbootService fb, IThorService thor)
     {
         _inspector = inspector;
         _fbFlash = fbFlash;
         _fb = fb;
+        _thor = thor;
         Entries.CollectionChanged += (_, _) => DryRunCommand.NotifyCanExecuteChanged();
         FastbootImages.CollectionChanged += (_, _) =>
         {
@@ -359,6 +365,73 @@ public partial class FlashViewModel : ObservableObject
             .Select(r => new FastbootFlashEntry(r.Partition, r.FilePath))
             .ToList();
     }
+
+    // ── Thor flash section ──
+
+    [RelayCommand(CanExecute = nameof(CanThorFlash))]
+    public async Task ThorFlashAsync()
+    {
+        if (string.IsNullOrWhiteSpace(ArchivePath))
+        {
+            Diagnostic = "Select an Odin archive first.";
+            return;
+        }
+        if (!ThorConfirmed)
+        {
+            Diagnostic = "Check the confirmation box to proceed with Thor flash. This writes to the device and cannot be undone.";
+            return;
+        }
+
+        IsFlashing = true;
+        Diagnostic = null;
+        FlashWarnings.Clear();
+        FlashStatusText = "Starting Thor flash…";
+        FlashProgressFraction = null;
+        ThorConfirmed = false;
+
+        _flashCts?.Dispose();
+        _flashCts = new CancellationTokenSource();
+        var ct = _flashCts.Token;
+
+        var progress = new Progress<ThorFlashProgress>(p =>
+        {
+            FlashStatusText = p.Message ?? $"{p.Phase} {p.PartitionName}";
+            FlashProgressFraction = p.FractionComplete;
+        });
+
+        try
+        {
+            var selected = Entries.Where(r => r.Selected).Select(r => r.Entry.PartitionGuess).ToList();
+            var result = await _thor.FlashArchiveAsync(
+                ArchivePath!,
+                selected.Count > 0 ? selected : null,
+                EfsClearEnabled,
+                progress, ct).ConfigureAwait(true);
+
+            foreach (var w in result.Warnings) FlashWarnings.Add(w);
+
+            FlashStatusText = result.Success
+                ? "Thor flash complete."
+                : $"Thor flash finished with warnings. {result.SucceededPartitions}/{result.TotalPartitions} partitions.";
+        }
+        catch (OperationCanceledException)
+        {
+            FlashStatusText = "Thor flash cancelled.";
+            FlashProgressFraction = null;
+        }
+        catch (Exception ex)
+        {
+            Diagnostic = $"Thor flash failed: {ex.Message}";
+            FlashStatusText = null;
+            FlashProgressFraction = null;
+        }
+        finally
+        {
+            IsFlashing = false;
+        }
+    }
+
+    private bool CanThorFlash() => !IsFlashing && !string.IsNullOrWhiteSpace(ArchivePath) && Entries.Count > 0;
 
     private static string GuessPartition(string fileName)
     {

@@ -19,6 +19,8 @@ public sealed class AppHost
     public IBootPatchService BootPatch { get; }
     public IOdinInspectorService OdinInspector { get; }
     public IFastbootFlashService FastbootFlash { get; }
+    public IToolManager ToolManager { get; }
+    public IThorService Thor { get; }
     public IOemGuidanceService OemGuidance { get; }
     public ImeiCache ImeiCache { get; }
     public AppSettingsStore SettingsStore { get; }
@@ -40,6 +42,8 @@ public sealed class AppHost
         BootPatch = new BootPatchService(Adb);
         OdinInspector = new OdinInspectorService();
         FastbootFlash = new FastbootFlashService(Fastboot);
+        ToolManager = new ToolManager();
+        Thor = new ThorService(ShellRunner, ToolManager);
         OemGuidance = new OemGuidanceService();
         ImeiCache = new ImeiCache();
         SettingsStore = new AppSettingsStore();
