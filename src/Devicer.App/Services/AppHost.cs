@@ -21,6 +21,7 @@ public sealed class AppHost
     public IFastbootFlashService FastbootFlash { get; }
     public IToolManager ToolManager { get; }
     public IThorService Thor { get; }
+    public IHeimdallService Heimdall { get; }
     public IOemGuidanceService OemGuidance { get; }
     public ImeiCache ImeiCache { get; }
     public AppSettingsStore SettingsStore { get; }
@@ -44,6 +45,7 @@ public sealed class AppHost
         FastbootFlash = new FastbootFlashService(Fastboot);
         ToolManager = new ToolManager();
         Thor = new ThorService(ShellRunner, ToolManager);
+        Heimdall = new HeimdallService(ShellRunner, ToolManager);
         OemGuidance = new OemGuidanceService();
         ImeiCache = new ImeiCache();
         SettingsStore = new AppSettingsStore();
