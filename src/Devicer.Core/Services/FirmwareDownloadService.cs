@@ -132,35 +132,45 @@ public sealed class FirmwareDownloadService : IFirmwareDownloadService, IDisposa
             else if (existing == info.BinaryByteSize) resumeFrom = info.BinaryByteSize; // already complete
         }
 
-        if (resumeFrom < info.BinaryByteSize)
-        {
-            progress?.Report(new FirmwareProgress(FirmwarePhase.Downloading, resumeFrom, info.BinaryByteSize,
-                resumeFrom > 0 ? $"Resuming download at {FormatBytes(resumeFrom)} / {FormatBytes(info.BinaryByteSize)}…" : $"Downloading {FormatBytes(info.BinaryByteSize)}…"));
-
-            // FUS requires a BinaryInitForMass POST to set up server-side download state
-            // before the actual blob fetch — without it, the cloud endpoint returns HTTP 403.
-            await BinaryInitForMassAsync(info, ct).ConfigureAwait(false);
-            await DownloadEncryptedAsync(info, encPath, resumeFrom, progress, ct).ConfigureAwait(false);
-        }
-        else
-        {
-            progress?.Report(new FirmwareProgress(FirmwarePhase.Downloading, info.BinaryByteSize, info.BinaryByteSize, "Download already complete."));
-        }
-
-        // SHA256 over the encrypted blob (we don't have an authoritative hash from the server, so this
-        // is informational — useful for cache-hit detection and integrity checks across resumes).
-        progress?.Report(new FirmwareProgress(FirmwarePhase.Downloading, info.BinaryByteSize, info.BinaryByteSize, "Hashing encrypted blob…"));
-        var sha = await _hash.ComputeSha256Async(encPath, ct).ConfigureAwait(false);
-
-        progress?.Report(new FirmwareProgress(FirmwarePhase.Decrypting, 0, info.BinaryByteSize, "Decrypting firmware…"));
         var key = info.IsV4
             ? FusCrypto.DeriveFirmwareKeyV4(info.LatestFwVersion, info.LogicValueFactory)
             : FusCrypto.DeriveFirmwareKeyV2(region, model, targetVersion);
 
-        var decryptedSize = await FirmwareCipher.DecryptFileAsync(encPath, decPath,
-            key,
-            new Progress<long>(bytes => progress?.Report(new FirmwareProgress(FirmwarePhase.Decrypting, bytes, info.BinaryByteSize))),
-            ct).ConfigureAwait(false);
+        long decryptedSize;
+        string sha;
+
+        if (resumeFrom > 0 && resumeFrom < info.BinaryByteSize)
+        {
+            progress?.Report(new FirmwareProgress(FirmwarePhase.Downloading, resumeFrom, info.BinaryByteSize,
+                $"Resuming download at {FormatBytes(resumeFrom)} / {FormatBytes(info.BinaryByteSize)}…"));
+            await BinaryInitForMassAsync(info, ct).ConfigureAwait(false);
+            await DownloadEncryptedAsync(info, encPath, resumeFrom, progress, ct).ConfigureAwait(false);
+
+            progress?.Report(new FirmwareProgress(FirmwarePhase.Downloading, info.BinaryByteSize, info.BinaryByteSize, "Hashing encrypted blob…"));
+            sha = await _hash.ComputeSha256Async(encPath, ct).ConfigureAwait(false);
+
+            progress?.Report(new FirmwareProgress(FirmwarePhase.Decrypting, 0, info.BinaryByteSize, "Decrypting firmware…"));
+            decryptedSize = await FirmwareCipher.DecryptFileAsync(encPath, decPath, key,
+                new Progress<long>(bytes => progress?.Report(new FirmwareProgress(FirmwarePhase.Decrypting, bytes, info.BinaryByteSize))),
+                ct).ConfigureAwait(false);
+        }
+        else if (resumeFrom >= info.BinaryByteSize)
+        {
+            progress?.Report(new FirmwareProgress(FirmwarePhase.Downloading, info.BinaryByteSize, info.BinaryByteSize, "Download already complete."));
+            sha = await _hash.ComputeSha256Async(encPath, ct).ConfigureAwait(false);
+
+            progress?.Report(new FirmwareProgress(FirmwarePhase.Decrypting, 0, info.BinaryByteSize, "Decrypting firmware…"));
+            decryptedSize = await FirmwareCipher.DecryptFileAsync(encPath, decPath, key,
+                new Progress<long>(bytes => progress?.Report(new FirmwareProgress(FirmwarePhase.Decrypting, bytes, info.BinaryByteSize))),
+                ct).ConfigureAwait(false);
+        }
+        else
+        {
+            progress?.Report(new FirmwareProgress(FirmwarePhase.Downloading, 0, info.BinaryByteSize,
+                $"Downloading + decrypting {FormatBytes(info.BinaryByteSize)} (streaming)…"));
+            await BinaryInitForMassAsync(info, ct).ConfigureAwait(false);
+            (decryptedSize, sha) = await DownloadAndDecryptStreamingAsync(info, decPath, key, progress, ct).ConfigureAwait(false);
+        }
 
         // Index the result.
         _cache.WriteIndex(folder, new FirmwareCache.IndexRecord(
@@ -220,6 +230,22 @@ public sealed class FirmwareDownloadService : IFirmwareDownloadService, IDisposa
         if (stem.Length < 16)
             throw new FusProtocolException($"BinaryInitForMass: filename stem '{stem}' is shorter than 16 chars; cannot compute logic check.");
         return stem[^16..];
+    }
+
+    private async Task<(long DecryptedSize, string EncryptedSha256)> DownloadAndDecryptStreamingAsync(
+        FirmwareBinaryInfo info, string decPath, byte[] key,
+        IProgress<FirmwareProgress>? progress, CancellationToken ct)
+    {
+        var remotePath = (info.ModelPath ?? string.Empty) + info.BinaryName;
+        using var resp = await _fus.StartDownloadAsync(remotePath, null, ct).ConfigureAwait(false);
+        await using var src = await resp.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
+
+        var decryptedSize = await FirmwareCipher.DecryptStreamAsync(
+            src, decPath, key, info.BinaryByteSize,
+            new Progress<long>(bytes => progress?.Report(new FirmwareProgress(FirmwarePhase.Downloading, bytes, info.BinaryByteSize))),
+            ct).ConfigureAwait(false);
+
+        return (decryptedSize, "streaming-no-enc-hash");
     }
 
     private async Task DownloadEncryptedAsync(FirmwareBinaryInfo info, string outPath, long resumeFrom,

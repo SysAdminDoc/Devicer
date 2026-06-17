@@ -102,6 +102,77 @@ public static class FirmwareCipher
         return totalOut;
     }
 
+    public static async Task<long> DecryptStreamAsync(
+        Stream encryptedStream,
+        string decryptedPath,
+        byte[] key,
+        long totalEncryptedSize,
+        IProgress<long>? progress,
+        CancellationToken ct)
+    {
+        if (key.Length != 16) throw new ArgumentException("AES-128 firmware key must be 16 bytes", nameof(key));
+        if (totalEncryptedSize % 16 != 0)
+            throw new InvalidDataException($"Encrypted firmware size {totalEncryptedSize} is not a multiple of 16.");
+
+        using var aes = Aes.Create();
+        aes.Mode = CipherMode.ECB;
+        aes.Padding = PaddingMode.None;
+        aes.Key = key;
+
+        using var dec = aes.CreateDecryptor();
+
+        await using var outFs = new FileStream(decryptedPath, FileMode.Create, FileAccess.Write, FileShare.Read, ChunkSize, useAsync: true);
+
+        var inBuf = new byte[ChunkSize];
+        var outBuf = new byte[ChunkSize];
+        long totalIn = 0, totalOut = 0;
+        var lastReport = Environment.TickCount64;
+
+        while (true)
+        {
+            var read = await ReadFullAsync(encryptedStream, inBuf, ct).ConfigureAwait(false);
+            if (read == 0) break;
+
+            var isFinal = totalIn + read >= totalEncryptedSize;
+
+            if (read % 16 != 0)
+                throw new InvalidDataException($"Short read of {read} bytes mid-stream — partial chunk not aligned to 16.");
+
+            var written = dec.TransformBlock(inBuf, 0, read, outBuf, 0);
+
+            if (isFinal)
+            {
+                if (written < 16)
+                    throw new InvalidDataException($"Decryption produced final block of {written} bytes — too small for PKCS#7.");
+                var pad = outBuf[written - 1];
+                if (pad < 1 || pad > 16)
+                    throw new InvalidDataException($"Decryption produced invalid PKCS#7 pad byte {pad}.");
+                for (int i = written - pad; i < written; i++)
+                {
+                    if (outBuf[i] != pad)
+                        throw new InvalidDataException($"PKCS#7 padding mismatch at offset {i}.");
+                }
+                written -= pad;
+            }
+
+            await outFs.WriteAsync(outBuf.AsMemory(0, written), ct).ConfigureAwait(false);
+            totalIn += read;
+            totalOut += written;
+
+            var now = Environment.TickCount64;
+            if (now - lastReport > 100)
+            {
+                progress?.Report(totalIn);
+                lastReport = now;
+            }
+
+            if (isFinal) break;
+        }
+
+        progress?.Report(totalIn);
+        return totalOut;
+    }
+
     private static async Task<int> ReadFullAsync(Stream s, byte[] buf, CancellationToken ct)
     {
         int got = 0;
