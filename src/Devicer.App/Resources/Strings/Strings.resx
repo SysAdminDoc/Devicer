@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <!-- App-wide -->
+  <data name="AppTitle" xml:space="preserve"><value>Devicer</value></data>
+  <data name="LocalOnlyBuild" xml:space="preserve"><value>Local-only build</value></data>
+
+  <!-- Navigation -->
+  <data name="Nav_Device" xml:space="preserve"><value>Device</value></data>
+  <data name="Nav_Firmware" xml:space="preserve"><value>Firmware</value></data>
+  <data name="Nav_ROMs" xml:space="preserve"><value>ROMs</value></data>
+  <data name="Nav_Backup" xml:space="preserve"><value>Backup</value></data>
+  <data name="Nav_Patch" xml:space="preserve"><value>Patch</value></data>
+  <data name="Nav_Flash" xml:space="preserve"><value>Flash</value></data>
+  <data name="Nav_Debloat" xml:space="preserve"><value>Debloat</value></data>
+  <data name="Nav_Universal" xml:space="preserve"><value>Universal</value></data>
+  <data name="Nav_Settings" xml:space="preserve"><value>Settings</value></data>
+
+  <!-- Common actions -->
+  <data name="Action_Search" xml:space="preserve"><value>Search</value></data>
+  <data name="Action_Browse" xml:space="preserve"><value>Browse</value></data>
+  <data name="Action_Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Action_OpenFolder" xml:space="preserve"><value>Open folder</value></data>
+  <data name="Action_Refresh" xml:space="preserve"><value>Refresh</value></data>
+  <data name="Action_ReCheck" xml:space="preserve"><value>Re-check</value></data>
+
+  <!-- Settings page -->
+  <data name="Settings_Title" xml:space="preserve"><value>Settings</value></data>
+  <data name="Settings_Subtitle" xml:space="preserve"><value>Theme, behavior, tool detection, and where Devicer keeps its data.</value></data>
+  <data name="Settings_Appearance" xml:space="preserve"><value>Appearance</value></data>
+  <data name="Settings_Theme" xml:space="preserve"><value>Theme</value></data>
+  <data name="Settings_ThemeDescription" xml:space="preserve"><value>Catppuccin Mocha (dark) and Catppuccin Latte (light). Switches live.</value></data>
+  <data name="Settings_Behavior" xml:space="preserve"><value>Behavior</value></data>
+  <data name="Settings_ProbeInterval" xml:space="preserve"><value>Hot-plug probe interval (seconds)</value></data>
+  <data name="Settings_PlatformTools" xml:space="preserve"><value>Platform-Tools</value></data>
+  <data name="Settings_About" xml:space="preserve"><value>About</value></data>
+  <data name="Settings_Version" xml:space="preserve"><value>Version</value></data>
+  <data name="Settings_SettingsFile" xml:space="preserve"><value>Settings file</value></data>
+  <data name="Settings_CrashLog" xml:space="preserve"><value>Crash log</value></data>
+  <data name="Settings_ToolCache" xml:space="preserve"><value>Tool cache</value></data>
+  <data name="Settings_RerunWizard" xml:space="preserve"><value>Re-run setup wizard</value></data>
+
+  <!-- Play Integrity warning -->
+  <data name="PlayIntegrity_Title" xml:space="preserve"><value>Play Integrity impact: </value></data>
+  <data name="PlayIntegrity_FlashWarning" xml:space="preserve"><value>Bootloader unlock and custom flashing will fail Play Integrity DEVICE and STRONG verdicts. Samsung Pay, Google Wallet, banking apps, and enterprise enrollment will stop working. Bypasses (Play Integrity Fix module) exist but break frequently.</value></data>
+  <data name="PlayIntegrity_PatchWarning" xml:space="preserve"><value>Root patching will fail Play Integrity DEVICE and STRONG verdicts. Samsung Pay, Google Wallet, banking apps, and enterprise enrollment will stop working. Bypasses (Magisk DenyList / Play Integrity Fix module) exist but break frequently.</value></data>
+
+  <!-- Knox warnings -->
+  <data name="Knox_IntactTitle" xml:space="preserve"><value>KNOX IS INTACT</value></data>
+  <data name="Knox_IntactWarning" xml:space="preserve"><value>Flashing a custom AP / kernel / boot image WILL trip the Knox eFuse permanently and disable Samsung Pay, Secure Folder, Health, and corporate enrollment. Once tripped, only board replacement reverses it. Flash stock-only via Odin to keep Knox alive.</value></data>
+  <data name="Knox_TrippedWarning" xml:space="preserve"><value>Knox eFuse is already tripped (warranty bit != 0). Further flashes won't restore Knox features.</value></data>
+
+  <!-- Status messages -->
+  <data name="Status_Cancelled" xml:space="preserve"><value>Cancelled.</value></data>
+  <data name="Status_NoDevices" xml:space="preserve"><value>No devices</value></data>
+</root>
