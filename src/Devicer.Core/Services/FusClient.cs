@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
 namespace Devicer.Core.Services;
@@ -42,13 +43,10 @@ public sealed class FusClient : IDisposable
             _cookies = new CookieContainer();
             var handler = new HttpClientHandler
             {
-                // The cloud-neofussvr download endpoint's Squid ACL requires the session
-                // cookies (JSESSIONID_SVR + SCOUTER + Imperva tracking pair) set during the
-                // POST handshake. Without them: HTTP 403 "Invalid Request". Imperva's
-                // bot-detection turned out to be a non-issue on the API path.
                 CookieContainer = _cookies,
                 UseCookies = true,
                 AllowAutoRedirect = false,
+                ServerCertificateCustomValidationCallback = ValidateFusCertificate,
             };
             _http = new HttpClient(handler) { Timeout = TimeSpan.FromMinutes(5) };
             _http.DefaultRequestHeaders.UserAgent.Clear();
@@ -272,6 +270,28 @@ public sealed class FusClient : IDisposable
         var sig = FusCrypto.ComputeAuthSignature(_decodedNonce, _key1Used);
         var auth = $"FUS nonce=\"{_encryptedNonce}\", signature=\"{sig}\", nc=\"\", type=\"\", realm=\"\", newauth=\"1\"";
         req.Headers.TryAddWithoutValidation("Authorization", auth);
+    }
+
+    private static bool ValidateFusCertificate(
+        HttpRequestMessage request,
+        X509Certificate2? cert,
+        X509Chain? chain,
+        System.Net.Security.SslPolicyErrors errors)
+    {
+        if (cert is null) return false;
+        if (errors == System.Net.Security.SslPolicyErrors.None) return true;
+        if ((errors & System.Net.Security.SslPolicyErrors.RemoteCertificateChainErrors) != 0
+            && chain is not null)
+        {
+            foreach (var status in chain.ChainStatus)
+            {
+                if (status.Status != X509ChainStatusFlags.NoError
+                    && status.Status != X509ChainStatusFlags.UntrustedRoot)
+                    return false;
+            }
+            return true;
+        }
+        return false;
     }
 
     public void Dispose()

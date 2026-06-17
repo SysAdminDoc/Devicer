@@ -134,6 +134,10 @@
                     <TextBlock Text="{Binding CrashlogPath}" Style="{StaticResource MonoValue}" />
                     <TextBlock Text="Tool cache" Style="{StaticResource FieldLabel}" />
                     <TextBlock Text="{Binding ToolsCachePath}" Style="{StaticResource MonoValue}" />
+                    <Button Content="Re-run setup wizard"
+                            Style="{StaticResource SecondaryButton}"
+                            Command="{Binding RerunSetupWizardCommand}"
+                            Margin="0,4,0,4" HorizontalAlignment="Left" />
                     <TextBlock Text="{Binding OpenFolderError}"
                                Foreground="{DynamicResource AppWarning}"
                                FontSize="11"

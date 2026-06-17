@@ -215,6 +215,7 @@ public sealed class OemGuidanceService : IOemGuidanceService
         Quirks =
         [
             new("OEM unlock toggle removed in One UI 8", "Samsung removed the 'OEM unlocking' developer toggle on Galaxy S25 / Z Fold7 / Z Flip7 with One UI 8 / Android 16. Bootloader unlock is currently NOT available on those models — flashing custom AP/CSC will fail with a SECURE-CHECK error."),
+            new("Maintenance Mode required for Download Mode (One UI 8.5+)", "Starting with One UI 8.5, Samsung requires Maintenance Mode to be enabled before the Volume Down + USB key combo enters Download Mode. Without it, the device shows a blank blue screen. Enable Maintenance Mode in Settings before attempting to flash."),
         ],
         PortalUrl = null,
     };

@@ -136,4 +136,15 @@ public partial class SettingsViewModel : ObservableObject
     }
 
     public event EventHandler<int>? ProbeIntervalChanged;
+
+    [RelayCommand]
+    public void RerunSetupWizard()
+    {
+        _store.Settings.FirstRunCompleted = false;
+        _store.Save();
+        var vm = new FirstRunViewModel(_store, _adb, _fastboot);
+        var win = new Views.FirstRunWindow(vm);
+        win.ShowDialog();
+        _ = RefreshToolStatusAsync();
+    }
 }

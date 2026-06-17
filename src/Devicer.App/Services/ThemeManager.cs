@@ -1,4 +1,5 @@
 using System.Windows;
+using Microsoft.Win32;
 
 namespace Devicer.App.Services;
 
@@ -25,7 +26,6 @@ public sealed class ThemeManager
             Source = new Uri($"pack://application:,,,/Resources/Themes/{dictName}.xaml", UriKind.Absolute),
         };
 
-        // Slot 0 is reserved for the palette dictionary; slot 1 is ThemeStyles. Replace slot 0 only.
         var merged = Application.Current.Resources.MergedDictionaries;
         if (merged.Count > 0) merged[0] = newDict;
         else merged.Add(newDict);
@@ -34,5 +34,18 @@ public sealed class ThemeManager
         _store.Save();
 
         ThemeChanged?.Invoke(this, theme);
+    }
+
+    public static AppTheme DetectSystemTheme()
+    {
+        try
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize");
+            var val = key?.GetValue("AppsUseLightTheme");
+            if (val is int i)
+                return i == 1 ? AppTheme.Latte : AppTheme.Mocha;
+        }
+        catch { }
+        return AppTheme.Mocha;
     }
 }

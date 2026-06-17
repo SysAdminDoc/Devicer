@@ -19,11 +19,13 @@ public partial class App : Application
         DispatcherUnhandledException += (_, args) => { LogCrash(args.Exception); args.Handled = true; };
         TaskScheduler.UnobservedTaskException += (_, args) => { LogCrash(args.Exception); args.SetObserved(); };
 
-        // Apply persisted theme before the first window opens so we don't flash Mocha when Latte is saved.
+        if (!Host.SettingsStore.Settings.FirstRunCompleted)
+        {
+            var systemTheme = ThemeManager.DetectSystemTheme();
+            Host.SettingsStore.Settings.Theme = systemTheme;
+        }
         Host.Theme.Apply(Host.SettingsStore.Settings.Theme);
 
-        // First-run wizard runs modal. If the user closes it without completing, FirstRunCompleted stays
-        // false and they'll see it again next launch — no harm done.
         if (!Host.SettingsStore.Settings.FirstRunCompleted)
         {
             var firstRunVm = new FirstRunViewModel(Host.SettingsStore, Host.Adb, Host.Fastboot);
