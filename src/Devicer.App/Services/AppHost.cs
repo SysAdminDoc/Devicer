@@ -22,6 +22,7 @@ public sealed class AppHost
     public IBootPatchService BootPatch { get; }
     public IPcPatchService PcPatch { get; }
     public IOdinInspectorService OdinInspector { get; }
+    public IPitParser PitParser { get; }
     public IFastbootFlashService FastbootFlash { get; }
     public IToolManager ToolManager { get; }
     public IThorService Thor { get; }
@@ -54,6 +55,7 @@ public sealed class AppHost
         BootPatch = new BootPatchService(Adb, Hash);
         PcPatch = new PcPatchService(ShellRunner, ToolManager, Hash);
         OdinInspector = new OdinInspectorService();
+        PitParser = new PitParser();
         FastbootFlash = new FastbootFlashService(Fastboot);
         Thor = new ThorService(ShellRunner, ToolManager);
         Heimdall = new HeimdallService(ShellRunner, ToolManager);
