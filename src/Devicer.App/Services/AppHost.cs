@@ -17,6 +17,7 @@ public sealed class AppHost
     public IRomDownloadService RomDownload { get; }
     public IBackupService Backup { get; }
     public IRestoreService Restore { get; }
+    public ITetherbackService Tetherback { get; }
     public IBootPatchService BootPatch { get; }
     public IPcPatchService PcPatch { get; }
     public IOdinInspectorService OdinInspector { get; }
@@ -43,8 +44,9 @@ public sealed class AppHost
         RomDownload = new RomDownloadService();
         Backup = new BackupService(Adb);
         Restore = new RestoreService(Adb);
-        BootPatch = new BootPatchService(Adb);
         ToolManager = new ToolManager();
+        Tetherback = new TetherbackService(ShellRunner, ToolManager);
+        BootPatch = new BootPatchService(Adb);
         PcPatch = new PcPatchService(ShellRunner, ToolManager);
         OdinInspector = new OdinInspectorService();
         FastbootFlash = new FastbootFlashService(Fastboot);
