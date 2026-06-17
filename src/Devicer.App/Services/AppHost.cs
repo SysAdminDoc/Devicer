@@ -18,6 +18,7 @@ public sealed class AppHost
     public IBackupService Backup { get; }
     public IRestoreService Restore { get; }
     public ITetherbackService Tetherback { get; }
+    public INeoBackupService NeoBackup { get; }
     public IBootPatchService BootPatch { get; }
     public IPcPatchService PcPatch { get; }
     public IOdinInspectorService OdinInspector { get; }
@@ -46,6 +47,7 @@ public sealed class AppHost
         Restore = new RestoreService(Adb);
         ToolManager = new ToolManager();
         Tetherback = new TetherbackService(ShellRunner, ToolManager);
+        NeoBackup = new NeoBackupService(Adb);
         BootPatch = new BootPatchService(Adb);
         PcPatch = new PcPatchService(ShellRunner, ToolManager);
         OdinInspector = new OdinInspectorService();
