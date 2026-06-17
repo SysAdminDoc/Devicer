@@ -105,3 +105,21 @@ public sealed class KnoxTrippedToVisibilityConverter : IValueConverter
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         => throw new NotSupportedException();
 }
+
+public sealed class WizardStepToVisibilityConverter : IValueConverter
+{
+    private readonly WizardStep _targetStep;
+    private WizardStepToVisibilityConverter(WizardStep step) => _targetStep = step;
+
+    public static readonly WizardStepToVisibilityConverter SelectDevice = new(WizardStep.SelectDevice);
+    public static readonly WizardStepToVisibilityConverter SelectFirmware = new(WizardStep.SelectFirmware);
+    public static readonly WizardStepToVisibilityConverter ReviewPlan = new(WizardStep.ReviewPlan);
+    public static readonly WizardStepToVisibilityConverter Confirm = new(WizardStep.Confirm);
+    public static readonly WizardStepToVisibilityConverter Flashing = new(WizardStep.Flashing);
+    public static readonly WizardStepToVisibilityConverter Complete = new(WizardStep.Complete);
+
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => value is WizardStep step && step == _targetStep ? Visibility.Visible : Visibility.Collapsed;
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
