@@ -321,6 +321,11 @@
                             <TextBlock Text="Reboot after flash (only if all partitions succeed)" />
                         </CheckBox.Content>
                     </CheckBox>
+                    <CheckBox IsChecked="{Binding DisableAvb, Mode=TwoWay}" Margin="0,6,0,0">
+                        <CheckBox.Content>
+                            <TextBlock TextWrapping="Wrap" Text="Disable AVB verification (flash vbmeta with --disable-verity --disable-verification). Required when flashing custom boot/recovery images on devices with locked or relocked bootloaders." />
+                        </CheckBox.Content>
+                    </CheckBox>
                 </StackPanel>
             </Border>
 

@@ -15,6 +15,7 @@ public interface IFastbootService
     Task<bool> SetActiveSlotAsync(string serial, string slot, CancellationToken ct = default);
     Task<bool> RebootAsync(string serial, CancellationToken ct = default);
     Task<bool> RebootBootloaderAsync(string serial, CancellationToken ct = default);
+    Task<bool> FlashDisableAvbAsync(string serial, string vbmetaPath, CancellationToken ct = default);
 }
 
 public sealed class FastbootService : IFastbootService
@@ -127,6 +128,17 @@ public sealed class FastbootService : IFastbootService
     public async Task<bool> RebootBootloaderAsync(string serial, CancellationToken ct = default)
     {
         var r = await _shell.RunAsync(Fastboot, new[] { "-s", serial, "reboot-bootloader" }, FastTimeout, ct).ConfigureAwait(false);
+        return r.Success;
+    }
+
+    public async Task<bool> FlashDisableAvbAsync(string serial, string vbmetaPath, CancellationToken ct = default)
+    {
+        DevicerLog.Info("Fastboot", $"flash vbmeta with --disable-verity --disable-verification ← {vbmetaPath}");
+        var r = await _shell.RunAsync(Fastboot,
+            new[] { "-s", serial, "--disable-verity", "--disable-verification", "flash", "vbmeta", vbmetaPath },
+            FlashTimeout, ct).ConfigureAwait(false);
+        if (!r.Success)
+            DevicerLog.Error("Fastboot", $"flash vbmeta failed (exit {r.ExitCode}): {r.Stderr}");
         return r.Success;
     }
 }

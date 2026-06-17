@@ -106,6 +106,9 @@ public partial class FlashViewModel : ObservableObject
     private bool _rebootAfterFlash;
 
     [ObservableProperty]
+    private bool _disableAvb;
+
+    [ObservableProperty]
     private bool _thorConfirmed;
 
     public bool IsKnoxIntact => string.Equals(KnoxBit, "0", StringComparison.Ordinal);
