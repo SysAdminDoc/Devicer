@@ -26,12 +26,16 @@ public partial class SettingsViewModel : ObservableObject
     private string _adbStatus = "Checking…";
 
     [ObservableProperty]
+    private bool _adbVersionWarning;
+
+    [ObservableProperty]
     private string _fastbootStatus = "Checking…";
 
     public string AppVersion { get; }
     public string SettingsPath { get; }
     public string CrashlogPath { get; }
     public string ToolsCachePath { get; }
+    public string? SettingsSaveError => _store.LastSaveError;
 
     public SettingsViewModel(AppSettingsStore store, ThemeManager theme, IAdbService adb, IFastbootService fastboot)
     {
@@ -57,9 +61,28 @@ public partial class SettingsViewModel : ObservableObject
     {
         AdbStatus = "Checking…";
         FastbootStatus = "Checking…";
+        AdbVersionWarning = false;
         var adbOk = await _adb.IsAvailableAsync();
         var fastbootOk = await _fastboot.IsAvailableAsync();
-        AdbStatus = adbOk ? "Available on PATH" : "Not found — install Android SDK Platform-Tools v37+";
+
+        if (adbOk)
+        {
+            var ver = await _adb.GetVersionAsync();
+            if (ver is not null)
+            {
+                AdbStatus = $"v{ver} on PATH";
+                if (Version.TryParse(ver, out var parsed) && parsed < IAdbService.MinSafeVersion)
+                {
+                    AdbStatus = $"v{ver} on PATH — OUTDATED (< 36.0.2, has Samsung detection + file truncation bugs)";
+                    AdbVersionWarning = true;
+                }
+            }
+            else
+                AdbStatus = "Available on PATH (version unknown)";
+        }
+        else
+            AdbStatus = "Not found — install Android SDK Platform-Tools v37+";
+
         FastbootStatus = fastbootOk ? "Available on PATH" : "Not found — install Android SDK Platform-Tools v37+";
     }
 

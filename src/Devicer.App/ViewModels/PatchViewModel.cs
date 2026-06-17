@@ -25,6 +25,9 @@ public partial class PatchViewModel : ObservableObject
     private string? _rootKindDisplay;
 
     [ObservableProperty]
+    private string? _patchTargetHint;
+
+    [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(PatchCommand))]
     [NotifyCanExecuteChangedFor(nameof(PcPatchCommand))]
     private bool _hasRoot;
@@ -76,6 +79,9 @@ public partial class PatchViewModel : ObservableObject
         RootKindDisplay = device.Root.Kind == RootKind.None
             ? "No root manager detected. Use the PC-side patcher below if available."
             : $"{device.Root.Kind} {device.Root.Version}";
+        PatchTargetHint = device.HasInitBoot
+            ? "This device uses init_boot.img (Android 13+ GKI). Select init_boot.img, not boot.img."
+            : "This device uses boot.img for root patching.";
     }
 
     [RelayCommand]

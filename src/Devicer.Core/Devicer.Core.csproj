@@ -4,9 +4,9 @@
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Version>2.0.0</Version>
-    <AssemblyVersion>2.0.0.0</AssemblyVersion>
-    <FileVersion>2.0.0.0</FileVersion>
+    <Version>2.1.0</Version>
+    <AssemblyVersion>2.1.0.0</AssemblyVersion>
+    <FileVersion>2.1.0.0</FileVersion>
     <RootNamespace>Devicer.Core</RootNamespace>
     <Product>Devicer</Product>
     <Company>SysAdminDoc</Company>
@@ -14,4 +14,7 @@
     <AssemblyTitle>Devicer.Core</AssemblyTitle>
     <Description>Core services and models for Devicer — adb/fastboot wrappers, device probe, root detection.</Description>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="9.0.4" />
+  </ItemGroup>
 </Project>

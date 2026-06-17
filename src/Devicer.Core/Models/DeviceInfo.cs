@@ -41,6 +41,21 @@ public sealed record DeviceInfo
     /// </summary>
     public string? Imei { get; init; }
 
+    /// <summary>One UI version string (e.g. "8.0", "7.1"). Null on non-Samsung devices.</summary>
+    public string? OneUiVersion { get; init; }
+
+    /// <summary>
+    /// True if the device has an init_boot partition (Android 13+ GKI 2.0).
+    /// When true, root managers patch init_boot.img instead of boot.img.
+    /// </summary>
+    public bool HasInitBoot { get; init; }
+
+    /// <summary>
+    /// The correct partition name for root patching: "init_boot" on Android 13+ with GKI,
+    /// "boot" on older devices.
+    /// </summary>
+    public string PatchTargetPartition => HasInitBoot ? "init_boot" : "boot";
+
     public bool IsSamsung =>
         (Manufacturer?.Contains("Samsung", StringComparison.OrdinalIgnoreCase) ?? false)
         || (Brand?.Contains("samsung", StringComparison.OrdinalIgnoreCase) ?? false);

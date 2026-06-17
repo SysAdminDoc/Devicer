@@ -111,8 +111,11 @@ public partial class FlashViewModel : ObservableObject
     public bool IsKnoxIntact => string.Equals(KnoxBit, "0", StringComparison.Ordinal);
     public bool IsKnoxTripped => !string.IsNullOrWhiteSpace(KnoxBit) && !IsKnoxIntact;
     public bool IsIdle => !IsFlashing;
-    public bool IsSamsung => _device?.Manufacturer?.Contains("samsung", StringComparison.OrdinalIgnoreCase) == true;
+    public bool IsSamsung => _device?.IsSamsung == true;
     public bool IsThorAvailable => _thor.IsAvailable;
+    public bool IsOneUi8BootloaderLocked => _device?.IsSamsung == true
+        && IsOneUi8OrNewer(_device.OneUiVersion)
+        && _device.OemUnlockSupported != true;
 
     public FlashViewModel(IOdinInspectorService inspector, IFastbootFlashService fbFlash, IFastbootService fb, IThorService thor)
     {
@@ -136,6 +139,15 @@ public partial class FlashViewModel : ObservableObject
         OnPropertyChanged(nameof(IsKnoxIntact));
         OnPropertyChanged(nameof(IsKnoxTripped));
         OnPropertyChanged(nameof(IsSamsung));
+        OnPropertyChanged(nameof(IsOneUi8BootloaderLocked));
+    }
+
+    private static bool IsOneUi8OrNewer(string? version)
+    {
+        if (string.IsNullOrWhiteSpace(version)) return false;
+        var dot = version.IndexOf('.');
+        var major = dot > 0 ? version[..dot] : version;
+        return int.TryParse(major, out var v) && v >= 8;
     }
 
     // ── Samsung Odin section ──

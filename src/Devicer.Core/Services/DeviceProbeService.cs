@@ -72,6 +72,10 @@ public sealed class DeviceProbeService : IDeviceProbeService
         var fingerprint = Get(props, "ro.build.fingerprint");
         var (pda, cscVer) = ExtractSamsungPda(props, fingerprint);
 
+        var oneUiVersion = Get(props, "ro.build.version.oneui") ?? Get(props, "ro.build.display.oneui");
+
+        var hasInitBoot = await DetectInitBootAsync(serial, props, root, ct).ConfigureAwait(false);
+
         return new DeviceInfo
         {
             Serial = serial,
@@ -98,7 +102,24 @@ public sealed class DeviceProbeService : IDeviceProbeService
             KnoxWarrantyBit = Get(props, "ro.boot.warranty_bit") ?? Get(props, "ro.warranty_bit"),
             Root = root,
             Imei = imei,
+            OneUiVersion = oneUiVersion,
+            HasInitBoot = hasInitBoot,
         };
+    }
+
+    private async Task<bool> DetectInitBootAsync(string serial, IReadOnlyDictionary<string, string> props, RootStatus root, CancellationToken ct)
+    {
+        if (int.TryParse(Get(props, "ro.build.version.sdk"), out var sdk) && sdk >= 33)
+        {
+            if (root.Kind != RootKind.None)
+            {
+                var r = await _adb.RunSuAsync(serial, "ls /dev/block/by-name/init_boot 2>/dev/null", TimeSpan.FromSeconds(5), ct).ConfigureAwait(false);
+                if (r.Success && r.Stdout.Contains("init_boot", StringComparison.Ordinal))
+                    return true;
+            }
+            return true;
+        }
+        return false;
     }
 
     private async Task<DeviceInfo> BuildFastbootDeviceInfoAsync(string serial, CancellationToken ct)

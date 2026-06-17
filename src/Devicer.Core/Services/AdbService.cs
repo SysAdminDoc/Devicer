@@ -7,6 +7,16 @@ public sealed record AdbDevice(string Serial, ConnectionState State);
 public interface IAdbService
 {
     Task<bool> IsAvailableAsync(CancellationToken ct = default);
+
+    /// <summary>
+    /// Returns the platform-tools version string (e.g. "36.0.2") or null if adb is not found.
+    /// ADB &lt; 36.0.2 has a Samsung device-detection bug and a Windows file-truncation bug
+    /// during push/pull that corrupts transferred boot images.
+    /// </summary>
+    Task<string?> GetVersionAsync(CancellationToken ct = default);
+
+    /// <summary>Minimum safe platform-tools version. Older versions have known Samsung bugs.</summary>
+    static readonly Version MinSafeVersion = new(36, 0, 2);
     Task<IReadOnlyList<AdbDevice>> ListDevicesAsync(CancellationToken ct = default);
     Task<IReadOnlyDictionary<string, string>> GetAllPropsAsync(string serial, CancellationToken ct = default);
     Task<string?> GetPropAsync(string serial, string key, CancellationToken ct = default);
@@ -64,6 +74,26 @@ public sealed class AdbService : IAdbService
         {
             return false;
         }
+    }
+
+    public async Task<string?> GetVersionAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            var r = await _shell.RunAsync(Adb, new[] { "version" }, FastTimeout, ct).ConfigureAwait(false);
+            if (!r.Success) return null;
+            foreach (var line in r.Stdout.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+            {
+                var trimmed = line.Trim();
+                if (!trimmed.StartsWith("Version", StringComparison.OrdinalIgnoreCase)) continue;
+                var dashIdx = trimmed.LastIndexOf('-');
+                if (dashIdx < 0) continue;
+                var ver = trimmed[(dashIdx + 1)..].Trim();
+                if (!string.IsNullOrWhiteSpace(ver)) return ver;
+            }
+            return null;
+        }
+        catch { return null; }
     }
 
     public async Task<IReadOnlyList<AdbDevice>> ListDevicesAsync(CancellationToken ct = default)

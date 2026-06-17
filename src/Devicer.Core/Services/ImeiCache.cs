@@ -1,4 +1,6 @@
 using System.IO;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -28,14 +30,17 @@ public sealed record ImeiCacheEntry
 }
 
 /// <summary>
-/// JSON-backed IMEI cache at <c>%LOCALAPPDATA%\Devicer\imei-cache.json</c>. Saves every
+/// DPAPI-encrypted IMEI cache at <c>%LOCALAPPDATA%\Devicer\imei-cache.json</c>. Saves every
 /// IMEI a user commits to a download, so they don't have to retype 15 digits next time.
 /// Entries are sorted newest-used-first; the cache is capped at <see cref="MaxEntries"/>
-/// to keep the dropdown short.
+/// to keep the dropdown short. IMEI data is encrypted at rest using Windows DPAPI
+/// (<see cref="DataProtectionScope.CurrentUser"/>) since IMEI is GDPR-classified personal data.
 /// </summary>
 public sealed class ImeiCache
 {
     public const int MaxEntries = 20;
+
+    private static readonly byte[] Entropy = "Devicer.ImeiCache.v1"u8.ToArray();
 
     private static readonly JsonSerializerOptions JsonOpts = new()
     {
@@ -79,10 +84,6 @@ public sealed class ImeiCache
     {
         if (string.IsNullOrWhiteSpace(imei)) return;
         var trimmed = imei.Trim();
-        // Real IMEIs are exactly 14 (no check digit) or 15 (with). Allowing 16 was a
-        // typo trap — a 16-digit pasted ICCID would silently cache and the user would
-        // pick it later expecting an IMEI. Reject anything outside that range AND reject
-        // non-digits (an IMEI never contains letters, spaces, or dashes).
         if (trimmed.Length is < 14 or > 15) return;
         foreach (var c in trimmed)
             if (c < '0' || c > '9') return;
@@ -104,7 +105,6 @@ public sealed class ImeiCache
         }
     }
 
-    /// <summary>Remove a specific IMEI from the cache.</summary>
     public bool Remove(string imei)
     {
         if (string.IsNullOrWhiteSpace(imei)) return false;
@@ -124,7 +124,22 @@ public sealed class ImeiCache
         try
         {
             if (!File.Exists(_path)) return new List<ImeiCacheEntry>();
-            var json = File.ReadAllText(_path);
+            var raw = File.ReadAllBytes(_path);
+            if (raw.Length == 0) return new List<ImeiCacheEntry>();
+
+            string json;
+            if (raw[0] == (byte)'[' || raw[0] == (byte)'{')
+            {
+                json = Encoding.UTF8.GetString(raw);
+            }
+            else
+            {
+                #pragma warning disable CA1416 // Devicer is a WPF app — Windows-only
+                var decrypted = ProtectedData.Unprotect(raw, Entropy, DataProtectionScope.CurrentUser);
+                #pragma warning restore CA1416
+                json = Encoding.UTF8.GetString(decrypted);
+            }
+
             var list = JsonSerializer.Deserialize<List<ImeiCacheEntry>>(json, JsonOpts);
             if (list is null) return new List<ImeiCacheEntry>();
             return list.OrderByDescending(e => e.LastUsedUtc).ToList();
@@ -139,8 +154,14 @@ public sealed class ImeiCache
     {
         try
         {
+            var json = JsonSerializer.Serialize(_entries, JsonOpts);
+            var plainBytes = Encoding.UTF8.GetBytes(json);
+            #pragma warning disable CA1416 // Devicer is a WPF app — Windows-only
+            var encrypted = ProtectedData.Protect(plainBytes, Entropy, DataProtectionScope.CurrentUser);
+            #pragma warning restore CA1416
+
             var tmp = _path + ".tmp";
-            File.WriteAllText(tmp, JsonSerializer.Serialize(_entries, JsonOpts));
+            File.WriteAllBytes(tmp, encrypted);
             if (File.Exists(_path)) File.Replace(tmp, _path, _path + ".bak", ignoreMetadataErrors: true);
             else File.Move(tmp, _path);
         }

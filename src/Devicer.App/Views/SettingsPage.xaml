@@ -30,6 +30,33 @@
             <TextBlock Text="Theme, behavior, tool detection, and where Devicer keeps its data."
                        Style="{StaticResource SubheadingTextBlock}" />
 
+            <!-- Settings save error banner -->
+            <Border Style="{StaticResource Card}"
+                    Background="#22F38BA8"
+                    BorderBrush="{DynamicResource AppDestructive}"
+                    Margin="0,0,0,12"
+                    Visibility="{Binding SettingsSaveError, Converter={x:Static vm:NullToCollapsedConverter.Instance}}">
+                <StackPanel>
+                    <TextBlock Text="SETTINGS NOT PERSISTING" FontWeight="Bold" Foreground="{DynamicResource AppDestructive}" Margin="0,0,0,4" />
+                    <TextBlock Text="{Binding SettingsSaveError}" TextWrapping="Wrap" Foreground="{DynamicResource AppForeground}" />
+                </StackPanel>
+            </Border>
+
+            <!-- ADB version warning banner -->
+            <Border Style="{StaticResource Card}"
+                    Background="#22F9E2AF"
+                    BorderBrush="{DynamicResource AppWarning}"
+                    Margin="0,0,0,12"
+                    Visibility="{Binding AdbVersionWarning, Converter={x:Static vm:BoolToVisibilityConverter.Instance}}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#xE7BA;" FontFamily="Segoe MDL2 Assets" FontSize="18"
+                               Foreground="{DynamicResource AppWarning}" Margin="0,0,12,0" VerticalAlignment="Center" />
+                    <TextBlock VerticalAlignment="Center" TextWrapping="Wrap">
+                        <Run Text="ADB version is below 36.0.2. Older versions have a Samsung device-detection bug and a Windows file-truncation bug during push/pull that can corrupt transferred boot images. Update to Platform-Tools 37+." />
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
             <!-- Appearance -->
             <Border Style="{StaticResource Card}" Margin="0,0,0,16">
                 <StackPanel>
