@@ -37,6 +37,69 @@ if (args.Length > 0 && args[0] == "--crypto-self-test")
     return;
 }
 
+if (args.Length >= 3 && args[0] == "--flash-fastboot")
+{
+    var fbSerial = args[1];
+    var entries = new List<FastbootFlashEntry>();
+    for (int i = 2; i < args.Length; i++)
+    {
+        var eq = args[i].IndexOf('=');
+        if (eq <= 0) { Console.WriteLine($"Invalid format: '{args[i]}'. Expected partition=image.img"); return; }
+        entries.Add(new FastbootFlashEntry(args[i][..eq], args[i][(eq + 1)..]));
+    }
+    var fbShell = new ShellRunner();
+    var fb = new FastbootService(fbShell);
+    var fbFlash = new FastbootFlashService(fb);
+    Console.WriteLine($"Batch fastboot flash: {entries.Count} partition(s) on {fbSerial}");
+    if (args.Contains("--dry-run"))
+    {
+        var plan = await fbFlash.GeneratePlanAsync(fbSerial, entries, null, false);
+        Console.WriteLine(plan);
+        return;
+    }
+    var progress = new Progress<FastbootFlashProgress>(p => Console.WriteLine($"  [{p.Phase}] {p.Message}"));
+    var fbResult = await fbFlash.FlashAsync(fbSerial, entries, null, false, progress);
+    Console.WriteLine($"Result: {fbResult.SucceededPartitions}/{fbResult.TotalPartitions} succeeded");
+    foreach (var w in fbResult.WarningMessages) Console.WriteLine($"  WARN: {w}");
+    Environment.ExitCode = fbResult.FailedPartitions.Count > 0 ? 1 : 0;
+    return;
+}
+
+if (args.Length >= 2 && args[0] == "--flash-thor")
+{
+    var tarPath = args[1];
+    var efsClear = args.Contains("--efs-clear");
+    var toolShell = new ShellRunner();
+    var toolMgr = new ToolManager();
+    var thor = new ThorService(toolShell, toolMgr);
+    if (!thor.IsAvailable) { Console.WriteLine("Thor not found on PATH or in tools cache."); Environment.ExitCode = 1; return; }
+    Console.WriteLine($"Thor flash: {tarPath} (EFS-Clear: {efsClear})");
+    var progress = new Progress<ThorFlashProgress>(p => Console.WriteLine($"  [{p.Phase}] {p.Message}"));
+    var thorResult = await thor.FlashArchiveAsync(tarPath, null, efsClear, progress);
+    Console.WriteLine(thorResult.Success ? "Flash succeeded." : $"Flash failed. {thorResult.Warnings.Count} warning(s).");
+    foreach (var w in thorResult.Warnings) Console.WriteLine($"  WARN: {w}");
+    Environment.ExitCode = thorResult.Success ? 0 : 1;
+    return;
+}
+
+if (args.Length >= 2 && args[0] == "--backup")
+{
+    var bkSerial = args[1];
+    var bkShell = new ShellRunner();
+    var bkAdb = new AdbService(bkShell);
+    var bkSvc = new BackupService(bkAdb);
+    Console.WriteLine($"Listing partitions on {bkSerial}…");
+    var parts = await bkAdb.ListPartitionsAsync(bkSerial);
+    var critical = parts.Where(p => p.IsCritical).ToList();
+    Console.WriteLine($"Found {parts.Count} partitions, {critical.Count} critical.");
+    Console.WriteLine("Backing up critical partitions…");
+    var progress = new Progress<BackupProgress>(p => Console.WriteLine($"  [{p.Phase}] {p.Message}"));
+    var bkResult = await bkSvc.RunAsync(bkSerial, null, critical, progress);
+    Console.WriteLine($"Saved {bkResult.Manifest.Partitions.Count}/{critical.Count} to {bkResult.FolderPath}");
+    foreach (var w in bkResult.WarningMessages) Console.WriteLine($"  WARN: {w}");
+    return;
+}
+
 if (args.Length >= 2 && args[0] == "--partitions")
 {
     var serialArg = args[1];

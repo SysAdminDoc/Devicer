@@ -27,6 +27,7 @@ public sealed class AppHost
     public IThorService Thor { get; }
     public IHeimdallService Heimdall { get; }
     public IOemGuidanceService OemGuidance { get; }
+    public IOemPluginRegistry PluginRegistry { get; }
     public ImeiCache ImeiCache { get; }
     public AppSettingsStore SettingsStore { get; }
     public ThemeManager Theme { get; }
@@ -55,6 +56,7 @@ public sealed class AppHost
         Thor = new ThorService(ShellRunner, ToolManager);
         Heimdall = new HeimdallService(ShellRunner, ToolManager);
         OemGuidance = new OemGuidanceService();
+        PluginRegistry = new OemPluginRegistry();
         ImeiCache = new ImeiCache();
         SettingsStore = new AppSettingsStore();
         Theme = new ThemeManager(SettingsStore);
