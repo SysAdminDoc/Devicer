@@ -19,13 +19,7 @@
     </UserControl.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0">
-        <Grid Margin="32,28,32,32">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
+        <Grid Margin="32,28,32,32" RowDefinitions="Auto,Auto,Auto,Auto">
 
             <!-- Header -->
             <DockPanel Grid.Row="0" Margin="0,0,0,8">
@@ -114,11 +108,7 @@
             <Border Grid.Row="3"
                     Style="{StaticResource Card}"
                     Visibility="{Binding SelectedDevice, Converter={x:Static vm:NullToCollapsedConverter.Instance}}">
-                <Grid DataContext="{Binding SelectedDevice}">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
+                <Grid DataContext="{Binding SelectedDevice}" ColumnDefinitions="*,*">
 
                     <!-- Left column -->
                     <StackPanel Grid.Column="0" Margin="0,0,16,0">

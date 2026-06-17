@@ -11,15 +11,7 @@
             <Setter Property="Margin" Value="0,0,0,4" />
         </Style>
     </UserControl.Resources>
-    <Grid Margin="32,28,32,32">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
+    <Grid Margin="32,28,32,32" RowDefinitions="Auto,Auto,Auto,Auto,*,Auto">
 
         <!-- Heading -->
         <DockPanel Grid.Row="0" Margin="0,0,0,8" LastChildFill="True">
@@ -98,12 +90,7 @@
                 <ItemsControl ItemsSource="{Binding Partitions}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Grid Margin="0,2">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
+                            <Grid Margin="0,2" ColumnDefinitions="Auto,*,Auto">
                                 <CheckBox Grid.Column="0"
                                           IsChecked="{Binding Selected, Mode=TwoWay}"
                                           VerticalAlignment="Center"

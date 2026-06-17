@@ -119,11 +119,7 @@
             <!-- Form -->
             <Border Style="{StaticResource Card}" Margin="0,0,0,16">
                 <StackPanel>
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
+                    <Grid ColumnDefinitions="*,*">
                         <StackPanel Grid.Column="0" Margin="0,0,8,0">
                             <TextBlock Text="MODEL" Style="{StaticResource FieldLabel}" />
                             <TextBox Text="{Binding Model, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12" />
@@ -155,11 +151,7 @@
                               Margin="0,0,0,4">
                         <ComboBox.ItemTemplate>
                             <DataTemplate>
-                                <Grid MinWidth="420">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
+                                <Grid MinWidth="420" ColumnDefinitions="*,Auto">
                                     <StackPanel Grid.Column="0">
                                         <TextBlock Text="{Binding Imei}"
                                                    FontFamily="Consolas, JetBrains Mono, Cascadia Mono"
@@ -203,12 +195,7 @@
                              ToolTip="Selected row controls which CSC is used by Download &amp; decrypt">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="78" />
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="150" />
-                                    </Grid.ColumnDefinitions>
+                                <Grid ColumnDefinitions="78,*,150">
                                     <TextBlock Grid.Column="0"
                                                Text="{Binding Csc}"
                                                FontFamily="Consolas, JetBrains Mono, Cascadia Mono"
