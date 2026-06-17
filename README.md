@@ -2,17 +2,17 @@
 
 # Devicer
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows-0078d4.svg)](#)
 [![.NET](https://img.shields.io/badge/.NET-10-512bd4.svg)](#)
-[![Status](https://img.shields.io/badge/status-1.0%20alpha-orange.svg)](#)
+[![Status](https://img.shields.io/badge/status-1.2%20alpha-orange.svg)](#)
 
 > Unified Windows toolkit for managing rooted Android phones — identify, search ROMs, back up, patch, and flash from one shell.
 
 ## Status
 
-**v1.0.0 — first feature-complete alpha.** Seven functional sidebar pages (Device / Firmware / ROMs / Backup / Patch / Flash / Universal) plus Settings, all built on a locked C# / .NET 10 WPF / subprocess-wrapper architecture. Verified end-to-end against a Samsung Galaxy S25 Ultra (SM-S938B / Android 16 / CSC EUX / Magisk 30.7) — Device probe, firmware lookup + native FUS download, ROM aggregation, partition backup, boot.img patch, and Odin inspector all live-tested. CommunityToolkit.Mvvm bumped to 8.4.2; CVE scan returned zero vulnerable packages across all three projects. Theme parity verified between Catppuccin Mocha and Latte. A portable-ZIP build script (`tools/build-release.ps1`) and a placeholder GitHub Actions release workflow (`.github/workflows/release.yml`) ship in the repo for when the user pushes to a remote. Backup performs root `dd` of selected partitions, pulls the images off-device, SHA256-verifies, and writes a versioned manifest to `%LOCALAPPDATA%\Devicer\backups\<serial>\<timestamp>\`. Critical Samsung partitions (EFS, modem NV, persist, modem state, FSC/FSG) are pre-selected and rendered with a CRITICAL badge + plain-language reason. Live-tested partition discovery on the connected S25 Ultra (125 partitions, all 6 critical correctly flagged). No Python, no JRE, no third-party servers. See [CHANGELOG.md](CHANGELOG.md). Tooling-landscape document at [docs/research.md](docs/research.md), phased build plan at [ROADMAP.md](ROADMAP.md).
+**v1.2.0 — in-app ROM download.** The ROMs tab now downloads builds directly into `%LOCALAPPDATA%\Devicer\roms\<codename>\` with chunked HTTP + SHA256/MD5 verification, resume support, progress bar, and cancel. Previously the "Download" button opened the browser; it now saves to disk and verifies the hash against the ROM source's published digest. A "Browser" button is still available for users who prefer the browser workflow. Seven functional sidebar pages (Device / Firmware / ROMs / Backup / Patch / Flash / Universal) plus Settings. See [CHANGELOG.md](CHANGELOG.md). Tooling-landscape document at [docs/research.md](docs/research.md), phased build plan at [ROADMAP.md](ROADMAP.md).
 
 ## Goals
 
@@ -40,6 +40,8 @@ dotnet build -c Release Devicer.sln
 dotnet run --project src/Devicer.App -c Release
 # Backend smoke test (probes connected phone, prints DeviceInfo to stdout):
 dotnet run --project tools/Devicer.Smoke -c Release
+# Multi-CSC firmware lookup smoke:
+dotnet run --project tools/Devicer.Smoke -c Release -- --firmware-regions SM-S938B EUX INS
 ```
 
 Release exe: `src/Devicer.App/bin/Release/net10.0-windows10.0.22621.0/Devicer.App.exe`.

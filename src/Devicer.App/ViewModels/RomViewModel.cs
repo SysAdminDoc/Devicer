@@ -1,4 +1,6 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.IO;
 using System.Net.Http;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -11,6 +13,9 @@ namespace Devicer.App.ViewModels;
 public partial class RomViewModel : ObservableObject
 {
     private readonly IRomAggregatorService _aggregator;
+    private readonly IRomDownloadService _downloader;
+
+    private CancellationTokenSource? _dlCts;
 
     public ObservableCollection<RomEntry> Results { get; } = new();
 
@@ -24,19 +29,33 @@ public partial class RomViewModel : ObservableObject
     private bool _isSearching;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsIdle))]
+    [NotifyCanExecuteChangedFor(nameof(CancelDownloadCommand))]
+    private bool _isDownloading;
+
+    [ObservableProperty]
     private string? _statusText;
 
     [ObservableProperty]
     private string? _diagnostic;
 
-    /// <summary>True if at least one source returned results.</summary>
+    [ObservableProperty]
+    private string? _downloadStatusText;
+
+    [ObservableProperty]
+    private double? _downloadProgressFraction;
+
+    [ObservableProperty]
+    private string? _lastDownloadPath;
+
     public bool HasResults => Results.Count > 0;
 
-    public bool IsIdle => !IsSearching;
+    public bool IsIdle => !IsSearching && !IsDownloading;
 
-    public RomViewModel(IRomAggregatorService aggregator)
+    public RomViewModel(IRomAggregatorService aggregator, IRomDownloadService downloader)
     {
         _aggregator = aggregator;
+        _downloader = downloader;
         Results.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasResults));
     }
 
@@ -92,12 +111,88 @@ public partial class RomViewModel : ObservableObject
     private bool CanSearch() => !IsSearching && !string.IsNullOrWhiteSpace(Codename);
 
     [RelayCommand]
-    public void OpenDownload(RomEntry? entry)
+    public async Task DownloadRomAsync(RomEntry? entry)
+    {
+        if (entry is null || IsDownloading) return;
+
+        IsDownloading = true;
+        Diagnostic = null;
+        DownloadStatusText = $"Downloading {entry.FileName}…";
+        DownloadProgressFraction = null;
+        LastDownloadPath = null;
+
+        _dlCts?.Dispose();
+        _dlCts = new CancellationTokenSource();
+        var ct = _dlCts.Token;
+
+        var progress = new Progress<RomDownloadProgress>(p =>
+        {
+            DownloadStatusText = p.Message ?? $"{p.Phase}";
+            DownloadProgressFraction = p.FractionComplete;
+        });
+
+        try
+        {
+            var result = await _downloader.DownloadAsync(entry, progress, ct).ConfigureAwait(true);
+            LastDownloadPath = Path.GetDirectoryName(result.LocalPath);
+
+            if (result.HashAlgorithm is not null && !result.HashVerified)
+            {
+                Diagnostic = $"{result.HashAlgorithm} mismatch: expected {result.ExpectedHash}, got {result.ActualHash}. The file may be corrupt — re-download or verify manually.";
+                DownloadStatusText = $"Downloaded but {result.HashAlgorithm} mismatch!";
+            }
+            else
+            {
+                var verifyNote = result.HashVerified ? $" ({result.HashAlgorithm} verified)" : "";
+                DownloadStatusText = $"Saved to {result.LocalPath}{verifyNote}";
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            DownloadStatusText = "Download cancelled.";
+            DownloadProgressFraction = null;
+        }
+        catch (HttpRequestException ex)
+        {
+            Diagnostic = $"Download failed: {ex.Message}";
+            DownloadStatusText = null;
+            DownloadProgressFraction = null;
+        }
+        catch (Exception ex)
+        {
+            Diagnostic = $"Download failed: {ex.Message}";
+            DownloadStatusText = null;
+            DownloadProgressFraction = null;
+        }
+        finally
+        {
+            IsDownloading = false;
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanCancelDownload))]
+    public void CancelDownload() => _dlCts?.Cancel();
+
+    private bool CanCancelDownload() => IsDownloading;
+
+    [RelayCommand]
+    public void OpenDownloadFolder()
+    {
+        if (string.IsNullOrWhiteSpace(LastDownloadPath) || !Directory.Exists(LastDownloadPath)) return;
+        try
+        {
+            Process.Start(new ProcessStartInfo { FileName = LastDownloadPath, UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            Diagnostic = $"Could not open folder: {ex.Message}";
+        }
+    }
+
+    [RelayCommand]
+    public void OpenInBrowser(RomEntry? entry)
     {
         if (entry is null) return;
-        // Route through UrlLauncher: ROM-feed URLs come from a third-party JSON
-        // (LineageOS / crDroid maintainers' repos) and a compromised feed could otherwise
-        // ship a `file:///c:/payload.exe` that ShellExecute would happily invoke.
         var err = UrlLauncher.TryOpen(entry.DownloadUrl);
         if (err is not null) Diagnostic = err;
     }

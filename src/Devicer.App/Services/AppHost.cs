@@ -14,6 +14,7 @@ public sealed class AppHost
     public IFirmwareCheckService FirmwareCheck { get; }
     public Func<IFirmwareDownloadService> FirmwareDownloadFactory { get; }
     public IRomAggregatorService RomAggregator { get; }
+    public IRomDownloadService RomDownload { get; }
     public IBackupService Backup { get; }
     public IBootPatchService BootPatch { get; }
     public IOdinInspectorService OdinInspector { get; }
@@ -33,6 +34,7 @@ public sealed class AppHost
         // and per-download isolation lets the user run sequential downloads cleanly.
         FirmwareDownloadFactory = () => new FirmwareDownloadService();
         RomAggregator = new RomAggregatorService();
+        RomDownload = new RomDownloadService();
         Backup = new BackupService(Adb);
         BootPatch = new BootPatchService(Adb);
         OdinInspector = new OdinInspectorService();

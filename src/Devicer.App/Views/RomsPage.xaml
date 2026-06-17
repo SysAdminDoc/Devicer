@@ -27,6 +27,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
@@ -68,8 +69,41 @@
             </StackPanel>
         </Border>
 
+        <!-- Download progress panel -->
+        <Border Grid.Row="3"
+                Style="{StaticResource Card}"
+                Margin="0,0,0,16"
+                Visibility="{Binding DownloadStatusText, Converter={x:Static vm:NullToCollapsedConverter.Instance}}">
+            <StackPanel>
+                <DockPanel Margin="0,0,0,6">
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                        <Button Content="Open folder"
+                                Style="{StaticResource SecondaryButton}"
+                                Command="{Binding OpenDownloadFolderCommand}"
+                                Margin="0,0,6,0"
+                                Visibility="{Binding LastDownloadPath, Converter={x:Static vm:NullToCollapsedConverter.Instance}}" />
+                        <Button Content="Cancel"
+                                Style="{StaticResource SecondaryButton}"
+                                Command="{Binding CancelDownloadCommand}"
+                                Visibility="{Binding IsDownloading, Converter={x:Static vm:BoolToVisibilityConverter.Instance}}" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding DownloadStatusText}"
+                               Foreground="{DynamicResource AppForeground}"
+                               FontSize="12"
+                               VerticalAlignment="Center"
+                               TextTrimming="CharacterEllipsis" />
+                </DockPanel>
+                <ProgressBar Height="4"
+                             Minimum="0" Maximum="100"
+                             Value="{Binding DownloadProgressFraction, Converter={x:Static vm:FractionToPercentConverter.Instance}}"
+                             Foreground="{DynamicResource AppAccent}"
+                             Background="{DynamicResource AppCardBackground}"
+                             Visibility="{Binding IsDownloading, Converter={x:Static vm:BoolToVisibilityConverter.Instance}}" />
+            </StackPanel>
+        </Border>
+
         <!-- Status line -->
-        <TextBlock Grid.Row="3"
+        <TextBlock Grid.Row="4"
                    Text="{Binding StatusText}"
                    Foreground="{DynamicResource AppMutedForeground}"
                    FontSize="12"
@@ -77,7 +111,7 @@
                    Visibility="{Binding StatusText, Converter={x:Static vm:NullToCollapsedConverter.Instance}}" />
 
         <!-- Results -->
-        <ScrollViewer Grid.Row="4" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer Grid.Row="5" VerticalScrollBarVisibility="Auto">
             <ItemsControl ItemsSource="{Binding Results}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
@@ -116,10 +150,16 @@
                                             Command="{Binding DataContext.OpenForumCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                             CommandParameter="{Binding}"
                                             Visibility="{Binding ForumUrl, Converter={x:Static vm:NullToCollapsedConverter.Instance}}" />
+                                    <Button Content="Browser"
+                                            Style="{StaticResource SecondaryButton}"
+                                            Margin="0,0,6,0"
+                                            Command="{Binding DataContext.OpenInBrowserCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                            CommandParameter="{Binding}" />
                                     <Button Content="Download"
                                             Style="{StaticResource PrimaryButton}"
-                                            Command="{Binding DataContext.OpenDownloadCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                            CommandParameter="{Binding}" />
+                                            Command="{Binding DataContext.DownloadRomCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                            CommandParameter="{Binding}"
+                                            IsEnabled="{Binding DataContext.IsIdle, RelativeSource={RelativeSource AncestorType=ItemsControl}}" />
                                 </StackPanel>
 
                                 <TextBlock Grid.Row="1" Grid.ColumnSpan="2"
