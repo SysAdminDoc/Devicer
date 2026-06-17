@@ -67,23 +67,23 @@ public partial class FirmwareViewModel : ObservableObject
     public ObservableCollection<FirmwareRegionResultItem> RegionResults { get; } = new();
 
     [ObservableProperty]
-    private string? _model;
+    public partial string? Model { get; set; }
 
     [ObservableProperty]
-    private string? _csc;
+    public partial string? Csc { get; set; }
 
     [ObservableProperty]
-    private string? _currentBuildId;
+    public partial string? CurrentBuildId { get; set; }
 
     [ObservableProperty]
-    private string? _imei;
+    public partial string? Imei { get; set; }
 
     /// <summary>
     /// Bound to the ComboBox's <c>SelectedItem</c>. When the user picks an item from the
     /// dropdown, this setter copies the entry's IMEI digits into the editable text field.
     /// </summary>
     [ObservableProperty]
-    private ImeiCacheEntry? _selectedImeiEntry;
+    public partial ImeiCacheEntry? SelectedImeiEntry { get; set; }
 
     partial void OnSelectedImeiEntryChanged(ImeiCacheEntry? value)
     {
@@ -92,10 +92,10 @@ public partial class FirmwareViewModel : ObservableObject
     }
 
     [ObservableProperty]
-    private FirmwareVersion? _latest;
+    public partial FirmwareVersion? Latest { get; set; }
 
     [ObservableProperty]
-    private FirmwareRegionResultItem? _selectedRegionResult;
+    public partial FirmwareRegionResultItem? SelectedRegionResult { get; set; }
 
     partial void OnSelectedRegionResultChanged(FirmwareRegionResultItem? value)
     {
@@ -112,18 +112,18 @@ public partial class FirmwareViewModel : ObservableObject
     }
 
     [ObservableProperty]
-    private bool _isChecking;
+    public partial bool IsChecking { get; set; }
 
     [ObservableProperty]
-    private string? _diagnostic;
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ShowUpToDateBadge))]
-    private string? _statusText;
+    public partial string? Diagnostic { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowUpToDateBadge))]
-    private bool _updateAvailable;
+    public partial string? StatusText { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowUpToDateBadge))]
+    public partial bool UpdateAvailable { get; set; }
 
     /// <summary>
     /// Visibility helper for the green "you're on the latest" badge. The badge had been
@@ -138,35 +138,35 @@ public partial class FirmwareViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsIdle))]
-    private bool _isDownloading;
+    public partial bool IsDownloading { get; set; }
 
     [ObservableProperty]
-    private string? _downloadStatus;
+    public partial string? DownloadStatus { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ProgressPercent))]
     [NotifyPropertyChangedFor(nameof(HasProgressFraction))]
-    private double? _progressFraction;
+    public partial double? ProgressFraction { get; set; }
 
     [ObservableProperty]
-    private long _bytesProcessed;
+    public partial long BytesProcessed { get; set; }
 
     [ObservableProperty]
-    private long? _totalBytes;
+    public partial long? TotalBytes { get; set; }
 
     [ObservableProperty]
-    private string? _lastDownloadedPath;
+    public partial string? LastDownloadedPath { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasGeofenceFailover))]
-    private bool _showMirrorFailover;
+    public partial bool ShowMirrorFailover { get; set; }
 
     public ObservableCollection<FirmwareMirror> Mirrors { get; } = new(FirmwareMirrors.All);
 
     public bool HasGeofenceFailover => ShowMirrorFailover && Mirrors.Count > 0;
 
     [ObservableProperty]
-    private string? _lastDecryptedPath;
+    public partial string? LastDecryptedPath { get; set; }
 
     public bool IsIdle => !IsDownloading && !IsChecking;
     public bool HasProgressFraction => ProgressFraction is not null;

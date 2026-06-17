@@ -21,32 +21,32 @@ public partial class RomViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SearchCommand))]
-    private string? _codename;
+    public partial string? Codename { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsIdle))]
     [NotifyCanExecuteChangedFor(nameof(SearchCommand))]
-    private bool _isSearching;
+    public partial bool IsSearching { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsIdle))]
     [NotifyCanExecuteChangedFor(nameof(CancelDownloadCommand))]
-    private bool _isDownloading;
+    public partial bool IsDownloading { get; set; }
 
     [ObservableProperty]
-    private string? _statusText;
+    public partial string? StatusText { get; set; }
 
     [ObservableProperty]
-    private string? _diagnostic;
+    public partial string? Diagnostic { get; set; }
 
     [ObservableProperty]
-    private string? _downloadStatusText;
+    public partial string? DownloadStatusText { get; set; }
 
     [ObservableProperty]
-    private double? _downloadProgressFraction;
+    public partial double? DownloadProgressFraction { get; set; }
 
     [ObservableProperty]
-    private string? _lastDownloadPath;
+    public partial string? LastDownloadPath { get; set; }
 
     public bool HasResults => Results.Count > 0;
 

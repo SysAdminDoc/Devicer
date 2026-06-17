@@ -10,13 +10,13 @@ public partial class SnackbarService : ObservableObject
     private DispatcherTimer? _timer;
 
     [ObservableProperty]
-    private string? _message;
+    public partial string? Message { get; set; }
 
     [ObservableProperty]
-    private SnackbarSeverity _severity;
+    public partial SnackbarSeverity Severity { get; set; }
 
     [ObservableProperty]
-    private bool _isVisible;
+    public partial bool IsVisible { get; set; }
 
     public void Show(string message, SnackbarSeverity severity = SnackbarSeverity.Info, int durationMs = 5000)
     {

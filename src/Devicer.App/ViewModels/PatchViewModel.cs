@@ -16,45 +16,45 @@ public partial class PatchViewModel : ObservableObject
     private CancellationTokenSource? _cts;
 
     [ObservableProperty]
-    private string? _serial;
+    public partial string? Serial { get; set; }
 
     [ObservableProperty]
-    private string? _model;
+    public partial string? Model { get; set; }
 
     [ObservableProperty]
-    private string? _rootKindDisplay;
+    public partial string? RootKindDisplay { get; set; }
 
     [ObservableProperty]
-    private string? _patchTargetHint;
-
-    [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(PatchCommand))]
-    [NotifyCanExecuteChangedFor(nameof(PcPatchCommand))]
-    private bool _hasRoot;
+    public partial string? PatchTargetHint { get; set; }
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(PatchCommand))]
     [NotifyCanExecuteChangedFor(nameof(PcPatchCommand))]
-    private string? _bootImagePath;
+    public partial bool HasRoot { get; set; }
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(PatchCommand))]
+    [NotifyCanExecuteChangedFor(nameof(PcPatchCommand))]
+    public partial string? BootImagePath { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsIdle))]
     [NotifyCanExecuteChangedFor(nameof(PatchCommand))]
     [NotifyCanExecuteChangedFor(nameof(PcPatchCommand))]
     [NotifyCanExecuteChangedFor(nameof(CancelCommand))]
-    private bool _isPatching;
+    public partial bool IsPatching { get; set; }
 
     [ObservableProperty]
-    private string? _statusText;
+    public partial string? StatusText { get; set; }
 
     [ObservableProperty]
-    private string? _diagnostic;
+    public partial string? Diagnostic { get; set; }
 
     [ObservableProperty]
-    private string? _outputPath;
+    public partial string? OutputPath { get; set; }
 
     [ObservableProperty]
-    private string? _outputSha256;
+    public partial string? OutputSha256 { get; set; }
 
     public bool IsIdle => !IsPatching;
     public bool IsPcPatcherAvailable => _pcPatcher.IsAvailable;

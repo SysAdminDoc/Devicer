@@ -16,22 +16,22 @@ public partial class UniversalViewModel : ObservableObject
     public ObservableCollection<OemStep> Quirks { get; } = new();
 
     [ObservableProperty]
-    private OemKind _detectedOem;
+    public partial OemKind DetectedOem { get; set; }
 
     [ObservableProperty]
-    private string? _detectedOemDisplay;
+    public partial string? DetectedOemDisplay { get; set; }
 
     [ObservableProperty]
-    private string? _model;
+    public partial string? Model { get; set; }
 
     [ObservableProperty]
-    private string? _codename;
+    public partial string? Codename { get; set; }
 
     [ObservableProperty]
-    private OemGuidance? _guide;
+    public partial OemGuidance? Guide { get; set; }
 
     [ObservableProperty]
-    private string? _diagnostic;
+    public partial string? Diagnostic { get; set; }
 
     public UniversalViewModel(IOemGuidanceService guidance)
     {

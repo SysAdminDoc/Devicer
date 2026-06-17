@@ -11,7 +11,7 @@ namespace Devicer.App.ViewModels;
 public partial class TarEntryRow : ObservableObject
 {
     [ObservableProperty]
-    private bool _selected = true;
+    public partial bool Selected { get; set; } = true;
 
     public required OdinTarEntry Entry { get; init; }
 }
@@ -19,10 +19,10 @@ public partial class TarEntryRow : ObservableObject
 public partial class FastbootImageRow : ObservableObject
 {
     [ObservableProperty]
-    private bool _selected = true;
+    public partial bool Selected { get; set; } = true;
 
     [ObservableProperty]
-    private string _partition;
+    public partial string Partition { get; set; } = "";
 
     public required string FilePath { get; init; }
     public string FileName => Path.GetFileName(FilePath);
@@ -42,8 +42,6 @@ public partial class FastbootImageRow : ObservableObject
             };
         }
     }
-
-    public FastbootImageRow() => _partition = "";
 }
 
 public partial class FlashViewModel : ObservableObject
@@ -60,56 +58,56 @@ public partial class FlashViewModel : ObservableObject
     public ObservableCollection<string> FlashWarnings { get; } = new();
 
     [ObservableProperty]
-    private string? _archivePath;
+    public partial string? ArchivePath { get; set; }
 
     [ObservableProperty]
-    private OdinTarInfo? _info;
+    public partial OdinTarInfo? Info { get; set; }
 
     [ObservableProperty]
-    private bool _efsClearEnabled;
+    public partial bool EfsClearEnabled { get; set; }
 
     [ObservableProperty]
-    private string? _knoxBit;
+    public partial string? KnoxBit { get; set; }
 
     [ObservableProperty]
-    private string? _diagnostic;
+    public partial string? Diagnostic { get; set; }
 
     [ObservableProperty]
-    private string? _statusText;
+    public partial string? StatusText { get; set; }
 
     [ObservableProperty]
-    private bool _isInspecting;
+    public partial bool IsInspecting { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsIdle))]
     [NotifyCanExecuteChangedFor(nameof(FastbootDryRunCommand))]
     [NotifyCanExecuteChangedFor(nameof(FastbootFlashCommand))]
     [NotifyCanExecuteChangedFor(nameof(CancelFlashCommand))]
-    private bool _isFlashing;
+    public partial bool IsFlashing { get; set; }
 
     [ObservableProperty]
-    private string? _flashStatusText;
+    public partial string? FlashStatusText { get; set; }
 
     [ObservableProperty]
-    private double? _flashProgressFraction;
+    public partial double? FlashProgressFraction { get; set; }
 
     [ObservableProperty]
-    private string? _fastbootSerial;
+    public partial string? FastbootSerial { get; set; }
 
     [ObservableProperty]
-    private bool _setActiveSlot;
+    public partial bool SetActiveSlot { get; set; }
 
     [ObservableProperty]
-    private string _activeSlotValue = "a";
+    public partial string ActiveSlotValue { get; set; } = "a";
 
     [ObservableProperty]
-    private bool _rebootAfterFlash;
+    public partial bool RebootAfterFlash { get; set; }
 
     [ObservableProperty]
-    private bool _disableAvb;
+    public partial bool DisableAvb { get; set; }
 
     [ObservableProperty]
-    private bool _thorConfirmed;
+    public partial bool ThorConfirmed { get; set; }
 
     public bool IsKnoxIntact => string.Equals(KnoxBit, "0", StringComparison.Ordinal);
     public bool IsKnoxTripped => !string.IsNullOrWhiteSpace(KnoxBit) && !IsKnoxIntact;

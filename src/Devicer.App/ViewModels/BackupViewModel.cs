@@ -11,7 +11,7 @@ namespace Devicer.App.ViewModels;
 public partial class PartitionRow : ObservableObject
 {
     [ObservableProperty]
-    private bool _selected;
+    public partial bool Selected { get; set; }
 
     public required PartitionInfo Info { get; init; }
 }
@@ -29,56 +29,56 @@ public partial class BackupViewModel : ObservableObject
     public ObservableCollection<string> Warnings { get; } = new();
 
     [ObservableProperty]
-    private string? _serial;
+    public partial string? Serial { get; set; }
 
     [ObservableProperty]
-    private string? _model;
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsIdle))]
-    [NotifyCanExecuteChangedFor(nameof(LoadPartitionsCommand))]
-    [NotifyCanExecuteChangedFor(nameof(StartBackupCommand))]
-    [NotifyCanExecuteChangedFor(nameof(CancelBackupCommand))]
-    private bool _isLoading;
+    public partial string? Model { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsIdle))]
     [NotifyCanExecuteChangedFor(nameof(LoadPartitionsCommand))]
     [NotifyCanExecuteChangedFor(nameof(StartBackupCommand))]
     [NotifyCanExecuteChangedFor(nameof(CancelBackupCommand))]
-    private bool _isRunning;
+    public partial bool IsLoading { get; set; }
 
     [ObservableProperty]
-    private string? _diagnostic;
+    [NotifyPropertyChangedFor(nameof(IsIdle))]
+    [NotifyCanExecuteChangedFor(nameof(LoadPartitionsCommand))]
+    [NotifyCanExecuteChangedFor(nameof(StartBackupCommand))]
+    [NotifyCanExecuteChangedFor(nameof(CancelBackupCommand))]
+    public partial bool IsRunning { get; set; }
 
     [ObservableProperty]
-    private string? _statusText;
+    public partial string? Diagnostic { get; set; }
 
     [ObservableProperty]
-    private double? _progressFraction;
+    public partial string? StatusText { get; set; }
 
     [ObservableProperty]
-    private string? _lastBackupFolder;
+    public partial double? ProgressFraction { get; set; }
+
+    [ObservableProperty]
+    public partial string? LastBackupFolder { get; set; }
 
     public bool IsIdle => !IsLoading && !IsRunning && !IsRestoring;
 
     [ObservableProperty]
-    private string? _restoreManifestPath;
+    public partial string? RestoreManifestPath { get; set; }
 
     [ObservableProperty]
-    private BackupManifest? _restoreManifest;
+    public partial BackupManifest? RestoreManifest { get; set; }
 
     [ObservableProperty]
-    private bool _restoreConfirmed;
+    public partial bool RestoreConfirmed { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsIdle))]
     [NotifyCanExecuteChangedFor(nameof(RestoreCommand))]
     [NotifyCanExecuteChangedFor(nameof(RestoreDryRunCommand))]
-    private bool _isRestoring;
+    public partial bool IsRestoring { get; set; }
 
     [ObservableProperty]
-    private string? _restoreStatusText;
+    public partial string? RestoreStatusText { get; set; }
 
     public ObservableCollection<PartitionRow> RestorePartitions { get; } = new();
     public ObservableCollection<string> RestoreWarnings { get; } = new();

@@ -14,16 +14,16 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
     private DateTime _lastProbeUtc = DateTime.MinValue;
 
     [ObservableProperty]
-    private bool _isProbing;
+    public partial bool IsProbing { get; set; }
 
     [ObservableProperty]
-    private string? _diagnostic;
+    public partial string? Diagnostic { get; set; }
 
     [ObservableProperty]
-    private DeviceInfo? _selectedDevice;
+    public partial DeviceInfo? SelectedDevice { get; set; }
 
     [ObservableProperty]
-    private string _statusText = "Idle";
+    public partial string StatusText { get; set; } = "Idle";
 
     public ObservableCollection<DeviceInfo> Devices { get; } = new();
 

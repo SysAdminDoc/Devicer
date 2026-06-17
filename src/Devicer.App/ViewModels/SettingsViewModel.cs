@@ -17,19 +17,19 @@ public partial class SettingsViewModel : ObservableObject
     public IReadOnlyList<AppTheme> Themes { get; } = new[] { AppTheme.Mocha, AppTheme.Latte };
 
     [ObservableProperty]
-    private AppTheme _selectedTheme;
+    public partial AppTheme SelectedTheme { get; set; }
 
     [ObservableProperty]
-    private int _probeIntervalSeconds;
+    public partial int ProbeIntervalSeconds { get; set; }
 
     [ObservableProperty]
-    private string _adbStatus = "Checking…";
+    public partial string AdbStatus { get; set; } = "Checking…";
 
     [ObservableProperty]
-    private bool _adbVersionWarning;
+    public partial bool AdbVersionWarning { get; set; }
 
     [ObservableProperty]
-    private string _fastbootStatus = "Checking…";
+    public partial string FastbootStatus { get; set; } = "Checking…";
 
     public string AppVersion { get; }
     public string SettingsPath { get; }
@@ -44,8 +44,8 @@ public partial class SettingsViewModel : ObservableObject
         _adb = adb;
         _fastboot = fastboot;
 
-        _selectedTheme = store.Settings.Theme;
-        _probeIntervalSeconds = store.Settings.ProbeIntervalSeconds;
+        SelectedTheme = store.Settings.Theme;
+        ProbeIntervalSeconds = store.Settings.ProbeIntervalSeconds;
 
         var dataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Devicer");
         AppVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.0.0";
@@ -87,7 +87,7 @@ public partial class SettingsViewModel : ObservableObject
     }
 
     [ObservableProperty]
-    private string? _openFolderError;
+    public partial string? OpenFolderError { get; set; }
 
     [RelayCommand]
     public void OpenSettingsFolder()
@@ -127,8 +127,8 @@ public partial class SettingsViewModel : ObservableObject
         var clamped = Math.Clamp(value, 2, 30);
         if (clamped != value)
         {
-            _probeIntervalSeconds = clamped;
-            OnPropertyChanged(nameof(ProbeIntervalSeconds));
+            ProbeIntervalSeconds = clamped;
+            return; // the re-entrant call will handle save + event
         }
         _store.Settings.ProbeIntervalSeconds = clamped;
         _store.Save();

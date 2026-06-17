@@ -12,16 +12,16 @@ public partial class FirstRunViewModel : ObservableObject
     private readonly IFastbootService _fastboot;
 
     [ObservableProperty]
-    private bool _isChecking = true;
+    public partial bool IsChecking { get; set; } = true;
 
     [ObservableProperty]
-    private bool? _adbAvailable;
+    public partial bool? AdbAvailable { get; set; }
 
     [ObservableProperty]
-    private bool? _fastbootAvailable;
+    public partial bool? FastbootAvailable { get; set; }
 
     [ObservableProperty]
-    private bool _everythingReady;
+    public partial bool EverythingReady { get; set; }
 
     public string AdbStatusText => AdbAvailable switch
     {

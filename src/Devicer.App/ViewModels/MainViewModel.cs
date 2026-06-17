@@ -18,10 +18,10 @@ public partial class MainViewModel : ObservableObject
     public ObservableCollection<NavItem> NavItems { get; }
 
     [ObservableProperty]
-    private NavItem? _selectedNavItem;
+    public partial NavItem? SelectedNavItem { get; set; }
 
     [ObservableProperty]
-    private UserControl? _currentPage;
+    public partial UserControl? CurrentPage { get; set; }
 
     /// <summary>
     /// Pretty-printed version string for the sidebar (<c>v1.1.0</c>). Sourced from
