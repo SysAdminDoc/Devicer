@@ -23,6 +23,7 @@ public sealed class AppHost
     public IPcPatchService PcPatch { get; }
     public IOdinInspectorService OdinInspector { get; }
     public IPitParser PitParser { get; }
+    public IPayloadExtractService PayloadExtract { get; }
     public IFastbootFlashService FastbootFlash { get; }
     public IToolManager ToolManager { get; }
     public IThorService Thor { get; }
@@ -57,6 +58,7 @@ public sealed class AppHost
         PcPatch = new PcPatchService(ShellRunner, ToolManager, Hash);
         OdinInspector = new OdinInspectorService();
         PitParser = new PitParser();
+        PayloadExtract = new PayloadExtractService();
         FastbootFlash = new FastbootFlashService(Fastboot);
         Thor = new ThorService(ShellRunner, ToolManager);
         Heimdall = new HeimdallService(ShellRunner, ToolManager);
