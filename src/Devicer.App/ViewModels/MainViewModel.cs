@@ -29,7 +29,7 @@ public partial class MainViewModel : ObservableObject
     /// </summary>
     public string AppVersionDisplay { get; }
 
-    public MainViewModel(DeviceViewModel deviceVm, FirmwareViewModel firmwareVm, RomViewModel romVm, BackupViewModel backupVm, PatchViewModel patchVm, FlashViewModel flashVm, UniversalViewModel universalVm, SettingsViewModel settingsVm)
+    public MainViewModel(DeviceViewModel deviceVm, FirmwareViewModel firmwareVm, RomViewModel romVm, BackupViewModel backupVm, PatchViewModel patchVm, FlashPageViewModel flashVm, UniversalViewModel universalVm, SettingsViewModel settingsVm)
     {
         NavItems = new ObservableCollection<NavItem>
         {
