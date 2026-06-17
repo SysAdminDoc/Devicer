@@ -14,7 +14,7 @@ public partial class MainWindow : Window
         var firmwareVm = new FirmwareViewModel(App.Host.FirmwareCheck, App.Host.FirmwareDownloadFactory, App.Host.Adb, App.Host.ImeiCache);
         var romVm = new RomViewModel(App.Host.RomAggregator, App.Host.RomDownload);
         var backupVm = new BackupViewModel(App.Host.Adb, App.Host.Backup);
-        var patchVm = new PatchViewModel(App.Host.BootPatch);
+        var patchVm = new PatchViewModel(App.Host.BootPatch, App.Host.PcPatch);
         var flashVm = new FlashViewModel(App.Host.OdinInspector, App.Host.FastbootFlash, App.Host.Fastboot, App.Host.Thor);
         var universalVm = new UniversalViewModel(App.Host.OemGuidance);
         var settingsVm = new SettingsViewModel(

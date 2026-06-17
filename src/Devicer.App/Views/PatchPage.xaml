@@ -95,6 +95,25 @@
                     <TextBlock Text="{Binding OutputSha256}" Style="{StaticResource MonoValue}" />
                 </StackPanel>
             </Border>
+
+            <!-- PC-side patcher fallback -->
+            <Border Height="1" Background="{DynamicResource AppCardBorder}" Margin="0,16,0,16" />
+            <DockPanel Margin="0,0,0,8" LastChildFill="True">
+                <Button DockPanel.Dock="Right"
+                        Content="PC-side patch"
+                        Style="{StaticResource PrimaryButton}"
+                        Command="{Binding PcPatchCommand}" />
+                <StackPanel>
+                    <TextBlock Text="PC-side patcher" FontWeight="SemiBold" FontSize="16"
+                               Foreground="{DynamicResource AppForeground}" Margin="0,0,0,4" />
+                    <TextBlock Style="{StaticResource SubheadingTextBlock}"
+                               Text="Patch boot.img on this PC using affggh/Magisk_patcher. No rooted device required — useful when you have a boot.img but the device has no root manager installed." />
+                </StackPanel>
+            </DockPanel>
+            <TextBlock Style="{StaticResource MutedTextBlock}" FontSize="11" Margin="0,0,0,12"
+                       Visibility="{Binding IsPcPatcherAvailable, Converter={x:Static vm:InverseBoolToVisibilityConverter.Instance}}">
+                Magisk_patcher not found on PATH or in the tools cache. Install affggh/Magisk_patcher or set its path in Settings.
+            </TextBlock>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

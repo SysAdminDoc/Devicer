@@ -17,6 +17,7 @@ public sealed class AppHost
     public IRomDownloadService RomDownload { get; }
     public IBackupService Backup { get; }
     public IBootPatchService BootPatch { get; }
+    public IPcPatchService PcPatch { get; }
     public IOdinInspectorService OdinInspector { get; }
     public IFastbootFlashService FastbootFlash { get; }
     public IToolManager ToolManager { get; }
@@ -41,9 +42,10 @@ public sealed class AppHost
         RomDownload = new RomDownloadService();
         Backup = new BackupService(Adb);
         BootPatch = new BootPatchService(Adb);
+        ToolManager = new ToolManager();
+        PcPatch = new PcPatchService(ShellRunner, ToolManager);
         OdinInspector = new OdinInspectorService();
         FastbootFlash = new FastbootFlashService(Fastboot);
-        ToolManager = new ToolManager();
         Thor = new ThorService(ShellRunner, ToolManager);
         Heimdall = new HeimdallService(ShellRunner, ToolManager);
         OemGuidance = new OemGuidanceService();

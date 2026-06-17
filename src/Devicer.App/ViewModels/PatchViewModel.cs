@@ -11,6 +11,7 @@ namespace Devicer.App.ViewModels;
 public partial class PatchViewModel : ObservableObject
 {
     private readonly IBootPatchService _patcher;
+    private readonly IPcPatchService _pcPatcher;
     private DeviceInfo? _device;
     private CancellationTokenSource? _cts;
 
@@ -24,14 +25,19 @@ public partial class PatchViewModel : ObservableObject
     private string? _rootKindDisplay;
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(PatchCommand))]
+    [NotifyCanExecuteChangedFor(nameof(PcPatchCommand))]
     private bool _hasRoot;
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(PatchCommand))]
+    [NotifyCanExecuteChangedFor(nameof(PcPatchCommand))]
     private string? _bootImagePath;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsIdle))]
     [NotifyCanExecuteChangedFor(nameof(PatchCommand))]
+    [NotifyCanExecuteChangedFor(nameof(PcPatchCommand))]
     [NotifyCanExecuteChangedFor(nameof(CancelCommand))]
     private bool _isPatching;
 
@@ -48,10 +54,12 @@ public partial class PatchViewModel : ObservableObject
     private string? _outputSha256;
 
     public bool IsIdle => !IsPatching;
+    public bool IsPcPatcherAvailable => _pcPatcher.IsAvailable;
 
-    public PatchViewModel(IBootPatchService patcher)
+    public PatchViewModel(IBootPatchService patcher, IPcPatchService pcPatcher)
     {
         _patcher = patcher;
+        _pcPatcher = pcPatcher;
     }
 
     public void PrefillFrom(DeviceInfo? device)
@@ -66,7 +74,7 @@ public partial class PatchViewModel : ObservableObject
         Model = device.Model;
         HasRoot = device.Root.Kind != RootKind.None;
         RootKindDisplay = device.Root.Kind == RootKind.None
-            ? "No root manager detected — patching requires Magisk, KernelSU, or APatch."
+            ? "No root manager detected. Use the PC-side patcher below if available."
             : $"{device.Root.Kind} {device.Root.Version}";
     }
 
@@ -125,6 +133,48 @@ public partial class PatchViewModel : ObservableObject
         && !string.IsNullOrWhiteSpace(BootImagePath)
         && File.Exists(BootImagePath);
 
+    [RelayCommand(CanExecute = nameof(CanPcPatch))]
+    public async Task PcPatchAsync()
+    {
+        if (string.IsNullOrWhiteSpace(BootImagePath)) return;
+
+        IsPatching = true;
+        Diagnostic = null;
+        OutputPath = null;
+        OutputSha256 = null;
+        StatusText = "Running PC-side patcher…";
+        _cts?.Dispose();
+        _cts = new CancellationTokenSource();
+        var ct = _cts.Token;
+
+        var progress = new Progress<PatchProgress>(p => StatusText = p.Message);
+
+        try
+        {
+            var res = await _pcPatcher.PatchBootImageAsync(BootImagePath!, progress, ct).ConfigureAwait(true);
+            OutputPath = res.OutputPath;
+            OutputSha256 = res.Sha256;
+            StatusText = $"Patched via PC-side {res.PatchedBy}. SHA256 captured. Output ready to flash.";
+        }
+        catch (OperationCanceledException)
+        {
+            StatusText = "Cancelled.";
+        }
+        catch (Exception ex)
+        {
+            Diagnostic = $"PC-side patch failed: {ex.Message}";
+            StatusText = null;
+        }
+        finally
+        {
+            IsPatching = false;
+        }
+    }
+
+    private bool CanPcPatch() => !IsPatching
+        && !string.IsNullOrWhiteSpace(BootImagePath)
+        && File.Exists(BootImagePath);
+
     [RelayCommand(CanExecute = nameof(CanCancel))]
     public void Cancel() => _cts?.Cancel();
 
@@ -142,7 +192,5 @@ public partial class PatchViewModel : ObservableObject
 
     private bool HasOutput() => !string.IsNullOrWhiteSpace(OutputPath);
 
-    partial void OnBootImagePathChanged(string? value) => PatchCommand.NotifyCanExecuteChanged();
-    partial void OnHasRootChanged(bool value) => PatchCommand.NotifyCanExecuteChanged();
     partial void OnOutputPathChanged(string? value) => OpenOutputFolderCommand.NotifyCanExecuteChanged();
 }
