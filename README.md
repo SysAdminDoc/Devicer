@@ -2,17 +2,17 @@
 
 # Devicer
 
-[![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-2.2.0-blue.svg)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows-0078d4.svg)](#)
 [![.NET](https://img.shields.io/badge/.NET-10-512bd4.svg)](#)
-[![Status](https://img.shields.io/badge/status-2.1%20alpha-orange.svg)](#)
+[![Status](https://img.shields.io/badge/status-2.2%20alpha-orange.svg)](#)
 
 > Unified Windows toolkit for managing rooted Android phones — identify, search ROMs, back up, patch, and flash from one shell.
 
 ## Status
 
-**v1.2.0 — in-app ROM download.** The ROMs tab now downloads builds directly into `%LOCALAPPDATA%\Devicer\roms\<codename>\` with chunked HTTP + SHA256/MD5 verification, resume support, progress bar, and cancel. Previously the "Download" button opened the browser; it now saves to disk and verifies the hash against the ROM source's published digest. A "Browser" button is still available for users who prefer the browser workflow. Seven functional sidebar pages (Device / Firmware / ROMs / Backup / Patch / Flash / Universal) plus Settings. See [CHANGELOG.md](CHANGELOG.md). Tooling-landscape document at [docs/research.md](docs/research.md), phased build plan at [ROADMAP.md](ROADMAP.md).
+**v2.2.0 - workflow automation and local-build hygiene.** The current alpha includes guided flashing, AVB/vbmeta-aware safety gates, payload.bin extraction, streaming Samsung firmware download/decrypt, debloat tooling, snackbar notifications, accessibility labels, localization scaffolding, and local-only release packaging. ROADMAP.md is drained; blocked hardware, signing, and strategy items live in [Roadmap_Blocked.md](Roadmap_Blocked.md). See [CHANGELOG.md](CHANGELOG.md) and [docs/research.md](docs/research.md).
 
 ## Goals
 
