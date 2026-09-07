@@ -203,9 +203,9 @@ public sealed class RomDownloadService : IRomDownloadService
     private static async Task<string> ComputeMd5Async(
         string path, IProgress<RomDownloadProgress>? progress, long total, CancellationToken ct)
     {
-        #pragma warning disable CA5351
+#pragma warning disable CA5351
         using var hash = MD5.Create();
-        #pragma warning restore CA5351
+#pragma warning restore CA5351
         return await HashFileAsync(hash, path, progress, total, ct).ConfigureAwait(false);
     }
 

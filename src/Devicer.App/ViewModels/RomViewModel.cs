@@ -138,7 +138,7 @@ public partial class RomViewModel : ObservableObject
 
             if (result.HashAlgorithm is not null && !result.HashVerified)
             {
-                Diagnostic = $"{result.HashAlgorithm} mismatch: expected {result.ExpectedHash}, got {result.ActualHash}. The file may be corrupt — re-download or verify manually.";
+                Diagnostic = $"{result.HashAlgorithm} mismatch: expected {result.ExpectedHash}, got {result.ActualHash}. The file may be corrupt: re-download or verify manually.";
                 DownloadStatusText = $"Downloaded but {result.HashAlgorithm} mismatch!";
             }
             else

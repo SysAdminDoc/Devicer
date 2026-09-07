@@ -37,7 +37,7 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
-            <Image Source="pack://application:,,,/Resources/Images/logo.png"
+            <Image Source="pack://application:,,,/Resources/Images/logo-small.png"
                    Width="44" Height="44" Margin="0,0,14,0" VerticalAlignment="Center" />
             <StackPanel VerticalAlignment="Center">
                 <TextBlock Text="Welcome to Devicer" Style="{StaticResource HeadingTextBlock}" />

@@ -352,7 +352,7 @@ public sealed class FirmwareDownloadService : IFirmwareDownloadService, IDisposa
         // Defend against BINARY_NATURE (value "1"/"0") leaking through.
         if (binaryName.Length < 8 || !binaryName.Contains('.'))
             throw new FusProtocolException(
-                $"BinaryInform: BINARY_NAME='{binaryName}' is too short to be a real firmware filename — server response shape changed.",
+                $"BinaryInform: BINARY_NAME='{binaryName}' is too short to be a real firmware filename. The server response shape changed.",
                 xml);
 
         var binaryByteSizeStr = GetFirst("BINARY_BYTE_SIZE", "BINARY_TOTAL_BYTE_COUNT")

@@ -128,7 +128,7 @@ public sealed class FastbootFlashService : IFastbootFlashService
     {
         var lines = new List<string>
         {
-            "DRY RUN — no data will be written. The following plan would execute:",
+            "DRY RUN: no data will be written. The following plan would execute:",
             "",
             $"Target: {serial}",
         };

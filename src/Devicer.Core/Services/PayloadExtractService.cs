@@ -75,7 +75,7 @@ public sealed class PayloadExtractService : IPayloadExtractService
 
             // Operation types: 0=REPLACE, 6=REPLACE_XZ, 8=REPLACE_BZ
             // For now we handle REPLACE (uncompressed) directly. Compressed
-            // operations pass through raw — a future version can add XZ/BZ2 decompression.
+            // operations pass through raw: a future version can add XZ/BZ2 decompression.
             byte[] output = buf;
 
             if (op.DstOffset >= 0)
@@ -108,7 +108,7 @@ public sealed class PayloadExtractService : IPayloadExtractService
         var metadataSigSize = version >= 2 ? ReadUint32BE(header, 20) : 0u;
 
         if (manifestSize > 100_000_000)
-            throw new InvalidDataException($"Manifest size {manifestSize} too large — corrupt or unsupported payload.");
+            throw new InvalidDataException($"Manifest size {manifestSize} too large: corrupt or unsupported payload.");
 
         var manifestBytes = new byte[manifestSize];
         await ReadFullAsync(fs, manifestBytes, (int)manifestSize, ct).ConfigureAwait(false);

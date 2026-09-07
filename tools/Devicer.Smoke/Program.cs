@@ -1,13 +1,13 @@
 using Devicer.Core.Models;
 using Devicer.Core.Services;
 
-// Devicer.Smoke — exercises Devicer.Core against whatever device is currently connected,
+// Devicer.Smoke: exercises Devicer.Core against whatever device is currently connected,
 // independently of the WPF shell. Run from repo root: `dotnet run --project tools/Devicer.Smoke`.
 //
 // Flags:
 //   --inform                       Probe + run a FUS BinaryInform on the connected Samsung's latest firmware.
 //                                  Verifies auth crypto end-to-end without downloading the blob.
-//   --inform <model> <csc> <pda>   Same, but with explicit model/CSC/PDA — useful when no device is connected.
+//   --inform <model> <csc> <pda>   Same, but with explicit model/CSC/PDA: useful when no device is connected.
 //   --firmware-regions <model> <csc...>
 //                                  Query several Samsung CSC feeds for one model.
 
@@ -87,7 +87,7 @@ if (args.Length >= 2 && args[0] == "--backup")
     var bkSerial = args[1];
     var bkShell = new ShellRunner();
     var bkAdb = new AdbService(bkShell);
-    var bkSvc = new BackupService(bkAdb);
+    var bkSvc = new BackupService(bkAdb, new HashService());
     Console.WriteLine($"Listing partitions on {bkSerial}…");
     var parts = await bkAdb.ListPartitionsAsync(bkSerial);
     var critical = parts.Where(p => p.IsCritical).ToList();
@@ -205,7 +205,7 @@ foreach (var dev in result.Devices)
                     Console.WriteLine();
                     if (string.IsNullOrWhiteSpace(dev.Imei))
                     {
-                        Console.WriteLine("--- FUS BinaryInform: SKIPPED (no IMEI — Samsung requires a real one as of late 2024) ---");
+                        Console.WriteLine("--- FUS BinaryInform: SKIPPED (no IMEI: Samsung requires a real one as of late 2024) ---");
                     }
                     else
                     {
@@ -246,7 +246,7 @@ static async Task FirmwareRegionsAsync(string model, IEnumerable<string> regions
 static async Task DownloadHeaderProbeAsync(string model, string csc, string version, string imei)
 {
     using var fus = new FusClient();
-    using var svc = new FirmwareDownloadService(fus);
+    using var svc = new FirmwareDownloadService(fus: fus);
     try
     {
         Console.WriteLine($"--- BinaryInform ---");
@@ -261,7 +261,7 @@ static async Task DownloadHeaderProbeAsync(string model, string csc, string vers
         // Reach in via a tiny range request to confirm the cloud-host URL works without burning bandwidth.
         var remotePath = (info.ModelPath ?? string.Empty) + info.BinaryName;
         Console.WriteLine($"Remote path   : '{remotePath}'");
-        // The fwv-slice algorithm is `binary_filename.split('.')[0][-16:]` — split on FIRST
+        // The fwv-slice algorithm is `binary_filename.split('.')[0][-16:]`: split on FIRST
         // dot, take last 16 of the leading chunk. The earlier `LastIndexOf` formulation was
         // buggy: for any filename with multiple dots (every modern .zip.enc4 name) it
         // included `.zip` in the slice and on short stems it threw ArgumentOutOfRange.
@@ -270,7 +270,7 @@ static async Task DownloadHeaderProbeAsync(string model, string csc, string vers
         var initResp = await fus.PostXmlAsync("/NF_DownloadBinaryInitForMass.do", initXml);
         Console.WriteLine($"Init response : {initResp.Substring(0, Math.Min(400, initResp.Length))}");
 
-        // 1-byte Range probe of the actual download — succeeds without burning the full 8 GB.
+        // 1-byte Range probe of the actual download: succeeds without burning the full 8 GB.
         using var dlResp = await fus.StartDownloadAsync(remotePath, 0L);
         Console.WriteLine($"Download HTTP : {(int)dlResp.StatusCode} {dlResp.ReasonPhrase}");
         Console.WriteLine($"Content-Length: {dlResp.Content.Headers.ContentLength}");

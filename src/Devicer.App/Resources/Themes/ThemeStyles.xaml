@@ -45,6 +45,8 @@
     <Style x:Key="SubheadingTextBlock" TargetType="TextBlock">
         <Setter Property="Foreground" Value="{DynamicResource AppMutedForeground}" />
         <Setter Property="FontSize" Value="{StaticResource AppFontSizeSubheading}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="LineHeight" Value="21" />
         <Setter Property="Margin" Value="0,0,0,16" />
     </Style>
 
@@ -204,7 +206,7 @@
         </Setter>
     </Style>
 
-    <!-- Status badge — square corners with subtle 4px radius. Variants differentiate by color + left-accent stripe, not by shape. -->
+    <!-- Status badge: square corners with subtle 4px radius. Variants differentiate by color + left-accent stripe, not by shape. -->
     <Style x:Key="Badge" TargetType="Border">
         <Setter Property="CornerRadius" Value="4" />
         <Setter Property="Padding" Value="10,4" />
@@ -242,8 +244,75 @@
         <Setter Property="Width" Value="10" />
     </Style>
 
+    <!-- Slider with a visible track and keyboard-focus treatment in both themes. -->
+    <Style TargetType="Slider">
+        <Setter Property="Height" Value="24" />
+        <Setter Property="Foreground" Value="{DynamicResource AppAccent}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Slider">
+                    <Grid VerticalAlignment="Center">
+                        <Track x:Name="PART_Track"
+                               Orientation="Horizontal"
+                               Minimum="{TemplateBinding Minimum}"
+                               Maximum="{TemplateBinding Maximum}"
+                               Value="{TemplateBinding Value}"
+                               IsDirectionReversed="{TemplateBinding IsDirectionReversed}">
+                            <Track.DecreaseRepeatButton>
+                                <RepeatButton Command="{x:Static Slider.DecreaseLarge}"
+                                              Background="{DynamicResource AppAccent}"
+                                              BorderThickness="0"
+                                              Focusable="False">
+                                    <RepeatButton.Template>
+                                        <ControlTemplate TargetType="RepeatButton">
+                                            <Border Height="5" Margin="0,0,-1,0"
+                                                    Background="{TemplateBinding Background}"
+                                                    CornerRadius="2" />
+                                        </ControlTemplate>
+                                    </RepeatButton.Template>
+                                </RepeatButton>
+                            </Track.DecreaseRepeatButton>
+                            <Track.IncreaseRepeatButton>
+                                <RepeatButton Command="{x:Static Slider.IncreaseLarge}"
+                                              Background="{DynamicResource AppBorderStrong}"
+                                              BorderThickness="0"
+                                              Focusable="False">
+                                    <RepeatButton.Template>
+                                        <ControlTemplate TargetType="RepeatButton">
+                                            <Border Height="5" Margin="-1,0,0,0"
+                                                    Background="{TemplateBinding Background}"
+                                                    CornerRadius="2" />
+                                        </ControlTemplate>
+                                    </RepeatButton.Template>
+                                </RepeatButton>
+                            </Track.IncreaseRepeatButton>
+                            <Track.Thumb>
+                                <Thumb Width="18" Height="18">
+                                    <Thumb.Template>
+                                        <ControlTemplate TargetType="Thumb">
+                                            <Border x:Name="thumb"
+                                                    Background="{DynamicResource AppForeground}"
+                                                    BorderBrush="{DynamicResource AppAccent}"
+                                                    BorderThickness="2"
+                                                    CornerRadius="5" />
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="thumb" Property="Background" Value="{DynamicResource AppAccent}" />
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Thumb.Template>
+                                </Thumb>
+                            </Track.Thumb>
+                        </Track>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- ============================================================
-         INPUT CONTROLS — dark theme defaults
+         INPUT CONTROLS: dark theme defaults
          WPF's stock TextBox / ComboBox / CheckBox templates pin parts of the
          visual tree to system colors (e.g. ComboBox's PART_EditableTextBox is
          system-white regardless of the parent's Background). We replace each
@@ -356,7 +425,7 @@
         </Setter>
     </Style>
 
-    <!-- ComboBoxItem — dark hover/selected, used by the popup item host -->
+    <!-- ComboBoxItem: dark hover/selected, used by the popup item host -->
     <Style TargetType="ComboBoxItem">
         <Setter Property="Foreground" Value="{DynamicResource AppForeground}" />
         <Setter Property="Background" Value="Transparent" />
@@ -500,7 +569,7 @@
         </Setter>
     </Style>
 
-    <!-- CheckBox — dark check-square + accent fill on checked -->
+    <!-- CheckBox: dark check-square + accent fill on checked -->
     <Style TargetType="CheckBox">
         <Setter Property="Foreground" Value="{DynamicResource AppForeground}" />
         <Setter Property="Background" Value="Transparent" />

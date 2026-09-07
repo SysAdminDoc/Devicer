@@ -115,7 +115,7 @@ public partial class BackupViewModel : ObservableObject
             var parts = await _adb.ListPartitionsAsync(Serial!).ConfigureAwait(true);
             if (parts.Count == 0)
             {
-                Diagnostic = "Could not list /dev/block/by-name. Root is required (Magisk / KernelSU / APatch). On a Samsung phone, EFS sits behind root — there's no shell-readable path.";
+                Diagnostic = "Could not list /dev/block/by-name. Root is required (Magisk / KernelSU / APatch). On a Samsung phone, EFS sits behind root: there's no shell-readable path.";
                 StatusText = null;
                 return;
             }

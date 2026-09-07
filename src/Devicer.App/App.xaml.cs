@@ -15,18 +15,20 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
+        var isMarketingCapture = MarketingCaptureMode.IsEnabled;
+
         AppDomain.CurrentDomain.UnhandledException += (_, args) => LogCrash(args.ExceptionObject as Exception);
         DispatcherUnhandledException += (_, args) => { LogCrash(args.Exception); args.Handled = true; };
         TaskScheduler.UnobservedTaskException += (_, args) => { LogCrash(args.Exception); args.SetObserved(); };
 
-        if (!Host.SettingsStore.Settings.FirstRunCompleted)
+        if (!isMarketingCapture && !Host.SettingsStore.Settings.FirstRunCompleted)
         {
             var systemTheme = ThemeManager.DetectSystemTheme();
             Host.SettingsStore.Settings.Theme = systemTheme;
         }
-        Host.Theme.Apply(Host.SettingsStore.Settings.Theme);
+        Host.Theme.Apply(isMarketingCapture ? AppTheme.Mocha : Host.SettingsStore.Settings.Theme);
 
-        if (!Host.SettingsStore.Settings.FirstRunCompleted)
+        if (!isMarketingCapture && !Host.SettingsStore.Settings.FirstRunCompleted)
         {
             var firstRunVm = new FirstRunViewModel(Host.SettingsStore, Host.Adb, Host.Fastboot);
             var firstRun = new FirstRunWindow(firstRunVm);

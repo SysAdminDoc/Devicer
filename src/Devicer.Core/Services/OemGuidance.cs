@@ -56,7 +56,7 @@ public sealed class OemGuidanceService : IOemGuidanceService
         ],
         Quirks =
         [
-            new("Anti-rollback (ARB)", "Pixel partitions enforce monotonically-increasing version. You CANNOT downgrade across an ARB boundary — the device will refuse to boot or brick. Always check the factory-image release notes for ARB warnings."),
+            new("Anti-rollback (ARB)", "Pixel partitions enforce monotonically-increasing version. You CANNOT downgrade across an ARB boundary: the device will refuse to boot or brick. Always check the factory-image release notes for ARB warnings."),
             new("init_boot.img on Pixel 7+", "Pixel 7 and newer ship a separate init_boot partition. Magisk-patch init_boot, NOT boot, on those models."),
         ],
         PortalUrl = "https://flash.android.com/",
@@ -124,7 +124,7 @@ public sealed class OemGuidanceService : IOemGuidanceService
         [
             new("Get IMEI", "Dial *#06# or check Settings → About."),
             new("Request unlock code", "Sony's developer portal accepts the IMEI and emails an unlock code for compatible models.", "https://developer.sony.com/develop/open-devices/get-started/unlock-bootloader"),
-            new("fastboot oem unlock", "`fastboot oem unlock 0x<your-code>`. WIPES USERDATA. Sony's camera DRM keys are also wiped — image quality degrades on most models."),
+            new("fastboot oem unlock", "`fastboot oem unlock 0x<your-code>`. WIPES USERDATA. Sony's camera DRM keys are also wiped: image quality degrades on most models."),
         ],
         FlashSteps =
         [
@@ -167,13 +167,13 @@ public sealed class OemGuidanceService : IOemGuidanceService
         Tooling = "fastboot + Motorola unlock portal for codes.",
         UnlockSteps =
         [
-            new("Get unique key", "On the device in fastboot: `fastboot oem get_unlock_data` — concatenate the lines into one string."),
+            new("Get unique key", "On the device in fastboot: `fastboot oem get_unlock_data`: concatenate the lines into one string."),
             new("Submit to Motorola portal", "The portal validates the key and emails an unlock code for eligible models.", "https://en-us.support.motorola.com/app/standalone/bootloader/unlock-your-device-a"),
             new("fastboot oem unlock <code>", "WIPES USERDATA. Some carrier-locked variants are NOT unlockable."),
         ],
         FlashSteps =
         [
-            new("RSA / Lenovo Moto fastboot images", "Motorola publishes per-device 'Stock' firmware that flashes via a `flashfile.xml` script — community tools (mfastboot / Lenovo SAM Tool) execute it."),
+            new("RSA / Lenovo Moto fastboot images", "Motorola publishes per-device 'Stock' firmware that flashes via a `flashfile.xml` script: community tools (mfastboot / Lenovo SAM Tool) execute it."),
         ],
         Quirks =
         [
@@ -208,13 +208,13 @@ public sealed class OemGuidanceService : IOemGuidanceService
     private static OemGuidance Samsung() => new()
     {
         Oem = OemKind.Samsung,
-        Headline = "Samsung uses Odin protocol — Devicer's Firmware + Flash tabs are dedicated to Samsung. This page is for non-Samsung devices.",
+        Headline = "Samsung uses Odin protocol: Devicer's Firmware + Flash tabs are dedicated to Samsung. This page is for non-Samsung devices.",
         Tooling = "(Use the Firmware and Flash tabs.)",
         UnlockSteps = [],
         FlashSteps = [],
         Quirks =
         [
-            new("OEM unlock toggle removed in One UI 8", "Samsung removed the 'OEM unlocking' developer toggle on Galaxy S25 / Z Fold7 / Z Flip7 with One UI 8 / Android 16. Bootloader unlock is currently NOT available on those models — flashing custom AP/CSC will fail with a SECURE-CHECK error."),
+            new("OEM unlock toggle removed in One UI 8", "Samsung removed the 'OEM unlocking' developer toggle on Galaxy S25 / Z Fold7 / Z Flip7 with One UI 8 / Android 16. Bootloader unlock is currently NOT available on those models: flashing custom AP/CSC will fail with a SECURE-CHECK error."),
             new("Maintenance Mode required for Download Mode (One UI 8.5+)", "Starting with One UI 8.5, Samsung requires Maintenance Mode to be enabled before the Volume Down + USB key combo enters Download Mode. Without it, the device shows a blank blue screen. Enable Maintenance Mode in Settings before attempting to flash."),
         ],
         PortalUrl = null,
@@ -223,7 +223,7 @@ public sealed class OemGuidanceService : IOemGuidanceService
     private static OemGuidance Generic(OemKind kind) => new()
     {
         Oem = kind,
-        Headline = $"No OEM-specific profile for {kind.DisplayName()} yet — fall back to standard fastboot.",
+        Headline = $"No OEM-specific profile for {kind.DisplayName()} yet: fall back to standard fastboot.",
         Tooling = "fastboot (Platform-Tools).",
         UnlockSteps =
         [
@@ -233,7 +233,7 @@ public sealed class OemGuidanceService : IOemGuidanceService
         ],
         FlashSteps =
         [
-            new("Per-partition fastboot", "`fastboot flash <partition> <file.img>` — works for boot, vbmeta, system, vendor, dtbo, init_boot, etc."),
+            new("Per-partition fastboot", "`fastboot flash <partition> <file.img>`: works for boot, vbmeta, system, vendor, dtbo, init_boot, etc."),
         ],
         Quirks =
         [

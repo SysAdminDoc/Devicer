@@ -14,8 +14,8 @@ namespace Devicer.Core.Services;
 /// • Parses any new <c>NONCE</c> response header and rotates internally.
 ///
 /// Endpoints:
-///   POST https://neofussvr.sslcs.cdngc.net/&lt;op&gt;             — control plane (XML in/out)
-///   GET  http://cloud-neofussvr.sslcs.cdngc.net/NF_DownloadBinaryForMass.do — bulk download (HTTP, range supported)
+///   POST https://neofussvr.sslcs.cdngc.net/&lt;op&gt;            : control plane (XML in/out)
+///   GET  http://cloud-neofussvr.sslcs.cdngc.net/NF_DownloadBinaryForMass.do: bulk download (HTTP, range supported)
 /// </summary>
 public sealed class FusClient : IDisposable
 {
@@ -68,7 +68,7 @@ public sealed class FusClient : IDisposable
 
     /// <summary>
     /// Establishes a session by hitting the GenerateNonce endpoint. Required before any
-    /// authenticated request. Idempotent — re-call to refresh.
+    /// authenticated request. Idempotent: re-call to refresh.
     /// </summary>
     public async Task EnsureSessionAsync(CancellationToken ct = default)
     {
@@ -86,7 +86,7 @@ public sealed class FusClient : IDisposable
         await EnsureSessionAsync(ct).ConfigureAwait(false);
 
         // Samsung's FUS parser is strict about Content-Type: it wants "application/xml" with
-        // no charset suffix. .NET's StringContent ctor auto-appends "; charset=utf-8" — strip it.
+        // no charset suffix. .NET's StringContent ctor auto-appends "; charset=utf-8": strip it.
         var content = new ByteArrayContent(Encoding.UTF8.GetBytes(xmlBody));
         content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/xml");
         using var req = new HttpRequestMessage(HttpMethod.Post, ApiHost + path) { Content = content };
@@ -133,16 +133,16 @@ public sealed class FusClient : IDisposable
         // The actual blob is only served by the cloud-neofussvr edge. The API host accepts
         // the GET but returns Content-Length: 0 (control-plane only). cloud-neofussvr's Squid
         // ACL also needs the JSESSIONID_SVR + Imperva session cookies that get set during the
-        // POST handshake — without UseCookies=true, the CDN denies with "Invalid Request".
+        // POST handshake: without UseCookies=true, the CDN denies with "Invalid Request".
         var url = $"{CloudHost}{DownloadPath}?file={encoded}";
         var req = new HttpRequestMessage(HttpMethod.Get, url);
-        // Force HTTP/1.1 — Samsung's cloud-neofussvr Squid edge rejects HTTP/2 with a generic
+        // Force HTTP/1.1: Samsung's cloud-neofussvr Squid edge rejects HTTP/2 with a generic
         // "Invalid Request" ACL deny. Smart Switch (the reference client) is built on WinHTTP,
         // which only speaks HTTP/1.1, so the edge config is calibrated for that.
         req.Version = System.Net.HttpVersion.Version11;
         req.VersionPolicy = System.Net.Http.HttpVersionPolicy.RequestVersionExact;
         AddAuthHeader(req);
-        // Always send Range — Samsung's bulk CDN requires it on every download request.
+        // Always send Range: Samsung's bulk CDN requires it on every download request.
         // Without it, some edge nodes return a Squid ACL-deny 403.
         req.Headers.Range = new RangeHeaderValue(rangeFrom ?? 0L, null);
         // Belt-and-suspenders: explicit UA on the request itself (in case the default doesn't propagate).
@@ -164,13 +164,13 @@ public sealed class FusClient : IDisposable
         if (!resp.IsSuccessStatusCode)
         {
             var body = await resp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-            // Log full body for 403/4xx — Samsung's CDN often embeds the actual block reason here.
+            // Log full body for 403/4xx: Samsung's CDN often embeds the actual block reason here.
             DevicerLog.Error("FUS", $"  full body ({body.Length} bytes):\n{body}");
             DevicerLog.Error("FUS", $"  response headers:");
             foreach (var h in resp.Headers.NonValidated.Concat(resp.Content.Headers.NonValidated))
                 DevicerLog.Error("FUS", $"    {h.Key}: {string.Join(" | ", h.Value)}");
             resp.Dispose();
-            throw new FusProtocolException($"FUS download failed: HTTP {(int)resp.StatusCode} — URL: {url}", body);
+            throw new FusProtocolException($"FUS download failed: HTTP {(int)resp.StatusCode}: URL: {url}", body);
         }
         return resp;
     }
@@ -201,7 +201,7 @@ public sealed class FusClient : IDisposable
 
     private static string? ExtractNonce(HttpResponseMessage resp)
     {
-        // Samsung's NONCE header value contains base64 — including '/' and '+' — which
+        // Samsung's NONCE header value contains base64: including '/' and '+': which
         // .NET's HttpClient parser refuses to validate, leaving the header in the
         // NonValidated collection. NonValidated.TryGetValues only matches *known* header
         // descriptors so it returns false for "NONCE"; iteration works.
@@ -240,7 +240,7 @@ public sealed class FusClient : IDisposable
 
     private void ConsumeRotatedNonce(HttpResponseMessage resp)
     {
-        // Samsung's NONCE header is base64 — some characters trip .NET's validating header
+        // Samsung's NONCE header is base64: some characters trip .NET's validating header
         // parsers, which moves the header into HeaderValuesCollection.NonValidated instead
         // of the parsed Headers/Content.Headers collections. Read NonValidated first.
         string? enc = ExtractNonce(resp);
@@ -248,7 +248,7 @@ public sealed class FusClient : IDisposable
 
         // Decode best-effort: Samsung's NONCE header sometimes returns short / non-padded
         // values that aren't decryptable. The previous nonce remains valid for further
-        // requests, so a rotation failure is non-fatal — it just means we'll keep using
+        // requests, so a rotation failure is non-fatal: it just means we'll keep using
         // the current session nonce until the server forces a re-handshake.
         try
         {
@@ -266,7 +266,7 @@ public sealed class FusClient : IDisposable
     private void AddAuthHeader(HttpRequestMessage req)
     {
         if (_decodedNonce is null || _encryptedNonce is null)
-            throw new InvalidOperationException("FusClient: no session — call EnsureSessionAsync first.");
+            throw new InvalidOperationException("FusClient: no session: call EnsureSessionAsync first.");
         var sig = FusCrypto.ComputeAuthSignature(_decodedNonce, _key1Used);
         var auth = $"FUS nonce=\"{_encryptedNonce}\", signature=\"{sig}\", nc=\"\", type=\"\", realm=\"\", newauth=\"1\"";
         req.Headers.TryAddWithoutValidation("Authorization", auth);

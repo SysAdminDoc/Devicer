@@ -57,11 +57,11 @@
             <Border Style="{StaticResource Card}" Margin="0,0,0,12">
                 <StackPanel>
                     <TextBlock Text="DEVICE" Style="{StaticResource FieldLabel}" />
-                    <TextBlock Text="{Binding Model, FallbackValue='— (no device selected)', TargetNullValue='— (no device selected)'}" Style="{StaticResource MonoValue}" />
+                    <TextBlock Text="{Binding Model, FallbackValue='No device selected', TargetNullValue='No device selected'}" Style="{StaticResource MonoValue}" />
                     <TextBlock Text="ROOT MANAGER" Style="{StaticResource FieldLabel}" />
-                    <TextBlock Text="{Binding RootKindDisplay, FallbackValue='—', TargetNullValue='—'}" Style="{StaticResource MonoValue}" />
+                    <TextBlock Text="{Binding RootKindDisplay, FallbackValue='N/A', TargetNullValue='N/A'}" Style="{StaticResource MonoValue}" />
                     <TextBlock Text="PATCH TARGET" Style="{StaticResource FieldLabel}" />
-                    <TextBlock Text="{Binding PatchTargetHint, FallbackValue='—', TargetNullValue='—'}"
+                    <TextBlock Text="{Binding PatchTargetHint, FallbackValue='N/A', TargetNullValue='N/A'}"
                                Foreground="{DynamicResource AppAccent}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,8" />
                 </StackPanel>
             </Border>
@@ -69,7 +69,7 @@
             <Border Style="{StaticResource Card}" Margin="0,0,0,12">
                 <StackPanel>
                     <TextBlock Text="BOOT IMAGE" Style="{StaticResource FieldLabel}" />
-                    <TextBlock Text="{Binding BootImagePath, FallbackValue='(none — click Browse)', TargetNullValue='(none — click Browse)'}"
+                    <TextBlock Text="{Binding BootImagePath, FallbackValue='(none, click Browse)', TargetNullValue='(none, click Browse)'}"
                                Style="{StaticResource MonoValue}" />
                 </StackPanel>
             </Border>
@@ -130,7 +130,7 @@
                     <TextBlock Text="PC-side patcher" FontWeight="SemiBold" FontSize="16"
                                Foreground="{DynamicResource AppForeground}" Margin="0,0,0,4" />
                     <TextBlock Style="{StaticResource SubheadingTextBlock}"
-                               Text="Patch boot.img on this PC using affggh/Magisk_patcher. No rooted device required — useful when you have a boot.img but the device has no root manager installed." />
+                               Text="Patch boot.img on this PC using affggh/Magisk_patcher. No rooted device required: useful when you have a boot.img but the device has no root manager installed." />
                 </StackPanel>
             </DockPanel>
             <TextBlock Style="{StaticResource MutedTextBlock}" FontSize="11" Margin="0,0,0,12"

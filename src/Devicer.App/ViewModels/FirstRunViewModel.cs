@@ -26,14 +26,14 @@ public partial class FirstRunViewModel : ObservableObject
     public string AdbStatusText => AdbAvailable switch
     {
         true => "adb detected on PATH",
-        false => "adb not found — install Android SDK Platform-Tools v37+ and add it to PATH",
+        false => "adb not found: install Android SDK Platform-Tools v37+ and add it to PATH",
         _ => "Checking adb…",
     };
 
     public string FastbootStatusText => FastbootAvailable switch
     {
         true => "fastboot detected on PATH",
-        false => "fastboot not found — install Android SDK Platform-Tools v37+ and add it to PATH",
+        false => "fastboot not found: install Android SDK Platform-Tools v37+ and add it to PATH",
         _ => "Checking fastboot…",
     };
 

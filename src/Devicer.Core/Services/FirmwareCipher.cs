@@ -5,7 +5,7 @@ namespace Devicer.Core.Services;
 
 /// <summary>
 /// Decrypts a Samsung firmware blob (.enc2 / .enc4). The encryption is AES-128-ECB with
-/// PKCS#7 padding on the final block — confirmed across every public FUS client
+/// PKCS#7 padding on the final block: confirmed across every public FUS client
 /// (samloader, Bifrost, samfirm).
 ///
 /// <para>
@@ -44,7 +44,7 @@ public static class FirmwareCipher
 
         var inLen = inFs.Length;
         if (inLen % 16 != 0)
-            throw new InvalidDataException($"Encrypted firmware size {inLen} is not a multiple of 16 — corrupt download or wrong endpoint.");
+            throw new InvalidDataException($"Encrypted firmware size {inLen} is not a multiple of 16: corrupt download or wrong endpoint.");
 
         var inBuf = new byte[ChunkSize];
         var outBuf = new byte[ChunkSize];
@@ -61,7 +61,7 @@ public static class FirmwareCipher
             var isFinal = totalIn + read >= inLen;
 
             if (read % 16 != 0)
-                throw new InvalidDataException($"Short read of {read} bytes mid-stream — partial chunk not aligned to 16.");
+                throw new InvalidDataException($"Short read of {read} bytes mid-stream: partial chunk not aligned to 16.");
 
             var written = dec.TransformBlock(inBuf, 0, read, outBuf, 0);
 
@@ -72,14 +72,14 @@ public static class FirmwareCipher
                 // looks valid; a strict check requires every pad byte to equal the pad
                 // count, which catches ~255/256 wrong-key cases on the final block alone.
                 if (written < 16)
-                    throw new InvalidDataException($"Decryption produced final block of {written} bytes — too small for PKCS#7. Wrong key or corrupt blob.");
+                    throw new InvalidDataException($"Decryption produced final block of {written} bytes: too small for PKCS#7. Wrong key or corrupt blob.");
                 var pad = outBuf[written - 1];
                 if (pad < 1 || pad > 16)
-                    throw new InvalidDataException($"Decryption produced invalid PKCS#7 pad byte {pad} — wrong key or corrupt blob.");
+                    throw new InvalidDataException($"Decryption produced invalid PKCS#7 pad byte {pad}: wrong key or corrupt blob.");
                 for (int i = written - pad; i < written; i++)
                 {
                     if (outBuf[i] != pad)
-                        throw new InvalidDataException($"PKCS#7 padding mismatch at offset {i} (expected 0x{pad:X2}, got 0x{outBuf[i]:X2}) — wrong key or corrupt blob.");
+                        throw new InvalidDataException($"PKCS#7 padding mismatch at offset {i} (expected 0x{pad:X2}, got 0x{outBuf[i]:X2}): wrong key or corrupt blob.");
                 }
                 written -= pad;
             }
@@ -136,14 +136,14 @@ public static class FirmwareCipher
             var isFinal = totalIn + read >= totalEncryptedSize;
 
             if (read % 16 != 0)
-                throw new InvalidDataException($"Short read of {read} bytes mid-stream — partial chunk not aligned to 16.");
+                throw new InvalidDataException($"Short read of {read} bytes mid-stream: partial chunk not aligned to 16.");
 
             var written = dec.TransformBlock(inBuf, 0, read, outBuf, 0);
 
             if (isFinal)
             {
                 if (written < 16)
-                    throw new InvalidDataException($"Decryption produced final block of {written} bytes — too small for PKCS#7.");
+                    throw new InvalidDataException($"Decryption produced final block of {written} bytes: too small for PKCS#7.");
                 var pad = outBuf[written - 1];
                 if (pad < 1 || pad > 16)
                     throw new InvalidDataException($"Decryption produced invalid PKCS#7 pad byte {pad}.");

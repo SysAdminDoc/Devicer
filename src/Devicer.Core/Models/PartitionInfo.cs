@@ -31,7 +31,7 @@ public sealed record PartitionInfo
                 >= m => $"{SizeBytes / (double)m:0.0} MB",
                 >= k => $"{SizeBytes / (double)k:0.0} KB",
                 > 0 => $"{SizeBytes} B",
-                _ => "—",
+                _ => "N/A",
             };
         }
     }
@@ -44,7 +44,7 @@ public sealed record PartitionInfo
     {
         // Samsung-critical: losing EFS bricks IMEI permanently.
         "efs", "efs1", "efs2", "factory", "factoryx",
-        // Modem firmware / NV RAM — losing these breaks cellular.
+        // Modem firmware / NV RAM: losing these breaks cellular.
         "modem", "modem1", "modem2", "nvram", "nv_data", "nv1", "nv2",
         // Qualcomm modem state.
         "modemst1", "modemst2", "fsg", "fsc",
@@ -60,7 +60,7 @@ public sealed record PartitionInfo
         return n switch
         {
             "efs" or "efs1" or "efs2" or "factory" or "factoryx" =>
-                "Samsung EFS — IMEI / serial / NVRAM. Losing this bricks the radio permanently.",
+                "Samsung EFS stores IMEI, serial, and NVRAM data. Losing it bricks the radio permanently.",
             "modem" or "modem1" or "modem2" =>
                 "Modem firmware. Recoverable but match-to-model required.",
             "nvram" or "nv_data" or "nv1" or "nv2" or "modemst1" or "modemst2" or "fsg" or "fsc" =>

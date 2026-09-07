@@ -102,7 +102,7 @@ public sealed class NeoBackupService : INeoBackupService
         progress?.Report(new BackupProgress(
             warnings.Count == 0 ? BackupPhase.Done : BackupPhase.Failed,
             "", 0, 0, 0, null,
-            pulledPath is not null ? $"Neo Backup pulled to {pulledPath}" : "Neo Backup launched — pull manually when backup completes."));
+            pulledPath is not null ? $"Neo Backup pulled to {pulledPath}" : "Neo Backup launched: pull manually when backup completes."));
 
         return new NeoBackupResult(warnings.Count == 0, pulledPath, warnings, output);
     }

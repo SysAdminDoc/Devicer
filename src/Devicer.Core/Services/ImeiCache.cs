@@ -8,7 +8,7 @@ namespace Devicer.Core.Services;
 
 /// <summary>
 /// One persistent IMEI entry. The model/CSC the IMEI was last paired with is captured
-/// alongside so the dropdown can label entries (e.g. "354237929314284 — SM-S938B/EUX").
+/// alongside so the dropdown can label entries (e.g. "354237929314284: SM-S938B/EUX").
 /// </summary>
 public sealed record ImeiCacheEntry
 {
@@ -22,7 +22,7 @@ public sealed record ImeiCacheEntry
         get
         {
             var ctx = !string.IsNullOrWhiteSpace(Model) || !string.IsNullOrWhiteSpace(Csc)
-                ? $"  —  {Model}{(string.IsNullOrWhiteSpace(Csc) ? "" : $" / {Csc}")}"
+                ? $" :  {Model}{(string.IsNullOrWhiteSpace(Csc) ? "" : $" / {Csc}")}"
                 : string.Empty;
             return $"{Imei}{ctx}";
         }
@@ -134,9 +134,9 @@ public sealed class ImeiCache
             }
             else
             {
-                #pragma warning disable CA1416 // Devicer is a WPF app — Windows-only
+#pragma warning disable CA1416 // Devicer is a WPF app: Windows-only
                 var decrypted = ProtectedData.Unprotect(raw, Entropy, DataProtectionScope.CurrentUser);
-                #pragma warning restore CA1416
+#pragma warning restore CA1416
                 json = Encoding.UTF8.GetString(decrypted);
             }
 
@@ -156,9 +156,9 @@ public sealed class ImeiCache
         {
             var json = JsonSerializer.Serialize(_entries, JsonOpts);
             var plainBytes = Encoding.UTF8.GetBytes(json);
-            #pragma warning disable CA1416 // Devicer is a WPF app — Windows-only
+#pragma warning disable CA1416 // Devicer is a WPF app: Windows-only
             var encrypted = ProtectedData.Protect(plainBytes, Entropy, DataProtectionScope.CurrentUser);
-            #pragma warning restore CA1416
+#pragma warning restore CA1416
 
             var tmp = _path + ".tmp";
             File.WriteAllBytes(tmp, encrypted);
@@ -167,7 +167,7 @@ public sealed class ImeiCache
         }
         catch
         {
-            // Disk full / ACL — non-fatal. Cache stays in-memory for this session.
+            // Disk full / ACL: non-fatal. Cache stays in-memory for this session.
         }
     }
 }

@@ -87,7 +87,7 @@ public sealed class RestoreService : IRestoreService
     {
         var lines = new List<string>
         {
-            "DRY RUN — no data will be written. The following restore plan would execute:",
+            "DRY RUN: no data will be written. The following restore plan would execute:",
             "",
         };
 
@@ -161,7 +161,7 @@ public sealed class RestoreService : IRestoreService
             var pushResult = await RunAdbPushAsync(serial, localPath, remoteTmp, ct).ConfigureAwait(false);
             if (!pushResult.Success)
             {
-                warnings.Add($"{p.Name}: adb push failed — {pushResult.Stderr.Trim()}");
+                warnings.Add($"{p.Name}: adb push failed: {pushResult.Stderr.Trim()}");
                 failed.Add(p.Name);
                 continue;
             }
@@ -178,13 +178,13 @@ public sealed class RestoreService : IRestoreService
             var ddResult = await _adb.RunSuAsync(serial, ddCmd, estimatedTimeout, ct).ConfigureAwait(false);
             if (!ddResult.Success)
             {
-                warnings.Add($"{p.Name}: dd write failed (exit {ddResult.ExitCode}) — {ddResult.Stderr.Trim()}");
+                warnings.Add($"{p.Name}: dd write failed (exit {ddResult.ExitCode}): {ddResult.Stderr.Trim()}");
                 failed.Add(p.Name);
             }
             else
             {
                 succeeded++;
-                DevicerLog.Info("Restore", $"{p.Name}: dd completed — {ddResult.Stdout.Trim()}");
+                DevicerLog.Info("Restore", $"{p.Name}: dd completed: {ddResult.Stdout.Trim()}");
             }
 
             using var cleanupCts = new CancellationTokenSource(TimeSpan.FromSeconds(10));

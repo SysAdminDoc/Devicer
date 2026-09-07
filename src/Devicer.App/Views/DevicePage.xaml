@@ -92,7 +92,7 @@
                                 <StackPanel Orientation="Horizontal" Margin="0,4">
                                     <Ellipse Width="9" Height="9" Margin="0,0,10,0" VerticalAlignment="Center" Fill="{DynamicResource AppSuccess}" />
                                     <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" VerticalAlignment="Center" />
-                                    <TextBlock Text=" — " Foreground="{DynamicResource AppSubtleForeground}" VerticalAlignment="Center" />
+                                    <TextBlock Text="  |  " Foreground="{DynamicResource AppSubtleForeground}" VerticalAlignment="Center" />
                                     <TextBlock Text="{Binding Serial}" FontFamily="Consolas" Foreground="{DynamicResource AppMutedForeground}" VerticalAlignment="Center" />
                                     <TextBlock Text=" · " Foreground="{DynamicResource AppSubtleForeground}" VerticalAlignment="Center" />
                                     <TextBlock Text="{Binding ConnectionState}" Foreground="{DynamicResource AppMutedForeground}" VerticalAlignment="Center" />
@@ -100,9 +100,22 @@
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
-                    <TextBlock Text="No devices detected. Plug in a phone with USB debugging enabled."
-                               Style="{StaticResource MutedTextBlock}"
-                               Visibility="{Binding Devices.Count, Converter={x:Static vm:CountToCollapsedConverter.Instance}}" />
+                    <Grid Visibility="{Binding Devices.Count, Converter={x:Static vm:CountToCollapsedConverter.Instance}}"
+                          Margin="0,4,0,0" ColumnDefinitions="Auto,*">
+                        <Border Grid.Column="0" Width="44" Height="44" Margin="0,0,14,0"
+                                Background="{DynamicResource AppSurfaceRaised}"
+                                BorderBrush="{DynamicResource AppBorderStrong}"
+                                BorderThickness="1" CornerRadius="10">
+                            <TextBlock Text="&#xE8EA;" FontFamily="Segoe MDL2 Assets" FontSize="20"
+                                       Foreground="{DynamicResource AppAccent}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="Connect a phone to begin" FontWeight="SemiBold" FontSize="14" />
+                            <TextBlock Text="Use a data-capable USB cable, unlock the phone, and approve this PC when Android asks. Devicer detects ADB, fastboot, recovery, and Download mode automatically."
+                                       Style="{StaticResource MutedTextBlock}" FontSize="12" Margin="0,4,0,0" />
+                        </StackPanel>
+                    </Grid>
                 </StackPanel>
             </Border>
 
@@ -118,26 +131,26 @@
                         <TextBlock Text="{Binding DisplayName}" Style="{StaticResource FieldValue}" />
 
                         <TextBlock Text="CODENAME" Style="{StaticResource FieldLabel}" />
-                        <TextBlock Text="{Binding Codename, FallbackValue=—, TargetNullValue=—}" Style="{StaticResource FieldValue}" />
+                        <TextBlock Text="{Binding Codename, FallbackValue='N/A', TargetNullValue='N/A'}" Style="{StaticResource FieldValue}" />
 
                         <TextBlock Text="ANDROID" Style="{StaticResource FieldLabel}" />
                         <TextBlock Style="{StaticResource FieldValue}">
-                            <Run Text="{Binding AndroidVersion, FallbackValue=—, TargetNullValue=—}" />
+                            <Run Text="{Binding AndroidVersion, FallbackValue='N/A', TargetNullValue='N/A'}" />
                             <Run Text=" (SDK " /><Run Text="{Binding AndroidSdk, FallbackValue=?, TargetNullValue=?}" /><Run Text=")" />
                         </TextBlock>
 
                         <TextBlock Text="BUILD FINGERPRINT" Style="{StaticResource FieldLabel}" />
-                        <TextBlock Text="{Binding BuildFingerprint, FallbackValue=—, TargetNullValue=—}" Style="{StaticResource FieldValue}" />
+                        <TextBlock Text="{Binding BuildFingerprint, FallbackValue='N/A', TargetNullValue='N/A'}" Style="{StaticResource FieldValue}" />
 
                         <TextBlock Text="SAMSUNG PDA / CSC FW" Style="{StaticResource FieldLabel}" />
                         <TextBlock Style="{StaticResource FieldValue}">
-                            <Run Text="{Binding SamsungPda, FallbackValue=—, TargetNullValue=—}" />
+                            <Run Text="{Binding SamsungPda, FallbackValue='N/A', TargetNullValue='N/A'}" />
                             <Run Text=" / " />
-                            <Run Text="{Binding SamsungCscVersion, FallbackValue=—, TargetNullValue=—}" />
+                            <Run Text="{Binding SamsungCscVersion, FallbackValue='N/A', TargetNullValue='N/A'}" />
                         </TextBlock>
 
                         <TextBlock Text="SECURITY PATCH" Style="{StaticResource FieldLabel}" />
-                        <TextBlock Text="{Binding SecurityPatch, FallbackValue=—, TargetNullValue=—}" Style="{StaticResource FieldValue}" />
+                        <TextBlock Text="{Binding SecurityPatch, FallbackValue='N/A', TargetNullValue='N/A'}" Style="{StaticResource FieldValue}" />
 
                         <TextBlock Text="ROOT STATUS" Style="{StaticResource FieldLabel}" />
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
@@ -159,25 +172,25 @@
                     <StackPanel Grid.Column="1" Margin="16,0,0,0">
                         <TextBlock Text="CSC (SAMSUNG)" Style="{StaticResource FieldLabel}" />
                         <TextBlock Style="{StaticResource FieldValue}">
-                            <Run Text="{Binding Csc, FallbackValue=—, TargetNullValue=—}" />
+                            <Run Text="{Binding Csc, FallbackValue='N/A', TargetNullValue='N/A'}" />
                             <Run Text=" / " />
-                            <Run Text="{Binding CscCountry, FallbackValue=—, TargetNullValue=—}" />
+                            <Run Text="{Binding CscCountry, FallbackValue='N/A', TargetNullValue='N/A'}" />
                         </TextBlock>
 
                         <TextBlock Text="BOOTLOADER" Style="{StaticResource FieldLabel}" />
-                        <TextBlock Text="{Binding BootloaderVersion, FallbackValue=—, TargetNullValue=—}" Style="{StaticResource FieldValue}" />
+                        <TextBlock Text="{Binding BootloaderVersion, FallbackValue='N/A', TargetNullValue='N/A'}" Style="{StaticResource FieldValue}" />
 
                         <TextBlock Text="BASEBAND" Style="{StaticResource FieldLabel}" />
-                        <TextBlock Text="{Binding BasebandVersion, FallbackValue=—, TargetNullValue=—}" Style="{StaticResource FieldValue}" />
+                        <TextBlock Text="{Binding BasebandVersion, FallbackValue='N/A', TargetNullValue='N/A'}" Style="{StaticResource FieldValue}" />
 
                         <TextBlock Text="SLOT (A/B)" Style="{StaticResource FieldLabel}" />
                         <TextBlock Style="{StaticResource FieldValue}">
-                            <Run Text="{Binding CurrentSlot, FallbackValue='—', TargetNullValue='—'}" />
+                            <Run Text="{Binding CurrentSlot, FallbackValue='N/A', TargetNullValue='N/A'}" />
                             <Run Text=" · A/B: " /><Run Text="{Binding IsAbDevice, FallbackValue=?, TargetNullValue=?}" />
                         </TextBlock>
 
                         <TextBlock Text="ENCRYPTION" Style="{StaticResource FieldLabel}" />
-                        <TextBlock Text="{Binding EncryptionState, FallbackValue=—, TargetNullValue=—}" Style="{StaticResource FieldValue}" />
+                        <TextBlock Text="{Binding EncryptionState, FallbackValue='N/A', TargetNullValue='N/A'}" Style="{StaticResource FieldValue}" />
 
                         <TextBlock Text="OEM UNLOCK" Style="{StaticResource FieldLabel}" />
                         <TextBlock Text="{Binding OemUnlockSupported, FallbackValue=unknown, TargetNullValue=unknown}" Style="{StaticResource FieldValue}" />
@@ -191,10 +204,10 @@
                             <Border Style="{StaticResource BadgeDanger}"
                                     Visibility="{Binding KnoxWarrantyBit, Converter={x:Static vm:KnoxTrippedToVisibilityConverter.Instance}}">
                                 <TextBlock>
-                                    <Run Text="Tripped (" /><Run Text="{Binding KnoxWarrantyBit, FallbackValue=?, TargetNullValue=?}" /><Run Text=") — eFuse, irreversible" />
+                                    <Run Text="Tripped (" /><Run Text="{Binding KnoxWarrantyBit, FallbackValue=?, TargetNullValue=?}" /><Run Text="): eFuse, irreversible" />
                                 </TextBlock>
                             </Border>
-                            <TextBlock Text="—" Style="{StaticResource MutedTextBlock}"
+                            <TextBlock Text="N/A" Style="{StaticResource MutedTextBlock}"
                                        Visibility="{Binding KnoxWarrantyBit, Converter={x:Static vm:NullToVisibleConverter.Instance}}" />
                         </StackPanel>
                     </StackPanel>

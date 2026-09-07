@@ -48,10 +48,10 @@ public sealed class FirmwareRegionResultItem
     public bool HasFirmware => Latest is not null;
     public bool UpdateAvailable { get; }
     public string StatusText { get; }
-    public string LatestPda => Latest?.Pda ?? "—";
-    public string LatestCsc => Latest?.Csc ?? "—";
-    public string LatestCp => Latest?.Cp ?? "—";
-    public string LatestBoot => Latest?.Boot ?? "—";
+    public string LatestPda => Latest?.Pda ?? "N/A";
+    public string LatestCsc => Latest?.Csc ?? "N/A";
+    public string LatestCp => Latest?.Cp ?? "N/A";
+    public string LatestBoot => Latest?.Boot ?? "N/A";
 }
 
 public partial class FirmwareViewModel : ObservableObject
@@ -128,7 +128,7 @@ public partial class FirmwareViewModel : ObservableObject
     /// <summary>
     /// Visibility helper for the green "you're on the latest" badge. The badge had been
     /// gated on <c>StatusText != null</c> alone, which let it render side-by-side with
-    /// the orange <c>UpdateAvailable</c> badge whenever both conditions held — both badges
+    /// the orange <c>UpdateAvailable</c> badge whenever both conditions held: both badges
     /// then sat on the right with conflicting messaging. Show the success badge only when
     /// we actually have status text AND there's no pending update.
     /// </summary>
@@ -177,7 +177,7 @@ public partial class FirmwareViewModel : ObservableObject
         {
             if (TotalBytes is { } t && t > 0)
                 return $"{FormatBytes(BytesProcessed)} / {FormatBytes(t)}";
-            return BytesProcessed > 0 ? FormatBytes(BytesProcessed) : "—";
+            return BytesProcessed > 0 ? FormatBytes(BytesProcessed) : "N/A";
         }
     }
 
@@ -208,7 +208,7 @@ public partial class FirmwareViewModel : ObservableObject
         _serial = device.Serial;
         if (!string.IsNullOrWhiteSpace(device.Model)) Model = device.Model;
         if (!string.IsNullOrWhiteSpace(device.Csc)) Csc = device.Csc;
-        // Use the Samsung PDA (AP firmware version) for comparison — NOT ro.build.id (Android build ID).
+        // Use the Samsung PDA (AP firmware version) for comparison: NOT ro.build.id (Android build ID).
         var current = device.SamsungPda ?? device.BuildId;
         if (!string.IsNullOrWhiteSpace(current)) CurrentBuildId = current;
         if (!string.IsNullOrWhiteSpace(device.Imei)) Imei = device.Imei;
@@ -306,7 +306,7 @@ public partial class FirmwareViewModel : ObservableObject
         // Normalize the field so the value the user sees matches what we're actually sending.
         Imei = imeiCandidate;
 
-        // Reset prior failover banner — only show if THIS attempt geofences.
+        // Reset prior failover banner: only show if THIS attempt geofences.
         ShowMirrorFailover = false;
 
         // Persist the IMEI so the user doesn't have to retype 15 digits on every retry.
@@ -363,7 +363,7 @@ public partial class FirmwareViewModel : ObservableObject
             if (!string.IsNullOrWhiteSpace(friendly.TechnicalDetail))
             {
                 sb.AppendLine();
-                sb.AppendLine("— Technical detail —");
+                sb.AppendLine("Technical detail");
                 sb.AppendLine(friendly.TechnicalDetail);
             }
             sb.AppendLine();

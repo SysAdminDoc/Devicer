@@ -1,0 +1,55 @@
+{
+  "executable": "Devicer-v2.2.1-win-x64.exe",
+  "isolatedDesktop": true,
+  "dpiAware": true,
+  "screenshots": [
+    {
+      "View": "device",
+      "File": "01-device.png",
+      "Width": 1600,
+      "Height": 1000,
+      "Bytes": 109958,
+      "Sha256": "f4750a1ead6df8812f4975cd1f1dcfbe6a2efecc44317d62c353e68c1f59a7c0"
+    },
+    {
+      "View": "firmware",
+      "File": "02-firmware.png",
+      "Width": 1600,
+      "Height": 1000,
+      "Bytes": 106751,
+      "Sha256": "54b62cebd78e019d90afec7a0f3e16050b6a6a83fe08edb921ed211a176de27e"
+    },
+    {
+      "View": "roms",
+      "File": "03-roms.png",
+      "Width": 1600,
+      "Height": 1000,
+      "Bytes": 86954,
+      "Sha256": "923d748efba01331c60a48ba2d79df64020821334931d7865e2c783d6a2e8803"
+    },
+    {
+      "View": "backup",
+      "File": "04-backup.png",
+      "Width": 1600,
+      "Height": 1000,
+      "Bytes": 109257,
+      "Sha256": "8fa70e063264e9fc5adcec9a1c004a4c58d559c1b2ecc8c80af840752b6813fc"
+    },
+    {
+      "View": "flash",
+      "File": "05-flash-safety.png",
+      "Width": 1600,
+      "Height": 1000,
+      "Bytes": 134986,
+      "Sha256": "fa28671b3ceff5eee7fe34d908893cb6a4eadcb42528c4aa90f02c727d28826c"
+    },
+    {
+      "View": "settings",
+      "File": "06-settings.png",
+      "Width": 1600,
+      "Height": 1000,
+      "Bytes": 98522,
+      "Sha256": "f1a161d56ccd88359ac4e109b88d3a73852d63d2379f28d431ce89ddbe1c4d17"
+    }
+  ]
+}

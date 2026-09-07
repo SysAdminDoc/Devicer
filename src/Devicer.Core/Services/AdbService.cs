@@ -318,7 +318,7 @@ public sealed class AdbService : IAdbService
         foreach (var line in parcelDump.Split('\n', StringSplitOptions.RemoveEmptyEntries))
         {
             var firstQuote = line.IndexOf('\'');
-            var lastQuote  = line.LastIndexOf('\'');
+            var lastQuote = line.LastIndexOf('\'');
             if (firstQuote < 0 || lastQuote <= firstQuote) continue;
             var inner = line.Substring(firstQuote + 1, lastQuote - firstQuote - 1);
             foreach (var c in inner)

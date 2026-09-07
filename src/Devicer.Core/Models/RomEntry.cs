@@ -68,6 +68,6 @@ public sealed record RomEntry
         RomKind.Nightly => "Nightly",
         RomKind.Alpha => "Alpha",
         RomKind.Beta => "Beta",
-        _ => "—",
+        _ => "N/A",
     };
 }

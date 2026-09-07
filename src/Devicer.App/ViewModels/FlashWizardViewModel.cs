@@ -92,7 +92,7 @@ public partial class FlashWizardViewModel : ObservableObject
                 break;
             case WizardStep.Confirm:
                 CurrentStep = WizardStep.Flashing;
-                StatusText = "Flash would execute here. (Guided mode — use the Flash tab for actual writes.)";
+                StatusText = "Flash would execute here. (Guided mode: use the Flash tab for actual writes.)";
                 ProgressFraction = 1.0;
                 ResultText = "Guided flash preview complete. Use the Flash tab to execute the plan.";
                 CurrentStep = WizardStep.Complete;
@@ -130,8 +130,8 @@ public partial class FlashWizardViewModel : ObservableObject
             "Flash Plan Summary",
             "",
             $"Device: {SelectedDevice?.DisplayName ?? "(none)"}",
-            $"Serial: {SelectedDevice?.Serial ?? "—"}",
-            $"Firmware: {FirmwarePath ?? "—"}",
+            $"Serial: {SelectedDevice?.Serial ?? "N/A"}",
+            $"Firmware: {FirmwarePath ?? "N/A"}",
             "",
         };
 
@@ -139,13 +139,13 @@ public partial class FlashWizardViewModel : ObservableObject
         {
             lines.Add("Mode: Samsung Odin (via Thor)");
             if (SelectedDevice.KnoxWarrantyBit == "0")
-                lines.Add("Knox: INTACT — custom AP flash will trip eFuse permanently");
+                lines.Add("Knox: INTACT: custom AP flash will trip eFuse permanently");
         }
         else
         {
             lines.Add("Mode: Fastboot");
             if (SelectedDevice?.IsAbDevice == true)
-                lines.Add($"A/B device — current slot: {SelectedDevice.CurrentSlot ?? "unknown"}");
+                lines.Add($"A/B device: current slot: {SelectedDevice.CurrentSlot ?? "unknown"}");
         }
 
         PlanSummary = string.Join('\n', lines);

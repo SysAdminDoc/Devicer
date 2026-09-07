@@ -134,7 +134,7 @@ public sealed class BackupService : IBackupService
                 var actual = new FileInfo(localPath).Length;
                 if (p.SizeBytes > 0 && actual > 0 && Math.Abs(actual - p.SizeBytes) > Math.Max(p.SizeBytes / 100, 4096))
                 {
-                    warnings.Add($"{p.Name}: backup size {actual:N0} differs from expected {p.SizeBytes:N0} bytes — image may be truncated.");
+                    warnings.Add($"{p.Name}: backup size {actual:N0} differs from expected {p.SizeBytes:N0} bytes: image may be truncated.");
                 }
 
                 progress?.Report(new BackupProgress(BackupPhase.Hashing, p.Name, i, partitions.Count, 0, p.SizeBytes,
@@ -156,7 +156,7 @@ public sealed class BackupService : IBackupService
             catch (OperationCanceledException)
             {
                 progress?.Report(new BackupProgress(BackupPhase.Cancelled, p.Name, i, partitions.Count, 0, p.SizeBytes, "Cancelled."));
-                // Cleanup must use a fresh token — the user-cancelled `ct` would immediately
+                // Cleanup must use a fresh token: the user-cancelled `ct` would immediately
                 // abort the rm and leave a multi-GB tmpfile on /data/local/tmp.
                 await TryCleanup(serial, remoteTmp).ConfigureAwait(false);
                 throw;

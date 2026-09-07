@@ -44,11 +44,27 @@ public partial class MainWindow : Window
             }
         };
 
-        DataContext = new MainViewModel(deviceVm, firmwareVm, romVm, backupVm, patchVm, flashVm, debloatVm, universalVm, settingsVm);
+        var mainVm = new MainViewModel(deviceVm, firmwareVm, romVm, backupVm, patchVm, flashVm, debloatVm, universalVm, settingsVm);
+        DataContext = mainVm;
 
         App.Host.Snackbar.PropertyChanged += OnSnackbarChanged;
 
-        Loaded += async (_, _) => await deviceVm.RefreshAsync();
+        if (MarketingCaptureMode.IsEnabled)
+        {
+            WindowStyle = WindowStyle.None;
+            ResizeMode = ResizeMode.NoResize;
+            Width = 1280;
+            Height = 800;
+            Loaded += async (_, _) =>
+            {
+                MarketingCaptureMode.ApplyDemoData(deviceVm, firmwareVm, romVm, backupVm, flashVm);
+                await MarketingCaptureMode.CaptureAsync(this, mainVm);
+            };
+        }
+        else
+        {
+            Loaded += async (_, _) => await deviceVm.RefreshAsync();
+        }
     }
 
     private void OnSnackbarChanged(object? sender, PropertyChangedEventArgs e)

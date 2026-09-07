@@ -73,14 +73,14 @@
                     </StackPanel>
                     <StackPanel Grid.Column="1">
                         <TextBlock Text="MODEL" Style="{StaticResource FieldLabel}" />
-                        <TextBlock Text="{Binding Model, FallbackValue='—', TargetNullValue='—'}"
+                        <TextBlock Text="{Binding Model, FallbackValue='N/A', TargetNullValue='N/A'}"
                                    FontFamily="Consolas, JetBrains Mono, Cascadia Mono"
                                    FontSize="13"
                                    Foreground="{DynamicResource AppForeground}" />
                     </StackPanel>
                     <StackPanel Grid.Column="2">
                         <TextBlock Text="CODENAME" Style="{StaticResource FieldLabel}" />
-                        <TextBlock Text="{Binding Codename, FallbackValue='—', TargetNullValue='—'}"
+                        <TextBlock Text="{Binding Codename, FallbackValue='N/A', TargetNullValue='N/A'}"
                                    FontFamily="Consolas, JetBrains Mono, Cascadia Mono"
                                    FontSize="13"
                                    Foreground="{DynamicResource AppForeground}" />

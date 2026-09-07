@@ -22,7 +22,7 @@ public static class FusErrorClassifier
     /// "raw protocol error" for anything we haven't seen yet.
     /// </summary>
     /// <param name="ex">The exception thrown by FusClient / FirmwareDownloadService.</param>
-    /// <param name="region">The CSC the caller asked for (e.g. <c>EUX</c>) — surfaced
+    /// <param name="region">The CSC the caller asked for (e.g. <c>EUX</c>): surfaced
     /// in the geofence explanation so the user sees the region they're requesting vs.
     /// the IP region the CDN saw.</param>
     public static FusFriendlyError Classify(FusProtocolException ex, string? region = null)
@@ -33,20 +33,20 @@ public static class FusErrorClassifier
         // ---- 403 / Squid ACL deny on the cloud-neofussvr edge ----
         // Samsung enforces geographic-origin filtering at the bulk-download CDN. The error
         // page conveniently includes the user's egress IP and the CDN node that handled
-        // the request — we surface both so the user can see why it was denied.
+        // the request: we surface both so the user can see why it was denied.
         if (msg.Contains("HTTP 403") && body.Contains("Invalid Request") &&
             body.Contains("access control configuration"))
         {
-            var ip   = Regex.Match(body, @"IP:\s*([0-9a-fA-F\.:]+)").Groups[1].Value;
+            var ip = Regex.Match(body, @"IP:\s*([0-9a-fA-F\.:]+)").Groups[1].Value;
             var node = Regex.Match(body, @"Node information:\s*([A-Za-z0-9_\-]+)").Groups[1].Value;
             var nodeRegion = GuessNodeRegion(node);
-            var regionPart = string.IsNullOrWhiteSpace(region) ? "" : $" — your firmware region is {region.ToUpperInvariant()}";
+            var regionPart = string.IsNullOrWhiteSpace(region) ? "" : $": your firmware region is {region.ToUpperInvariant()}";
 
             var explanation = string.Join('\n',
                 $"Samsung's firmware-download CDN refused the request because it's coming from the wrong region{regionPart}.",
                 "",
                 $"  • Your egress IP    : {(string.IsNullOrEmpty(ip) ? "(not in response)" : ip)}",
-                $"  • Samsung CDN node  : {(string.IsNullOrEmpty(node) ? "(unknown)" : $"{node}{(string.IsNullOrEmpty(nodeRegion) ? "" : $" — {nodeRegion}")}")}",
+                $"  • Samsung CDN node  : {(string.IsNullOrEmpty(node) ? "(unknown)" : $"{node}{(string.IsNullOrEmpty(nodeRegion) ? "" : $": {nodeRegion}")}")}",
                 "",
                 "Auth, IMEI, and protocol handshake all succeeded. This is purely a CDN geofence: " +
                 "Samsung will not serve EU-region firmware (EUX, EUR, etc.) to a non-EU IP, won't serve " +
@@ -58,7 +58,7 @@ public static class FusErrorClassifier
                 "   For EUX firmware, a UK or Ireland VPN endpoint is reliable.",
                 "2. Alternatively, run Devicer from a cloud VM hosted in the matching region",
                 "   (AWS eu-west-1, Hetzner Falkenstein, etc.).",
-                "3. As a last resort, request a CSC that matches your IP region — but this only helps if",
+                "3. As a last resort, request a CSC that matches your IP region: but this only helps if",
                 "   your device can actually run that CSC's firmware (it usually can; CSC is software-side).");
 
             return new FusFriendlyError(
@@ -76,11 +76,11 @@ public static class FusErrorClassifier
                 Title: "Wrong FUS endpoint",
                 Explanation: "Samsung accepted the download request but returned an empty body. " +
                              "This means we contacted the control-plane host (neofussvr) instead of the bulk-download host (cloud-neofussvr).",
-                SuggestedAction: "Update Devicer — this is an internal routing bug, not a user issue.",
+                SuggestedAction: "Update Devicer: this is an internal routing bug, not a user issue.",
                 TechnicalDetail: msg);
         }
 
-        // ---- FUS Status 408 (auth failed — bad IMEI or wrong LOGIC_CHECK) ----
+        // ---- FUS Status 408 (auth failed: bad IMEI or wrong LOGIC_CHECK) ----
         var fusStatus = Regex.Match(body, @"<Status>(\d+)</Status>").Groups[1].Value;
         if (fusStatus == "408")
         {
@@ -92,7 +92,7 @@ public static class FusErrorClassifier
                 SuggestedAction: "Tap 'Open IMEI on phone' to launch Settings → About phone → Status, then copy your " +
                                  "actual IMEI 1 (15 digits) into the IMEI field. Verify the model and CSC are correct " +
                                  "(re-probe the device on the Device tab if you've moved SIMs).",
-                TechnicalDetail: $"FUS Status 408 — auth failed. Body: {Truncate(body, 400)}");
+                TechnicalDetail: $"FUS Status 408: auth failed. Body: {Truncate(body, 400)}");
         }
 
         if (fusStatus == "5006")
@@ -114,7 +114,7 @@ public static class FusErrorClassifier
                 Explanation: "Samsung's FUS thinks the IMEI is not a valid subscriber for the requested firmware. " +
                              "This typically means the IMEI you entered isn't valid, or it doesn't match a Samsung device that's known to that CSC.",
                 SuggestedAction: "Re-check the IMEI (15 digits, no spaces). If it's correct, the device may have been " +
-                                 "reported lost/stolen on Samsung's network — try a different IMEI from a known-good Samsung device.",
+                                 "reported lost/stolen on Samsung's network: try a different IMEI from a known-good Samsung device.",
                 TechnicalDetail: $"FUS Status 5009. Body: {Truncate(body, 400)}");
         }
 
@@ -126,7 +126,7 @@ public static class FusErrorClassifier
                 Explanation: "GenerateNonce returned HTTP 200 but no NONCE response header. " +
                              "Most likely Samsung's edge is silently dropping our session because the IP is rate-limited, " +
                              "blocked, or because Samsung rotated the protocol.",
-                SuggestedAction: "Wait a few minutes and retry — rate limits clear quickly. If it persists across IP " +
+                SuggestedAction: "Wait a few minutes and retry: rate limits clear quickly. If it persists across IP " +
                                  "changes (try a VPN), Samsung may have rotated the wire protocol; check the Devicer roadmap for an update.",
                 TechnicalDetail: msg);
         }
@@ -136,7 +136,7 @@ public static class FusErrorClassifier
         {
             return new FusFriendlyError(
                 Title: "Cannot decrypt Samsung's session nonce",
-                Explanation: "Devicer carries two known KEY_1 generations (current + legacy) and tries both — " +
+                Explanation: "Devicer carries two known KEY_1 generations (current + legacy) and tries both: " +
                              "but the decoded result on each was non-printable. This means Samsung rotated the " +
                              "protocol key beyond what's known to the open-source FUS clients.",
                 SuggestedAction: "Update Devicer when a new KEY_1 lands. samloader / SamloaderKotlin GitHub issues " +

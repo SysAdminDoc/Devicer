@@ -8,9 +8,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>false</UseWindowsForms>
-    <Version>2.2.0</Version>
-    <AssemblyVersion>2.2.0.0</AssemblyVersion>
-    <FileVersion>2.2.0.0</FileVersion>
+    <Version>2.2.1</Version>
+    <AssemblyVersion>2.2.1.0</AssemblyVersion>
+    <FileVersion>2.2.1.0</FileVersion>
     <RootNamespace>Devicer.App</RootNamespace>
     <Product>Devicer</Product>
     <Company>SysAdminDoc</Company>
@@ -32,6 +32,7 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="..\..\branding\logo.png" Link="Resources\Images\logo.png" />
+    <Resource Include="..\..\branding\logo-small.png" Link="Resources\Images\logo-small.png" />
     <!-- Embedded as a WPF resource so MainWindow / FirstRunWindow can set Icon via the
          standard pack:// URI (sharper than the rasterized PNG at small render sizes). -->
     <Resource Include="..\..\branding\logo.ico" Link="Resources\Images\logo.ico" />

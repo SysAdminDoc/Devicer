@@ -43,8 +43,8 @@
             <StackPanel>
                 <TextBlock Text="EFS / NVRAM IS ONE-WAY" FontWeight="Bold" Foreground="{DynamicResource AppDestructive}" Margin="0,0,0,4" />
                 <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource AppForeground}">
-                    Losing EFS bricks the device's IMEI permanently — there is no recovery short of a board swap.
-                    Always create a fresh backup before flashing AP/CP/CSC, before relocking the bootloader, and before any "EFS-Clear" Odin operation.
+                    Losing EFS bricks the device's IMEI permanently. There is no recovery short of a board swap.
+                    Always create a fresh backup before flashing AP/CP/CSC, relocking the bootloader, or using any "EFS-Clear" Odin operation.
                 </TextBlock>
             </StackPanel>
         </Border>

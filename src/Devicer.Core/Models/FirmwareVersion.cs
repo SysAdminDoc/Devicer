@@ -47,7 +47,7 @@ public sealed record FirmwareVersion(string Pda, string Csc, string Cp, string? 
         {
             var pda = string.IsNullOrWhiteSpace(Pda) ? "" : Pda;
             var csc = string.IsNullOrWhiteSpace(Csc) ? pda : Csc;
-            var cp  = string.IsNullOrWhiteSpace(Cp)  ? pda : Cp;
+            var cp = string.IsNullOrWhiteSpace(Cp) ? pda : Cp;
             var boot = string.IsNullOrWhiteSpace(Boot) ? pda : Boot;
             return $"{pda}/{csc}/{cp}/{boot}";
         }

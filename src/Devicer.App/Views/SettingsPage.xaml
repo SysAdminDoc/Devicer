@@ -76,7 +76,7 @@
                 <StackPanel>
                     <TextBlock Text="Behavior" Style="{StaticResource SectionLabel}" />
                     <TextBlock Text="Hot-plug probe interval (seconds)" Style="{StaticResource FieldLabel}" />
-                    <DockPanel LastChildFill="False">
+                    <DockPanel LastChildFill="True">
                         <TextBlock Text="{Binding ProbeIntervalSeconds, StringFormat={}{0}s}"
                                    DockPanel.Dock="Right"
                                    Foreground="{DynamicResource AppAccent}"

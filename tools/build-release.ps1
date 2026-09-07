@@ -1,15 +1,4 @@
 #requires -Version 7
-<#
-.SYNOPSIS
-    Build a Release-configuration Devicer.App, package it as a portable ZIP, emit a SHA256 sidecar.
-
-.DESCRIPTION
-    Output goes to dist/. Run from the repo root:
-        pwsh tools/build-release.ps1
-
-    The portable ZIP is framework-dependent (.NET 10 desktop runtime required on the host).
-    For a self-contained single-file binary, pass -SelfContained.
-#>
 [CmdletBinding()]
 param(
     [switch]$SelfContained,
@@ -21,60 +10,97 @@ $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
 Push-Location $repoRoot
 try {
-    Write-Host '==> Cleaning previous outputs' -ForegroundColor Cyan
-    if (Test-Path dist) { Remove-Item dist -Recurse -Force }
-    New-Item -ItemType Directory dist | Out-Null
+    $dist = Join-Path $repoRoot 'dist'
+    if (Test-Path -LiteralPath $dist) {
+        Remove-Item -LiteralPath $dist -Recurse -Force
+    }
+    New-Item -ItemType Directory -Path $dist | Out-Null
 
-    # XPath returns $null for an MSBuild SDK csproj that uses <PropertyGroup
-    # Condition="'$(...)'..."> wrapping or that exposes only AssemblyVersion. Fail loudly
-    # so a missing tag never silently produces an empty `Devicer-v-portable...zip`.
-    $versionNode = Select-Xml -Path src/Devicer.App/Devicer.App.csproj -XPath '//Version'
-    if (-not $versionNode) { throw 'Could not locate <Version> in src/Devicer.App/Devicer.App.csproj.' }
+    $versionNode = Select-Xml -Path 'src/Devicer.App/Devicer.App.csproj' -XPath '//Version'
+    if (-not $versionNode) { throw 'Could not locate <Version> in Devicer.App.csproj.' }
     $version = $versionNode.Node.InnerText.Trim()
-    if (-not $version) { throw '<Version> in Devicer.App.csproj is empty.' }
-    $tag = "v$version"
-    Write-Host "==> Building Devicer $tag ($Configuration)" -ForegroundColor Cyan
+    if (-not $version) { throw 'The application version is empty.' }
+
+    $publishDirectory = Join-Path $dist 'publish'
+    $packageDirectory = Join-Path $dist 'package'
+    New-Item -ItemType Directory -Path $packageDirectory | Out-Null
 
     $publishArgs = @(
         'publish'
         'src/Devicer.App/Devicer.App.csproj'
         '-c', $Configuration
         '-f', $Tfm
+        '-r', 'win-x64'
         '-p:PublishProfile='
         '-p:DebugType=embedded'
-        '-o', "dist/portable-$version"
+        '-o', $publishDirectory
     )
+
     if ($SelfContained) {
         $publishArgs += @(
-            '--self-contained', 'true',
-            '-r', 'win-x64',
-            '-p:PublishSingleFile=true',
+            '--self-contained', 'true'
+            '-p:PublishSingleFile=true'
             '-p:IncludeNativeLibrariesForSelfExtract=true'
+            '-p:EnableCompressionInSingleFile=true'
         )
-    } else {
-        $publishArgs += @(
-            '--self-contained', 'false',
-            '-r', 'win-x64'
-        )
+    }
+    else {
+        $publishArgs += @('--self-contained', 'false')
     }
 
     & dotnet @publishArgs
-    if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed (exit $LASTEXITCODE)" }
+    if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed with exit code $LASTEXITCODE." }
 
-    $publishDir = "dist/portable-$version"
-    $zipName = "Devicer-$tag-portable-win-x64$(if ($SelfContained) {'-selfcontained'}).zip"
-    $zipPath = "dist/$zipName"
+    $standaloneAsset = $null
+    if ($SelfContained) {
+        $publishedExe = Join-Path $publishDirectory 'Devicer.App.exe'
+        if (-not (Test-Path -LiteralPath $publishedExe)) { throw 'The published executable is missing.' }
+        $standaloneAsset = Join-Path $dist "Devicer-v$version-win-x64.exe"
+        Copy-Item -LiteralPath $publishedExe -Destination $standaloneAsset
+        Copy-Item -LiteralPath $publishedExe -Destination (Join-Path $packageDirectory 'Devicer.exe')
+        $zipAsset = Join-Path $dist "Devicer-v$version-win-x64.zip"
+    }
+    else {
+        Copy-Item -Path (Join-Path $publishDirectory '*') -Destination $packageDirectory -Recurse
+        $zipAsset = Join-Path $dist "Devicer-v$version-framework-dependent-win-x64.zip"
+    }
 
-    Write-Host "==> Compressing $publishDir → $zipPath" -ForegroundColor Cyan
-    Compress-Archive -Path "$publishDir/*" -DestinationPath $zipPath -CompressionLevel Optimal -Force
+    Copy-Item -LiteralPath 'README.md' -Destination $packageDirectory
+    Copy-Item -LiteralPath 'LICENSE' -Destination $packageDirectory
+    Compress-Archive -Path (Join-Path $packageDirectory '*') -DestinationPath $zipAsset -CompressionLevel Optimal
 
-    $sha = (Get-FileHash $zipPath -Algorithm SHA256).Hash.ToLower()
-    "$sha *$zipName" | Set-Content -Encoding ASCII "$zipPath.sha256"
+    $assets = @($zipAsset)
+    if ($standaloneAsset) { $assets = @($standaloneAsset) + $assets }
 
-    Write-Host '' -ForegroundColor Cyan
-    Write-Host '==> Done.' -ForegroundColor Green
-    Write-Host "    ZIP    : $zipPath" -ForegroundColor Green
-    Write-Host "    SHA256 : $sha" -ForegroundColor Green
+    $assetMetadata = foreach ($asset in $assets) {
+        $file = Get-Item -LiteralPath $asset
+        $hash = (Get-FileHash -LiteralPath $asset -Algorithm SHA256).Hash.ToLowerInvariant()
+        [ordered]@{
+            file = $file.Name
+            bytes = $file.Length
+            sha256 = $hash
+        }
+    }
+
+    $checksumAsset = Join-Path $dist "Devicer-v$version-sha256.txt"
+    $assetMetadata | ForEach-Object { "$($_.sha256) *$($_.file)" } | Set-Content -LiteralPath $checksumAsset -Encoding ascii
+
+    $manifest = [ordered]@{
+        product = 'Devicer'
+        version = $version
+        runtime = if ($SelfContained) { 'self-contained win-x64' } else { 'framework-dependent win-x64' }
+        codeSigned = $false
+        assets = $assetMetadata
+    }
+    $manifest | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $dist "Devicer-v$version-release.json") -Encoding utf8
+
+    Remove-Item -LiteralPath $publishDirectory, $packageDirectory -Recurse -Force
+
+    Write-Host "Built Devicer v$version"
+    foreach ($asset in $assets) {
+        Write-Host "  $([IO.Path]::GetFileName($asset))"
+    }
+    Write-Host "  $([IO.Path]::GetFileName($checksumAsset))"
 }
 finally {
     Pop-Location

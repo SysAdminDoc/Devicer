@@ -182,7 +182,7 @@
                         </ComboBox.ItemTemplate>
                     </ComboBox>
                     <TextBlock Style="{StaticResource MutedTextBlock}" FontSize="11" TextWrapping="Wrap"
-                               Text="Samsung's FUS rejects fake IMEIs as of late 2024. Modern One UI 7+ blocks programmatic IMEI reads even via root — click 'Open IMEI on phone' to pop the Settings page on the device, then enter the 15-digit number above. Devicer remembers every IMEI you've used; pick one from the dropdown to skip the typing." />
+                               Text="Samsung's FUS rejects fake IMEIs. Modern One UI blocks programmatic reads even with root access. Open the IMEI page on your phone, then enter the 15-digit number above. Devicer can remember it for your next download." />
                 </StackPanel>
             </Border>
 
@@ -218,11 +218,11 @@
                                                    FontSize="11"
                                                    TextWrapping="NoWrap">
                                             <Run Text="CSC " />
-                                            <Run Text="{Binding LatestCsc}" />
+                                            <Run Text="{Binding LatestCsc, Mode=OneWay}" />
                                             <Run Text=" / CP " />
-                                            <Run Text="{Binding LatestCp}" />
+                                            <Run Text="{Binding LatestCp, Mode=OneWay}" />
                                             <Run Text=" / BOOT " />
-                                            <Run Text="{Binding LatestBoot}" />
+                                            <Run Text="{Binding LatestBoot, Mode=OneWay}" />
                                         </TextBlock>
                                     </StackPanel>
                                     <TextBlock Grid.Column="2"
@@ -257,21 +257,21 @@
                     </DockPanel>
 
                     <TextBlock Text="PDA" Style="{StaticResource FieldLabel}" />
-                    <TextBlock Text="{Binding Latest.Pda, FallbackValue='—', TargetNullValue='—'}" Style="{StaticResource MonoValue}" />
+                    <TextBlock Text="{Binding Latest.Pda, FallbackValue='N/A', TargetNullValue='N/A'}" Style="{StaticResource MonoValue}" />
 
                     <TextBlock Text="CSC" Style="{StaticResource FieldLabel}" />
-                    <TextBlock Text="{Binding Latest.Csc, FallbackValue='—', TargetNullValue='—'}" Style="{StaticResource MonoValue}" />
+                    <TextBlock Text="{Binding Latest.Csc, FallbackValue='N/A', TargetNullValue='N/A'}" Style="{StaticResource MonoValue}" />
 
                     <TextBlock Text="MODEM (CP)" Style="{StaticResource FieldLabel}" />
-                    <TextBlock Text="{Binding Latest.Cp, FallbackValue='—', TargetNullValue='—'}" Style="{StaticResource MonoValue}" />
+                    <TextBlock Text="{Binding Latest.Cp, FallbackValue='N/A', TargetNullValue='N/A'}" Style="{StaticResource MonoValue}" />
 
                     <TextBlock Text="BOOT" Style="{StaticResource FieldLabel}" />
-                    <TextBlock Text="{Binding Latest.Boot, FallbackValue='—', TargetNullValue='—'}" Style="{StaticResource MonoValue}" />
+                    <TextBlock Text="{Binding Latest.Boot, FallbackValue='N/A', TargetNullValue='N/A'}" Style="{StaticResource MonoValue}" />
 
                     <Separator Margin="0,4,0,12" Background="{DynamicResource AppBorder}" />
 
                     <TextBlock Text="CURRENTLY INSTALLED (PDA)" Style="{StaticResource FieldLabel}" />
-                    <TextBlock Text="{Binding CurrentBuildId, FallbackValue='— (no device selected)', TargetNullValue='— (no device selected)'}" Style="{StaticResource MonoValue}" />
+                    <TextBlock Text="{Binding CurrentBuildId, FallbackValue='No device selected', TargetNullValue='No device selected'}" Style="{StaticResource MonoValue}" />
                 </StackPanel>
             </Border>
 
@@ -323,9 +323,9 @@
                         <TextBlock Text="LAST DOWNLOAD" Style="{StaticResource FieldLabel}" Margin="0" VerticalAlignment="Center" />
                     </DockPanel>
                     <TextBlock Text="DECRYPTED" Style="{StaticResource FieldLabel}" />
-                    <TextBlock Text="{Binding LastDecryptedPath, FallbackValue='—'}" Style="{StaticResource MonoValue}" />
+                    <TextBlock Text="{Binding LastDecryptedPath, FallbackValue='N/A'}" Style="{StaticResource MonoValue}" />
                     <TextBlock Text="ENCRYPTED" Style="{StaticResource FieldLabel}" />
-                    <TextBlock Text="{Binding LastDownloadedPath, FallbackValue='—'}" Style="{StaticResource MonoValue}" />
+                    <TextBlock Text="{Binding LastDownloadedPath, FallbackValue='N/A'}" Style="{StaticResource MonoValue}" />
                 </StackPanel>
             </Border>
 
@@ -349,9 +349,8 @@
 
             <!-- Footer note -->
             <TextBlock Style="{StaticResource MutedTextBlock}" FontSize="12" Margin="0,12,0,0" TextWrapping="Wrap">
-                Devicer talks directly to Samsung's FUS (Smart Switch protocol) — no Samsung account, no third-party servers.
-                Encrypted blobs and decrypted firmware are cached at <Run FontFamily="Consolas, JetBrains Mono, Cascadia Mono" Text="%LOCALAPPDATA%\Devicer\firmware\" />.
-                AES decryption (ECB + PKCS#7) runs locally; nothing leaves your machine.
+                Devicer talks directly to Samsung's FUS using the Smart Switch protocol. No Samsung account or third-party relay is required.
+                Firmware is cached under <Run FontFamily="Consolas, JetBrains Mono, Cascadia Mono" Text="%LOCALAPPDATA%\Devicer\firmware\" />, and decryption runs locally.
             </TextBlock>
         </StackPanel>
     </ScrollViewer>

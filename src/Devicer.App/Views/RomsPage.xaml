@@ -30,6 +30,7 @@
                     Style="{StaticResource PrimaryButton}"
                     Command="{Binding SearchCommand}"
                     IsEnabled="{Binding IsIdle}"
+                    VerticalAlignment="Top"
                     AutomationProperties.Name="Search for custom ROMs" />
             <StackPanel>
                 <TextBlock Text="Custom ROMs" Style="{StaticResource HeadingTextBlock}" />

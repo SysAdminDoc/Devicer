@@ -1,67 +1,120 @@
-<p align="center"><img src="branding/logo.png" width="128" alt="Devicer logo"/></p>
+![Devicer banner](assets/brand/devicer-readme-banner.png)
 
 # Devicer
 
-[![Version](https://img.shields.io/badge/version-2.2.0-blue.svg)](CHANGELOG.md)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/platform-Windows-0078d4.svg)](#)
-[![.NET](https://img.shields.io/badge/.NET-10-512bd4.svg)](#)
-[![Status](https://img.shields.io/badge/status-2.2%20alpha-orange.svg)](#)
+[![Version](https://img.shields.io/badge/version-2.2.1-38d9ff.svg)](https://github.com/SysAdminDoc/Devicer/releases/tag/v2.2.1)
+[![License](https://img.shields.io/badge/license-MIT-8bd5ca.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-4f7cff.svg)](#requirements)
+[![Build](https://img.shields.io/badge/build-self--contained-8b5cf6.svg)](#install)
 
-> Unified Windows toolkit for managing rooted Android phones — identify, search ROMs, back up, patch, and flash from one shell.
+Devicer is a Windows toolkit for Android device discovery, Samsung firmware, ROM downloads, partition backups, boot image patching, and guarded flashing. It keeps device work in one desktop app and puts the risky choices in plain sight before anything is written.
 
-## Status
+[**Download Devicer v2.2.1 for Windows x64**](https://github.com/SysAdminDoc/Devicer/releases/latest/download/Devicer-v2.2.1-win-x64.zip)
 
-**v2.2.0 - workflow automation and local-build hygiene.** The current alpha includes guided flashing, AVB/vbmeta-aware safety gates, payload.bin extraction, streaming Samsung firmware download/decrypt, debloat tooling, snackbar notifications, accessibility labels, localization scaffolding, and local-only release packaging. ROADMAP.md is drained; blocked hardware, signing, and strategy items live in [Roadmap_Blocked.md](Roadmap_Blocked.md). See [CHANGELOG.md](CHANGELOG.md) and [docs/research.md](docs/research.md).
+## See it in action
 
-## Goals
+![Devicer identifies a sample Samsung phone and reports its software, root, encryption, and Knox state](assets/screenshots/01-device.png)
 
-1. **Identify** device + currently-installed ROM (model, CSC, build fingerprint, BL, baseband, root status, slot, encryption state).
-2. **Search & download** stock firmware (Samsung CSC-aware) AND custom ROMs (LineageOS, crDroid, PixelExperience indices) from one search box.
-3. **Back up** — partitions, EFS/NV (Samsung-critical, losing it bricks IMEI), userdata, Magisk modules.
-4. **Patch + flash** — patch boot.img / init_boot.img with Magisk on the PC side (no phone roundtrip), flash via Odin protocol or fastboot, with EFS-clear and Knox-trip safety gates.
+The Device view gathers the details you usually chase through separate ADB commands. The sample serial makes the representative capture easy to distinguish from a live phone.
 
-## Why
+| Firmware lookup | ROM discovery |
+|---|---|
+| ![Devicer compares official Samsung firmware across two CSC regions](assets/screenshots/02-firmware.png) | ![Devicer lists verified LineageOS builds for a device codename](assets/screenshots/03-roms.png) |
 
-No single tool covers all four jobs in 2026. The closest existing option, [Thor Flash Utility](https://github.com/Samsung-Loki/Thor), only does firmware download + flash. ROM-search aggregation is still browser work. Backup orchestration from PC is fragmented across TWRP nandroids and per-app tools. Devicer integrates the recommended best-of-breed toolchain ([Bifrost](https://github.com/zacharee/SamloaderKotlin) + Thor + [tetherback](https://github.com/dlenski/tetherback) + [Magisk_patcher](https://github.com/affggh/Magisk_patcher)) under one shell.
+| Critical backup | Flash safety review |
+|---|---|
+| ![Devicer preselects critical EFS, modem, and persistent partitions](assets/screenshots/04-backup.png) | ![Devicer shows Knox and bootloader warnings before an Odin flash](assets/screenshots/05-flash-safety.png) |
 
-## Stack (locked v0.2.0)
+These screenshots come from the production Windows executable on isolated desktops at 125% DPI. Capture mode uses representative data and disables hardware probing, so it never reads a connected phone.
 
-C# / .NET 10 WPF, TFM `net10.0-windows10.0.22621.0`, MVVM via `CommunityToolkit.Mvvm`. Catppuccin Mocha theme.
+## What it handles
 
-## Architecture (locked v0.2.0)
+| Workflow | What Devicer does |
+|---|---|
+| Device insight | Detects ADB, fastboot, recovery, sideload, bootloader, and Samsung Download mode. Reports model, build, root, encryption, slots, CSC, Knox, and bootloader state. |
+| Official firmware | Checks Samsung's public FUS feed by model and CSC, compares the installed PDA, downloads the encrypted package, then decrypts it locally. |
+| Custom ROMs | Searches LineageOS and crDroid by codename. Downloads stay in the app, with SHA-256 or MD5 verification when the source publishes a digest. |
+| Backup and restore | Finds block partitions through root, preselects EFS and other critical data, verifies each backup, and checks hashes before restore. |
+| Boot patching | Sends `boot.img` or `init_boot.img` to Magisk, KernelSU, or APatch. A PC-side Magisk patcher is available when the phone is not rooted. |
+| Flash planning | Inspects Odin archives, builds dry runs, gates destructive Thor actions, and manages fastboot image queues with slot and AVB options. |
 
-**Orchestration shell with subprocess wrappers** for every backend tool. `Devicer.App` (WPF UI) sits on top of `Devicer.Core` (services + models). Each external tool — Bifrost, Thor, tetherback, Magisk_patcher — runs as a child process across the OS-level boundary, which keeps Thor's GPL-3.0 from contaminating Devicer's MIT license. Tools are downloaded lazily on first need to `%LOCALAPPDATA%\Devicer\tools\` with version + SHA256 pinning.
+## Why use it
 
-## Build
+- One interface replaces a pile of terminal commands and browser tabs.
+- Critical Samsung partitions are called out before a flash, with EFS clear disabled by default.
+- External GPL tools run as separate processes. Devicer remains MIT licensed and each backend can be updated independently.
+- Device data, cached firmware, manifests, and logs stay under your Windows profile. No Devicer account is required.
+
+## Install
+
+1. Download `Devicer-v2.2.1-win-x64.zip` from the [latest release](https://github.com/SysAdminDoc/Devicer/releases/latest).
+2. Verify the matching SHA-256 file if you want to confirm the download.
+3. Extract the ZIP and run `Devicer.exe`.
+4. Connect a phone with a data-capable USB cable. Enable USB debugging, unlock the phone, and approve the computer when Android asks.
+
+The Windows build is self-contained, so you do not need to install .NET. It is not code signed because no signing certificate is available for this project. Windows SmartScreen may show an unrecognized publisher notice. Check the published SHA-256 digest before running it.
+
+## Requirements
+
+- Windows 10 or Windows 11, x64
+- Android SDK Platform Tools v37 or newer on `PATH`
+- A data-capable USB cable and the correct OEM USB driver
+- Root access for raw partition backup, restore, and on-device boot patching
+
+Firmware lookup and ROM search can work without root. Flashing also depends on the target device, an unlocked bootloader where required, and a compatible backend such as Thor, Heimdall, or fastboot.
+
+## Safety model
+
+Devicer cannot make flashing risk-free. It can make the plan visible.
+
+- Dry runs show the archive entries or fastboot images before execution.
+- EFS clear starts off and requires an explicit choice.
+- Knox, One UI bootloader restrictions, Play Integrity impact, and AVB choices are shown near the controls that matter.
+- Restore checks the saved manifest and SHA-256 values before writing partitions.
+
+Back up EFS, modem state, `persist`, and any device-specific calibration data before changing firmware. Never flash an image built for another model or bootloader revision.
+
+## Build from source
+
+Devicer uses C# with .NET 10 WPF and CommunityToolkit.Mvvm.
 
 ```powershell
-dotnet build -c Release Devicer.sln
+dotnet restore Devicer.sln
+dotnet test Devicer.sln -c Release
 dotnet run --project src/Devicer.App -c Release
-# Backend smoke test (probes connected phone, prints DeviceInfo to stdout):
-dotnet run --project tools/Devicer.Smoke -c Release
-# Multi-CSC firmware lookup smoke:
-dotnet run --project tools/Devicer.Smoke -c Release -- --firmware-regions SM-S938B EUX INS
 ```
 
-Release exe: `src/Devicer.App/bin/Release/net10.0-windows10.0.22621.0/Devicer.App.exe`.
+Build the release package locally:
+
+```powershell
+pwsh tools/build-release.ps1 -SelfContained
+```
+
+Recreate the brand assets and isolated-desktop screenshots:
+
+```powershell
+pwsh tools/build-brand-assets.ps1
+dotnet run --project tools/Devicer.MarketingCapture -c Release -- `
+  --app src/Devicer.App/bin/Release/net10.0-windows10.0.22621.0/Devicer.App.exe `
+  --output assets/screenshots
+```
 
 ## Project layout
 
+```text
+src/Devicer.Core/            Device models, services, parsers, and tool wrappers
+src/Devicer.App/             WPF application, pages, themes, and view models
+tests/Devicer.Core.Tests/    Unit and regression tests
+tools/Devicer.Smoke/         Hardware and public-feed smoke commands
+tools/Devicer.MarketingCapture/  Private-desktop screenshot runner
+assets/brand/                Master identity, banner, social card, and icon family
+assets/screenshots/          Current production UI captures
 ```
-Devicer.sln
-src/
-  Devicer.Core/         class library — IShellRunner, AdbService, FastbootService,
-                        DeviceProbeService, DeviceInfo / RootStatus models
-  Devicer.App/          WPF shell — sidebar nav, 7 functional pages (Device / Firmware /
-                        ROMs / Backup / Patch / Flash / Universal) + Settings, Catppuccin
-                        Mocha + Latte themes, MVVM via CommunityToolkit.Mvvm
-tools/
-  Devicer.Smoke/        E2E console smoke against the connected device
-docs/
-  research.md           2026 tooling landscape, foundation document
-```
+
+## Current limits
+
+Devicer is an alpha release for experienced Android users. A wrong image, interrupted write, locked bootloader, or anti-rollback rule can leave a phone unbootable. Samsung firmware downloads still require a valid IMEI, and the availability of third-party tools can vary by device family.
 
 ## License
 
-[MIT](LICENSE) — preserved by subprocess architecture; do **not** convert to library linking against GPL tools.
+Devicer is available under the [MIT License](LICENSE). Thor Flash Utility and other optional tools keep their own licenses and run outside the Devicer process.

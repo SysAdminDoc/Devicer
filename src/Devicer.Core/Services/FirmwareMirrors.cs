@@ -11,7 +11,7 @@ public sealed record FirmwareMirror(string Name, string UrlTemplate, string Note
     public string BuildUrl(string model, string csc)
         => UrlTemplate
             .Replace("{model}", model.Trim().ToUpperInvariant())
-            .Replace("{csc}",   csc.Trim().ToUpperInvariant());
+            .Replace("{csc}", csc.Trim().ToUpperInvariant());
 }
 
 public static class FirmwareMirrors
@@ -30,7 +30,7 @@ public static class FirmwareMirrors
         new FirmwareMirror(
             Name: "SamFW",
             UrlTemplate: "https://samfw.com/firmware/{model}/{csc}",
-            Note: "Cloudflare Turnstile challenge — solved automatically by your browser."),
+            Note: "Cloudflare Turnstile challenge: solved automatically by your browser."),
         new FirmwareMirror(
             Name: "SamFrew",
             UrlTemplate: "https://samfrew.com/firmware/model/{model}/region/{csc}/upload/Desc/0/10",

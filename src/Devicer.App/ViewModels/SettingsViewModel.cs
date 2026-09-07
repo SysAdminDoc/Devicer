@@ -73,7 +73,7 @@ public partial class SettingsViewModel : ObservableObject
                 AdbStatus = $"v{ver} on PATH";
                 if (Version.TryParse(ver, out var parsed) && parsed < IAdbService.MinSafeVersion)
                 {
-                    AdbStatus = $"v{ver} on PATH — OUTDATED (< 36.0.2, has Samsung detection + file truncation bugs)";
+                    AdbStatus = $"v{ver} on PATH: OUTDATED (< 36.0.2, has Samsung detection + file truncation bugs)";
                     AdbVersionWarning = true;
                 }
             }
@@ -81,9 +81,9 @@ public partial class SettingsViewModel : ObservableObject
                 AdbStatus = "Available on PATH (version unknown)";
         }
         else
-            AdbStatus = "Not found — install Android SDK Platform-Tools v37+";
+            AdbStatus = "Not found: install Android SDK Platform-Tools v37+";
 
-        FastbootStatus = fastbootOk ? "Available on PATH" : "Not found — install Android SDK Platform-Tools v37+";
+        FastbootStatus = fastbootOk ? "Available on PATH" : "Not found: install Android SDK Platform-Tools v37+";
     }
 
     [ObservableProperty]

@@ -42,7 +42,7 @@ public sealed record OdinTarEntry
                 >= m => $"{SizeBytes / (double)m:0.0} MB",
                 >= k => $"{SizeBytes / (double)k:0.0} KB",
                 > 0 => $"{SizeBytes} B",
-                _ => "—",
+                _ => "N/A",
             };
         }
     }
@@ -58,7 +58,7 @@ public sealed record OdinTarInfo
     /// <summary>True if the file ended in <c>.tar.md5</c>; the inner tar is the same, with MD5 appended.</summary>
     public required bool HasMd5Suffix { get; init; }
 
-    /// <summary>The package class — AP / CP / CSC / HOME_CSC / BL — derived from the FILE name.</summary>
+    /// <summary>The package class: AP / CP / CSC / HOME_CSC / BL: derived from the FILE name.</summary>
     public string? PackageHint
     {
         get

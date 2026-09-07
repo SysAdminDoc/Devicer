@@ -117,7 +117,7 @@ public partial class OdinFlashViewModel : ObservableObject
             Info = info;
             foreach (var e in info.Entries)
                 Entries.Add(new TarEntryRow { Entry = e, Selected = e.IsImage });
-            StatusText = $"{info.Entries.Count} entries — {info.PackageHint ?? "(unknown package)"} {(info.HasMd5Suffix ? "[.md5 trailer]" : string.Empty)}";
+            StatusText = $"{info.Entries.Count} entries: {info.PackageHint ?? "(unknown package)"} {(info.HasMd5Suffix ? "[.md5 trailer]" : string.Empty)}";
         }
         catch (Exception ex)
         {
@@ -144,7 +144,7 @@ public partial class OdinFlashViewModel : ObservableObject
 
         var lines = new List<string>
         {
-            "DRY RUN — no data was written. The following plan would execute:",
+            "DRY RUN: no data was written. The following plan would execute:",
             "",
         };
         if (EfsClearEnabled)
