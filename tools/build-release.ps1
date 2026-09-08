@@ -2,19 +2,24 @@
 [CmdletBinding()]
 param(
     [switch]$SelfContained,
+    [switch]$BuildOnly,
+    [switch]$PackageOnly,
     [string]$Configuration = 'Release',
     [string]$Tfm = 'net10.0-windows10.0.22621.0'
 )
 
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
+if ($BuildOnly -and $PackageOnly) { throw 'Choose BuildOnly or PackageOnly, not both.' }
 Push-Location $repoRoot
 try {
     $dist = Join-Path $repoRoot 'dist'
-    if (Test-Path -LiteralPath $dist) {
+    $dist = [IO.Path]::GetFullPath($dist)
+    if (-not $dist.StartsWith([IO.Path]::GetFullPath($repoRoot) + '\', [StringComparison]::OrdinalIgnoreCase)) { throw 'Unexpected build cleanup path.' }
+    if (-not $PackageOnly -and (Test-Path -LiteralPath $dist)) {
         Remove-Item -LiteralPath $dist -Recurse -Force
     }
-    New-Item -ItemType Directory -Path $dist | Out-Null
+    New-Item -ItemType Directory -Path $dist -Force | Out-Null
 
     $versionNode = Select-Xml -Path 'src/Devicer.App/Devicer.App.csproj' -XPath '//Version'
     if (-not $versionNode) { throw 'Could not locate <Version> in Devicer.App.csproj.' }
@@ -23,6 +28,7 @@ try {
 
     $publishDirectory = Join-Path $dist 'publish'
     $packageDirectory = Join-Path $dist 'package'
+    if (Test-Path -LiteralPath $packageDirectory) { Remove-Item -LiteralPath $packageDirectory -Recurse -Force }
     New-Item -ItemType Directory -Path $packageDirectory | Out-Null
 
     $publishArgs = @(
@@ -48,16 +54,20 @@ try {
         $publishArgs += @('--self-contained', 'false')
     }
 
-    & dotnet @publishArgs
-    if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed with exit code $LASTEXITCODE." }
+    if (-not $PackageOnly) {
+        & dotnet @publishArgs
+        if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed with exit code $LASTEXITCODE." }
+    }
 
     $standaloneAsset = $null
     if ($SelfContained) {
         $publishedExe = Join-Path $publishDirectory 'Devicer.App.exe'
-        if (-not (Test-Path -LiteralPath $publishedExe)) { throw 'The published executable is missing.' }
         $standaloneAsset = Join-Path $dist "Devicer-v$version-win-x64.exe"
-        Copy-Item -LiteralPath $publishedExe -Destination $standaloneAsset
-        Copy-Item -LiteralPath $publishedExe -Destination (Join-Path $packageDirectory 'Devicer.exe')
+        if (-not $PackageOnly) {
+            if (-not (Test-Path -LiteralPath $publishedExe)) { throw 'The published executable is missing.' }
+            Copy-Item -LiteralPath $publishedExe -Destination $standaloneAsset
+        }
+        Copy-Item -LiteralPath $standaloneAsset -Destination (Join-Path $packageDirectory 'Devicer.exe')
         $zipAsset = Join-Path $dist "Devicer-v$version-win-x64.zip"
     }
     else {
@@ -65,9 +75,18 @@ try {
         $zipAsset = Join-Path $dist "Devicer-v$version-framework-dependent-win-x64.zip"
     }
 
+    if ($BuildOnly) { Write-Host "Built Devicer v$version. Capture and review before packaging."; return }
+    if ($SelfContained) {
+        & (Join-Path $PSScriptRoot 'verify-marketing.ps1') -Executable $standaloneAsset -Version $version
+    }
     Copy-Item -LiteralPath 'README.md' -Destination $packageDirectory
     Copy-Item -LiteralPath 'LICENSE' -Destination $packageDirectory
+    Copy-Item -LiteralPath 'assets' -Destination $packageDirectory -Recurse
+    if (Test-Path -LiteralPath $zipAsset) { Remove-Item -LiteralPath $zipAsset -Force }
     Compress-Archive -Path (Join-Path $packageDirectory '*') -DestinationPath $zipAsset -CompressionLevel Optimal
+    if ($SelfContained) {
+        & (Join-Path $PSScriptRoot 'verify-marketing.ps1') -Executable $standaloneAsset -Version $version -Archive $zipAsset
+    }
 
     $assets = @($zipAsset)
     if ($standaloneAsset) { $assets = @($standaloneAsset) + $assets }
@@ -94,7 +113,10 @@ try {
     }
     $manifest | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $dist "Devicer-v$version-release.json") -Encoding utf8
 
-    Remove-Item -LiteralPath $publishDirectory, $packageDirectory -Recurse -Force
+    foreach ($temporary in $publishDirectory, $packageDirectory) {
+        if (-not [IO.Path]::GetFullPath($temporary).StartsWith($dist + '\', [StringComparison]::OrdinalIgnoreCase)) { throw 'Unexpected staging cleanup path.' }
+        if (Test-Path -LiteralPath $temporary) { Remove-Item -LiteralPath $temporary -Recurse -Force }
+    }
 
     Write-Host "Built Devicer v$version"
     foreach ($asset in $assets) {

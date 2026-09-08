@@ -29,6 +29,19 @@ internal static class MarketingCaptureMode
     public static bool IsEnabled =>
         string.Equals(Environment.GetEnvironmentVariable(EnabledVariable), "1", StringComparison.Ordinal);
 
+    public static string DataDirectory
+    {
+        get
+        {
+            if (!IsEnabled)
+                return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Devicer");
+            var profile = Environment.GetEnvironmentVariable("DEVICER_MARKETING_PROFILE");
+            if (string.IsNullOrWhiteSpace(profile) || !Path.IsPathFullyQualified(profile))
+                throw new InvalidOperationException("Capture mode requires an absolute temporary profile directory.");
+            return profile;
+        }
+    }
+
     public static void ApplyDemoData(
         DeviceViewModel device,
         FirmwareViewModel firmware,
@@ -102,7 +115,7 @@ internal static class MarketingCaptureMode
         firmware.SelectedRegionResult = eux;
 
         roms.Codename = "husky";
-        roms.StatusText = "2 verified LineageOS builds for husky.";
+        roms.StatusText = "2 sample LineageOS builds for husky.";
         roms.Diagnostic = null;
         roms.Results.Clear();
         roms.Results.Add(new RomEntry

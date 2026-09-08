@@ -2,14 +2,14 @@
 
 # Devicer
 
-[![Version](https://img.shields.io/badge/version-2.2.1-38d9ff.svg)](https://github.com/SysAdminDoc/Devicer/releases/tag/v2.2.1)
+[![Version](https://img.shields.io/badge/version-2.2.2-38d9ff.svg)](https://github.com/SysAdminDoc/Devicer/releases/tag/v2.2.2)
 [![License](https://img.shields.io/badge/license-MIT-8bd5ca.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-4f7cff.svg)](#requirements)
 [![Build](https://img.shields.io/badge/build-self--contained-8b5cf6.svg)](#install)
 
-Devicer is a Windows toolkit for Android device discovery, Samsung firmware, ROM downloads, partition backups, boot image patching, and guarded flashing. It keeps device work in one desktop app and puts the risky choices in plain sight before anything is written.
+Devicer puts Android firmware and device tools in one Windows app. Inspect a phone, compare Samsung firmware across regions, or prepare a partition backup before moving to patching and flash plans. It's alpha software for experienced Android users, with the risks shown beside the controls.
 
-[**Download Devicer v2.2.1 for Windows x64**](https://github.com/SysAdminDoc/Devicer/releases/latest/download/Devicer-v2.2.1-win-x64.zip)
+[**Download Devicer v2.2.2 for Windows x64**](https://github.com/SysAdminDoc/Devicer/releases/latest/download/Devicer-v2.2.2-win-x64.zip)
 
 ## See it in action
 
@@ -19,13 +19,13 @@ The Device view gathers the details you usually chase through separate ADB comma
 
 | Firmware lookup | ROM discovery |
 |---|---|
-| ![Devicer compares official Samsung firmware across two CSC regions](assets/screenshots/02-firmware.png) | ![Devicer lists verified LineageOS builds for a device codename](assets/screenshots/03-roms.png) |
+| ![Devicer compares sample Samsung firmware across two CSC regions](assets/screenshots/02-firmware.png) | ![Devicer lists representative LineageOS builds for a device codename](assets/screenshots/03-roms.png) |
 
 | Critical backup | Flash safety review |
 |---|---|
 | ![Devicer preselects critical EFS, modem, and persistent partitions](assets/screenshots/04-backup.png) | ![Devicer shows Knox and bootloader warnings before an Odin flash](assets/screenshots/05-flash-safety.png) |
 
-These screenshots come from the production Windows executable on isolated desktops at 125% DPI. Capture mode uses representative data and disables hardware probing, so it never reads a connected phone.
+These screenshots come from the production Windows executable on isolated desktops at 125% DPI. Device details, firmware builds, and ROM results are representative data, not a compatibility list or a completed flash. Capture mode uses temporary preferences and an empty IMEI cache, with polling and external tool commands disabled. Settings paths use `%LOCALAPPDATA%` labels. The [capture record](assets/screenshots/capture-report.json) identifies the exact executable and six screenshots by SHA-256.
 
 ## What it handles
 
@@ -38,6 +38,8 @@ These screenshots come from the production Windows executable on isolated deskto
 | Boot patching | Sends `boot.img` or `init_boot.img` to Magisk, KernelSU, or APatch. A PC-side Magisk patcher is available when the phone is not rooted. |
 | Flash planning | Inspects Odin archives, builds dry runs, gates destructive Thor actions, and manages fastboot image queues with slot and AVB options. |
 
+A ROM result with a published hash is marked "SHA-256 available". Verification happens after the download, not when the search result appears.
+
 ## Why use it
 
 - One interface replaces a pile of terminal commands and browser tabs.
@@ -47,12 +49,14 @@ These screenshots come from the production Windows executable on isolated deskto
 
 ## Install
 
-1. Download `Devicer-v2.2.1-win-x64.zip` from the [latest release](https://github.com/SysAdminDoc/Devicer/releases/latest).
+1. Download `Devicer-v2.2.2-win-x64.zip` from the [latest release](https://github.com/SysAdminDoc/Devicer/releases/latest).
 2. Verify the matching SHA-256 file if you want to confirm the download.
 3. Extract the ZIP and run `Devicer.exe`.
 4. Connect a phone with a data-capable USB cable. Enable USB debugging, unlock the phone, and approve the computer when Android asks.
 
 The Windows build is self-contained, so you do not need to install .NET. It is not code signed because no signing certificate is available for this project. Windows SmartScreen may show an unrecognized publisher notice. Check the published SHA-256 digest before running it.
+
+The ZIP includes this guide, its screenshots, and the complete [original artwork archive](assets/brand/concepts/README.md).
 
 ## Requirements
 
@@ -74,6 +78,8 @@ Devicer cannot make flashing risk-free. It can make the plan visible.
 
 Back up EFS, modem state, `persist`, and any device-specific calibration data before changing firmware. Never flash an image built for another model or bootloader revision.
 
+Don't treat a downgrade as an unlock method. Samsung's hardware rollback protection can reject older bootloaders, and its Knox warranty bit records unsupported software changes permanently. Read [Samsung's hardware-security explanation](https://docs.samsungknox.com/admin/fundamentals/whitepaper/samsung-knox-mobile-security/system-security/hw-backed-security/) before planning a change. App behavior after modification also depends on the [integrity verdicts](https://developer.android.com/google/play/integrity/verdicts) each app requires.
+
 ## Build from source
 
 Devicer uses C# with .NET 10 WPF and CommunityToolkit.Mvvm.
@@ -87,17 +93,20 @@ dotnet run --project src/Devicer.App -c Release
 Build the release package locally:
 
 ```powershell
-pwsh tools/build-release.ps1 -SelfContained
+pwsh tools/build-release.ps1 -SelfContained -BuildOnly
 ```
 
-Recreate the brand assets and isolated-desktop screenshots:
+Capture the built executable on private desktops, without a connected phone:
 
 ```powershell
-pwsh tools/build-brand-assets.ps1
 dotnet run --project tools/Devicer.MarketingCapture -c Release -- `
-  --app src/Devicer.App/bin/Release/net10.0-windows10.0.22621.0/Devicer.App.exe `
-  --output assets/screenshots
+  --app dist/Devicer-v2.2.2-win-x64.exe `
+  --output build/marketing-candidate
 ```
+
+Review the six captures before replacing `assets/screenshots` with the PNGs and report. Then run `pwsh tools/build-release.ps1 -SelfContained -PackageOnly`. Package checks reject stale captures, missing guide artwork, and changes to the archived originals. Use `tools/build-brand-assets.ps1` only when intentionally exporting brand sizes; the selected identity and original concepts are already saved.
+
+Run `pwsh tools/test-marketing.ps1 -Executable dist/Devicer-v2.2.2-win-x64.exe -Version 2.2.2` to exercise the package checks against deliberately invalid fixtures. The test uses temporary copies and leaves the original artwork alone.
 
 ## Project layout
 

@@ -1,6 +1,13 @@
 {
-  "executable": "Devicer-v2.2.1-win-x64.exe",
+  "schemaVersion": 2,
+  "version": "2.2.2",
+  "executable": "Devicer-v2.2.2-win-x64.exe",
+  "executableSha256": "8b3d9b8eaaaf718cee7df78b91b61bc7ed45918b4645bdfbbf88c5235bd1ccfb",
+  "executableBytes": 73337158,
   "isolatedDesktop": true,
+  "isolatedProfile": true,
+  "externalToolCommands": false,
+  "representativeData": true,
   "dpiAware": true,
   "screenshots": [
     {
@@ -8,48 +15,48 @@
       "File": "01-device.png",
       "Width": 1600,
       "Height": 1000,
-      "Bytes": 109958,
-      "Sha256": "f4750a1ead6df8812f4975cd1f1dcfbe6a2efecc44317d62c353e68c1f59a7c0"
+      "Bytes": 110136,
+      "Sha256": "2c69bf7901bc55b56131b7ebbe50581ade4fafd103188742f0f7c0b88c8a4405"
     },
     {
       "View": "firmware",
       "File": "02-firmware.png",
       "Width": 1600,
       "Height": 1000,
-      "Bytes": 106751,
-      "Sha256": "54b62cebd78e019d90afec7a0f3e16050b6a6a83fe08edb921ed211a176de27e"
+      "Bytes": 106813,
+      "Sha256": "dd57466a10fc3a675bb39f3eb443c744d514419154c5309c85c7378e8f9db96b"
     },
     {
       "View": "roms",
       "File": "03-roms.png",
       "Width": 1600,
       "Height": 1000,
-      "Bytes": 86954,
-      "Sha256": "923d748efba01331c60a48ba2d79df64020821334931d7865e2c783d6a2e8803"
+      "Bytes": 87318,
+      "Sha256": "6e580b6c65abc2c6f8e1ccc1be5aea662639c19cb315403c6bc2ab72ec81d4bd"
     },
     {
       "View": "backup",
       "File": "04-backup.png",
       "Width": 1600,
       "Height": 1000,
-      "Bytes": 109257,
-      "Sha256": "8fa70e063264e9fc5adcec9a1c004a4c58d559c1b2ecc8c80af840752b6813fc"
+      "Bytes": 109408,
+      "Sha256": "d46f24473ba0bfe0a1739d22c8ae75aca7499205eb5b26a3eb11daf33419a8af"
     },
     {
       "View": "flash",
       "File": "05-flash-safety.png",
       "Width": 1600,
       "Height": 1000,
-      "Bytes": 134986,
-      "Sha256": "fa28671b3ceff5eee7fe34d908893cb6a4eadcb42528c4aa90f02c727d28826c"
+      "Bytes": 129708,
+      "Sha256": "b1d2b747cd6181e0df3bea5a7216fbc294f32281076ffcd60f29a7491ba8c2bb"
     },
     {
       "View": "settings",
       "File": "06-settings.png",
       "Width": 1600,
       "Height": 1000,
-      "Bytes": 98522,
-      "Sha256": "f1a161d56ccd88359ac4e109b88d3a73852d63d2379f28d431ce89ddbe1c4d17"
+      "Bytes": 93929,
+      "Sha256": "d1f5ef119c6667a8a697fe84a605b732f1b2f615e413061e518a57f16dfe3929"
     }
   ]
 }

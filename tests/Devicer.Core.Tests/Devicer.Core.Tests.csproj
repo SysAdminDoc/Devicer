@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Devicer.Core\Devicer.Core.csproj" />
+    <None Include="..\..\src\Devicer.App\Views\RomsPage.xaml" Link="RomsPage.xaml" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

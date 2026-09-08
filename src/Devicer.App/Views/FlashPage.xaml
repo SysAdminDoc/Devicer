@@ -30,7 +30,7 @@
                                Foreground="{DynamicResource AppWarning}" Margin="0,0,12,0" VerticalAlignment="Top" />
                     <TextBlock Grid.Column="1" VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12">
                         <Run FontWeight="SemiBold" Text="Play Integrity impact: " />
-                        <Run Text="Bootloader unlock and custom flashing will fail Play Integrity DEVICE and STRONG verdicts. Samsung Pay, Google Wallet, banking apps, and enterprise enrollment will stop working. Bypasses (Play Integrity Fix module) exist but break frequently." />
+                        <Run Text="Unlocking the bootloader or installing custom firmware can affect device-integrity checks. Payment apps, banking apps, and managed work profiles may stop working. Check their requirements before proceeding." />
                     </TextBlock>
                 </Grid>
             </Border>
@@ -73,9 +73,9 @@
                         Margin="0,0,0,12"
                         Visibility="{Binding IsOneUi8BootloaderLocked, Converter={x:Static vm:BoolToVisibilityConverter.Instance}}">
                     <StackPanel>
-                        <TextBlock Text="ONE UI 8: BOOTLOADER UNLOCK REMOVED" FontWeight="Bold" Foreground="{DynamicResource AppDestructive}" Margin="0,0,0,4" />
+                        <TextBlock Text="BOOTLOADER UNLOCK RESTRICTION" FontWeight="Bold" Foreground="{DynamicResource AppDestructive}" Margin="0,0,0,4" />
                         <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource AppForeground}">
-                            Samsung removed the OEM unlock toggle in One UI 8 firmware. Custom flashing is not possible on this device without first downgrading to One UI 7.1 (Jan 2025 patch), unlocking the bootloader there, then re-flashing One UI 8 while preserving the BL partition. Attempting to flash without an unlocked bootloader will fail or hard-brick the device.
+                            Devicer detected a bootloader-unlock restriction. Don't assume a firmware downgrade will enable unlocking. Samsung rollback protection can reject older bootloaders. Confirm model-specific support and the installed bootloader revision before planning a custom flash.
                         </TextBlock>
                     </StackPanel>
                 </Border>

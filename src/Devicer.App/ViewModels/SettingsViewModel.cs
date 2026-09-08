@@ -47,9 +47,9 @@ public partial class SettingsViewModel : ObservableObject
         SelectedTheme = store.Settings.Theme;
         ProbeIntervalSeconds = store.Settings.ProbeIntervalSeconds;
 
-        var dataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Devicer");
+        var dataDir = MarketingCaptureMode.IsEnabled ? @"%LOCALAPPDATA%\Devicer" : MarketingCaptureMode.DataDirectory;
         AppVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.0.0";
-        SettingsPath = store.SettingsPath;
+        SettingsPath = MarketingCaptureMode.IsEnabled ? Path.Combine(dataDir, "settings.json") : store.SettingsPath;
         CrashlogPath = Path.Combine(dataDir, "crashlog.txt");
         ToolsCachePath = Path.Combine(dataDir, "tools");
 
@@ -59,6 +59,13 @@ public partial class SettingsViewModel : ObservableObject
     [RelayCommand]
     public async Task RefreshToolStatusAsync()
     {
+        if (MarketingCaptureMode.IsEnabled)
+        {
+            AdbStatus = "Not queried in sample mode";
+            FastbootStatus = "Not queried in sample mode";
+            AdbVersionWarning = false;
+            return;
+        }
         AdbStatus = "Checking…";
         FastbootStatus = "Checking…";
         AdbVersionWarning = false;

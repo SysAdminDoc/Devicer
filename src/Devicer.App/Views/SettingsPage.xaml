@@ -87,8 +87,8 @@
                                 Margin="0,0,12,0" VerticalAlignment="Center"
                                 AutomationProperties.Name="Probe interval seconds" />
                     </DockPanel>
-                    <TextBlock Text="Devicer re-probes adb / fastboot at this interval to catch USB plug / unplug events. Lower is more responsive but slightly more CPU; 4s is the default."
-                               Style="{StaticResource MutedTextBlock}" FontSize="12" Margin="0,8,0,0" />
+                    <TextBlock Text="Checks for connected devices at this interval. Shorter intervals use more CPU. The default is 4 seconds."
+                               TextWrapping="Wrap" Style="{StaticResource MutedTextBlock}" FontSize="12" Margin="0,8,0,0" />
                 </StackPanel>
             </Border>
 
@@ -107,7 +107,7 @@
                     <TextBlock Text="{Binding AdbStatus}" Style="{StaticResource MonoValue}" />
                     <TextBlock Text="fastboot" Style="{StaticResource FieldLabel}" />
                     <TextBlock Text="{Binding FastbootStatus}" Style="{StaticResource MonoValue}" />
-                    <TextBlock Style="{StaticResource MutedTextBlock}" FontSize="12">
+                    <TextBlock Style="{StaticResource MutedTextBlock}" FontSize="12" TextWrapping="Wrap">
                         Install Android SDK Platform-Tools v37+ from
                         <Hyperlink NavigateUri="https://developer.android.com/tools/releases/platform-tools"
                                    RequestNavigate="Hyperlink_RequestNavigate"

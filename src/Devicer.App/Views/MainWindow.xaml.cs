@@ -12,7 +12,8 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
-        var deviceVm = new DeviceViewModel(App.Host.DeviceProbe, App.Host.SettingsStore.Settings.ProbeIntervalSeconds);
+        var deviceVm = new DeviceViewModel(App.Host.DeviceProbe, App.Host.SettingsStore.Settings.ProbeIntervalSeconds,
+            enablePolling: !MarketingCaptureMode.IsEnabled);
         var firmwareVm = new FirmwareViewModel(App.Host.FirmwareCheck, App.Host.FirmwareDownloadFactory, App.Host.Adb, App.Host.ImeiCache);
         var romVm = new RomViewModel(App.Host.RomAggregator, App.Host.RomDownload);
         var backupVm = new BackupViewModel(App.Host.Adb, App.Host.Backup, App.Host.Restore);

@@ -45,7 +45,7 @@ public partial class App : Application
         if (ex is null) return;
         try
         {
-            var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Devicer");
+            var dir = MarketingCaptureMode.DataDirectory;
             Directory.CreateDirectory(dir);
             var path = Path.Combine(dir, "crashlog.txt");
             File.AppendAllText(path,

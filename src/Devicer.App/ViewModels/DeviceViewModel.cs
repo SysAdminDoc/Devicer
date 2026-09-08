@@ -27,7 +27,7 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
 
     public ObservableCollection<DeviceInfo> Devices { get; } = new();
 
-    public DeviceViewModel(IDeviceProbeService probe, int probeIntervalSeconds = 4)
+    public DeviceViewModel(IDeviceProbeService probe, int probeIntervalSeconds = 4, bool enablePolling = true)
     {
         _probe = probe;
 
@@ -35,7 +35,8 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
         // Cheap (`adb devices` is fast) and a sensible upper bound on UX latency for "user just plugged in".
         _hotplugTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(Math.Clamp(probeIntervalSeconds, 2, 30)) };
         _hotplugTimer.Tick += async (_, _) => await PollAsync();
-        _hotplugTimer.Start();
+        if (enablePolling)
+            _hotplugTimer.Start();
     }
 
     public void SetProbeInterval(int seconds)

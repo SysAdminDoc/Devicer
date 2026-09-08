@@ -51,12 +51,19 @@ internal static class Program
                 JsonSerializer.Serialize(
                     new
                     {
+                        schemaVersion = 2,
+                        version = FileVersionInfo.GetVersionInfo(executable).ProductVersion?.Split('+')[0],
                         executable = Path.GetFileName(executable),
+                        executableSha256 = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(executable))).ToLowerInvariant(),
+                        executableBytes = new FileInfo(executable).Length,
                         isolatedDesktop = true,
+                        isolatedProfile = true,
+                        externalToolCommands = false,
+                        representativeData = true,
                         dpiAware = true,
                         screenshots = captures,
                     },
-                    new JsonSerializerOptions { WriteIndented = true }) + Environment.NewLine);
+                    new JsonSerializerOptions { WriteIndented = true }).Replace("\r\n", "\n") + "\n");
 
             Console.WriteLine($"Captured {captures.Count} Devicer views on isolated desktops.");
             return 0;
@@ -92,15 +99,17 @@ internal static class Program
 
         ProcessInformation processInfo = default;
         IntPtr environmentBlock = IntPtr.Zero;
+        var profile = Path.Combine(Path.GetTempPath(), $"DevicerCaptureProfile-{Guid.NewGuid():N}");
         try
         {
+            Directory.CreateDirectory(profile);
             var startup = new StartupInfo
             {
                 Size = Marshal.SizeOf<StartupInfo>(),
                 Desktop = $"winsta0\\{desktopName}",
             };
             var commandLine = new StringBuilder($"\"{executable}\"");
-            environmentBlock = BuildEnvironmentBlock(outputDirectory, view);
+            environmentBlock = BuildEnvironmentBlock(outputDirectory, view, profile);
             if (!CreateProcess(
                     executable,
                     commandLine,
@@ -141,10 +150,16 @@ internal static class Program
                 CloseHandle(processInfo.Process);
             }
             CloseDesktop(desktop);
+            var allowedRoot = Path.GetFullPath(Path.GetTempPath()).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+            if (!Path.GetFullPath(profile).StartsWith(allowedRoot, StringComparison.OrdinalIgnoreCase)
+                || !Path.GetFileName(profile).StartsWith("DevicerCaptureProfile-", StringComparison.Ordinal))
+                throw new InvalidOperationException("Unexpected capture profile cleanup path.");
+            if (Directory.Exists(profile))
+                Directory.Delete(profile, recursive: true);
         }
     }
 
-    private static IntPtr BuildEnvironmentBlock(string outputDirectory, string view)
+    private static IntPtr BuildEnvironmentBlock(string outputDirectory, string view, string profile)
     {
         var variables = new SortedDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (DictionaryEntry entry in Environment.GetEnvironmentVariables())
@@ -155,6 +170,7 @@ internal static class Program
         variables["DEVICER_MARKETING_CAPTURE"] = "1";
         variables["DEVICER_MARKETING_OUTPUT"] = outputDirectory;
         variables["DEVICER_MARKETING_VIEW"] = view;
+        variables["DEVICER_MARKETING_PROFILE"] = profile;
         variables["DOTNET_CLI_UI_LANGUAGE"] = "en-US";
 
         var block = string.Join('\0', variables.Select(pair => $"{pair.Key}={pair.Value}")) + "\0\0";

@@ -3,7 +3,7 @@ using System.Text;
 
 namespace Devicer.Core.Services;
 
-public sealed class ShellRunner : IShellRunner
+public sealed class ShellRunner(bool allowProcesses = true) : IShellRunner
 {
     public async Task<ShellResult> RunAsync(
         string fileName,
@@ -11,6 +11,8 @@ public sealed class ShellRunner : IShellRunner
         TimeSpan? timeout = null,
         CancellationToken cancellationToken = default)
     {
+        if (!allowProcesses)
+            throw new InvalidOperationException("External tool commands are disabled in sample capture mode.");
         var psi = new ProcessStartInfo
         {
             FileName = fileName,

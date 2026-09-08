@@ -34,7 +34,7 @@ public sealed class AppSettingsStore
 
     public AppSettingsStore()
     {
-        var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Devicer");
+        var dir = MarketingCaptureMode.DataDirectory;
         Directory.CreateDirectory(dir);
         _path = Path.Combine(dir, "settings.json");
         Settings = Load();

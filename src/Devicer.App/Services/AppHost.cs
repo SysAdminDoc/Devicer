@@ -39,7 +39,7 @@ public sealed class AppHost
 
     public AppHost()
     {
-        ShellRunner = new ShellRunner();
+        ShellRunner = new ShellRunner(allowProcesses: !MarketingCaptureMode.IsEnabled);
         Adb = new AdbService(ShellRunner);
         Fastboot = new FastbootService(ShellRunner);
         DeviceProbe = new DeviceProbeService(Adb, Fastboot);
@@ -67,8 +67,8 @@ public sealed class AppHost
         OemGuidance = new OemGuidanceService();
         PluginRegistry = new OemPluginRegistry();
         Snackbar = new SnackbarService();
-        ImeiCache = new ImeiCache();
         SettingsStore = new AppSettingsStore();
+        ImeiCache = new ImeiCache(System.IO.Path.Combine(MarketingCaptureMode.DataDirectory, "imei-cache.json"));
         Theme = new ThemeManager(SettingsStore);
     }
 }

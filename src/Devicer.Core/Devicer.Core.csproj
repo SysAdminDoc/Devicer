@@ -4,9 +4,9 @@
     <Nullable>enable</Nullable>
     <LangVersion>14.0</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Version>2.2.1</Version>
-    <AssemblyVersion>2.2.1.0</AssemblyVersion>
-    <FileVersion>2.2.1.0</FileVersion>
+    <Version>2.2.2</Version>
+    <AssemblyVersion>2.2.2.0</AssemblyVersion>
+    <FileVersion>2.2.2.0</FileVersion>
     <RootNamespace>Devicer.Core</RootNamespace>
     <Product>Devicer</Product>
     <Company>SysAdminDoc</Company>

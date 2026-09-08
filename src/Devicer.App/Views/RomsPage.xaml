@@ -167,7 +167,7 @@
                                     </TextBlock>
                                     <TextBlock Foreground="{DynamicResource AppMutedForeground}" FontSize="11"
                                                Visibility="{Binding Sha256, Converter={x:Static vm:NullToCollapsedConverter.Instance}}">
-                                        <Run Text="SHA256 verified" />
+                                        <Run Text="SHA-256 available" />
                                     </TextBlock>
                                 </StackPanel>
                             </Grid>
